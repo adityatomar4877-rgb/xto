@@ -362,6 +362,26 @@ def create_demo_topology() -> DigitalTwinTopology:
             protocol="TCP",
             port=443,
         ),
+        # DMZ Web Portal -> Core App Server (API communication)
+        Relationship(
+            id="REL-WEB-APP",
+            source_id="WEB-SRV-01",
+            target_id="APP-SRV-01",
+            type=RelationshipType.NETWORK_REACHABILITY,
+            protocol="TCP",
+            port=8080,
+            properties={"service": "REST API Gateway"},
+        ),
+        # Finance Workstation -> Core App Server (Internal Web Portal)
+        Relationship(
+            id="REL-FIN-APP",
+            source_id="WS-FIN-02",
+            target_id="APP-SRV-01",
+            type=RelationshipType.NETWORK_REACHABILITY,
+            protocol="TCP",
+            port=443,
+            properties={"service": "Internal Banking Web UI"},
+        ),
         # VPN -> Corp LAN & Engineering
         Relationship(
             id="REL-04",

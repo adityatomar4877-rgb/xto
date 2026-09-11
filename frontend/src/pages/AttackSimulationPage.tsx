@@ -197,16 +197,22 @@ export const AttackSimulationPage: React.FC = () => {
 
   // Active path and compromised nodes from timeline up to activeStepIndex
   const activeEvents = simulationTrace ? simulationTrace.timeline.slice(0, activeStepIndex + 1) : [];
-  const compromisedList = activeEvents
-    .filter((e) => e.success)
-    .map((e) => e.target_asset_id);
+  const compromisedList = Array.from(
+    new Set(
+      activeEvents
+        .filter((e) => e.success && e.target_asset_id && e.target_asset_id !== "EXT-INTERNET")
+        .map((e) => e.target_asset_id)
+    )
+  );
 
-  // Reconstruct detected route path nodes in order
+  // Reconstruct detected route path nodes in order without duplicates
   const detectedPath: string[] = simulationTrace && simulationTrace.timeline.length > 0
-    ? [
-        simulationTrace.timeline[0].source_asset_id,
-        ...activeEvents.map((e) => e.target_asset_id),
-      ]
+    ? Array.from(
+        new Set([
+          simulationTrace.timeline[0].source_asset_id,
+          ...activeEvents.map((e) => e.target_asset_id),
+        ])
+      )
     : [footholdId];
 
   // Active step details

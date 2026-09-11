@@ -169,7 +169,7 @@ const TOPOLOGY_NODES: TopologyNode[] = [
   },
 ];
 
-// Exactly 14 active routes matching reference screenshot
+// Active topology routes matching backend SecurityTwin topology
 const TOPOLOGY_ROUTES = [
   { id: "R1", from: "EXT-INTERNET", to: "FW-EDGE-01", defaultTech: "T1190 / T1566" },
   { id: "R2", from: "FW-EDGE-01", to: "WEB-SRV-01", defaultTech: "T1190" },
@@ -179,12 +179,15 @@ const TOPOLOGY_ROUTES = [
   { id: "R6", from: "WS-FIN-02", to: "APP-SRV-01", defaultTech: "T1021.001" },
   { id: "R7", from: "WS-ENG-04", to: "APP-SRV-01", defaultTech: "T1021.004" },
   { id: "R8", from: "WS-ENG-04", to: "DC-CORP-01", defaultTech: "T1003" },
-  { id: "R9", from: "APP-SRV-01", to: "CLOUD-K8S-01", defaultTech: "T1078.004" },
-  { id: "R10", from: "APP-SRV-01", to: "DB-PROD-01", defaultTech: "T1005" },
-  { id: "R11", from: "DC-CORP-01", to: "DB-PROD-01", defaultTech: "T1021.002" },
-  { id: "R12", from: "DC-CORP-01", to: "SIEM-SOC-01", defaultTech: "T1562.001" },
-  { id: "R13", from: "CLOUD-K8S-01", to: "DB-PROD-01", defaultTech: "T1530" },
-  { id: "R14", from: "DB-PROD-01", to: "VAULT-BACKUP-01", defaultTech: "T1486" },
+  { id: "R9", from: "WS-ENG-04", to: "CLOUD-K8S-01", defaultTech: "T1078" },
+  { id: "R10", from: "APP-SRV-01", to: "CLOUD-K8S-01", defaultTech: "T1078.004" },
+  { id: "R11", from: "APP-SRV-01", to: "DB-PROD-01", defaultTech: "T1005" },
+  { id: "R12", from: "APP-SRV-01", to: "VAULT-BACKUP-01", defaultTech: "T1021.002" },
+  { id: "R13", from: "DC-CORP-01", to: "DB-PROD-01", defaultTech: "T1021.002" },
+  { id: "R14", from: "DC-CORP-01", to: "VAULT-BACKUP-01", defaultTech: "T1047" },
+  { id: "R15", from: "DC-CORP-01", to: "SIEM-SOC-01", defaultTech: "T1562.001" },
+  { id: "R16", from: "CLOUD-K8S-01", to: "DB-PROD-01", defaultTech: "T1530" },
+  { id: "R17", from: "DB-PROD-01", to: "VAULT-BACKUP-01", defaultTech: "T1486" },
 ];
 
 function generateRoutePath(fromNode: TopologyNode, toNode: TopologyNode): string {
@@ -407,53 +410,62 @@ export const Tactical3DScene: React.FC<Tactical3DSceneProps> = ({
             })}
 
             {/* 2. DETECTED ATTACK PATH (RED: stroke #EF4444 / #DC2626) */}
-            {TOPOLOGY_ROUTES.map((route) => {
-              const detected = isRouteDetected(route.from, route.to);
-              if (!detected) return null;
-              const from = nodeMap.get(route.from);
-              const to = nodeMap.get(route.to);
-              if (!from || !to) return null;
-              const d = generateRoutePath(from, to);
+            {(() => {
+              if (!highlightPath || highlightPath.length < 2) return null;
+              const segments: { fromId: string; toId: string; key: string }[] = [];
+              for (let i = 0; i < highlightPath.length - 1; i++) {
+                const fId = highlightPath[i];
+                const tId = highlightPath[i + 1];
+                if (fId && tId && fId !== tId && fId !== "EXT-INTERNET") {
+                  segments.push({ fromId: fId, toId: tId, key: `${fId}-${tId}-${i}` });
+                }
+              }
+              return segments.map((seg) => {
+                const from = nodeMap.get(seg.fromId);
+                const to = nodeMap.get(seg.toId);
+                if (!from || !to) return null;
+                const d = generateRoutePath(from, to);
 
-              return (
-                <g key={`detected-route-${route.id}`}>
-                  {/* Outer Red Glow */}
-                  <path
-                    d={d}
-                    fill="none"
-                    stroke="#EF4444"
-                    strokeWidth="8"
-                    strokeOpacity="0.25"
-                    strokeLinecap="round"
-                    filter="url(#redDetectedGlow)"
-                  />
-                  {/* Core Red Conduit Line */}
-                  <path
-                    d={d}
-                    fill="none"
-                    stroke="#DC2626"
-                    strokeWidth="2.6"
-                    strokeLinecap="round"
-                  />
-                  {/* Flowing Red Particle Pulse */}
-                  <circle r="4" fill="#EF4444">
-                    <animateMotion path={d} dur="2.4s" repeatCount="indefinite" />
-                  </circle>
-                </g>
-              );
-            })}
+                return (
+                  <g key={`detected-direct-${seg.key}`}>
+                    {/* Outer Red Glow */}
+                    <path
+                      d={d}
+                      fill="none"
+                      stroke="#EF4444"
+                      strokeWidth="8"
+                      strokeOpacity="0.28"
+                      strokeLinecap="round"
+                      filter="url(#redDetectedGlow)"
+                    />
+                    {/* Core Red Conduit Line */}
+                    <path
+                      d={d}
+                      fill="none"
+                      stroke="#DC2626"
+                      strokeWidth="2.8"
+                      strokeLinecap="round"
+                    />
+                    {/* Flowing Red Particle Pulse */}
+                    <circle r="4" fill="#EF4444">
+                      <animateMotion path={d} dur="2.4s" repeatCount="indefinite" />
+                    </circle>
+                  </g>
+                );
+              });
+            })()}
 
             {/* 3. PREDICTED NEXT MOVE PATH (YELLOW: stroke #EAB308 / #FACC15 based on MITRE) */}
-            {TOPOLOGY_ROUTES.map((route) => {
-              const predicted = isRoutePredicted(route.from, route.to);
-              if (!predicted) return null;
-              const from = nodeMap.get(route.from);
-              const to = nodeMap.get(route.to);
+            {(() => {
+              if (!predictedNextHop || !predictedNextHop.sourceId || !predictedNextHop.targetId) return null;
+              if (predictedNextHop.sourceId === predictedNextHop.targetId) return null;
+              const from = nodeMap.get(predictedNextHop.sourceId);
+              const to = nodeMap.get(predictedNextHop.targetId);
               if (!from || !to) return null;
               const d = generateRoutePath(from, to);
 
               return (
-                <g key={`predicted-route-${route.id}`}>
+                <g key={`predicted-direct-${predictedNextHop.sourceId}-${predictedNextHop.targetId}`}>
                   {/* Outer Gold Glow */}
                   <path
                     d={d}
@@ -479,7 +491,7 @@ export const Tactical3DScene: React.FC<Tactical3DSceneProps> = ({
                   </circle>
                 </g>
               );
-            })}
+            })()}
 
             {/* 4. RENDER 12 TOPOLOGY NODES */}
             {TOPOLOGY_NODES.map((n) => {
