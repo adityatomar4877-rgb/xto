@@ -162,7 +162,19 @@ export const CommandCenterPage: React.FC = () => {
       <div className="grid grid-cols-12 gap-4">
         {/* Left 8 Cols: Environment Digital Twin */}
         <div className="col-span-12 lg:col-span-8 flex flex-col">
-          <Tactical3DScene height="h-[430px]" />
+          <Tactical3DScene
+            height="h-[430px]"
+            highlightPath={["EXT-INTERNET", "FW-EDGE-01", "VPN-GW-01", "WS-ENG-04", "DC-CORP-01"]}
+            compromisedNodes={["FW-EDGE-01", "VPN-GW-01", "WS-ENG-04", "DC-CORP-01"]}
+            predictedNextHop={{
+              sourceId: "DC-CORP-01",
+              targetId: "DB-PROD-01",
+              techniqueId: "T1021.002",
+              techniqueName: "SMB / Admin Shares",
+              confidence: 94,
+              phase: "Lateral Movement",
+            }}
+          />
         </div>
 
         {/* Right 4 Cols: Active Simulation & Top Threat Vectors */}

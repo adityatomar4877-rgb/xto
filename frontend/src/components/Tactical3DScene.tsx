@@ -1,5 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
-import * as THREE from "three";
+import React, { useState } from "react";
 import {
   Plus,
   Minus,
@@ -14,260 +13,245 @@ import {
   Layers,
   User,
   Database,
-  Grid,
-  CheckCircle2,
-  AlertTriangle,
-  Flame,
-  ArrowRight,
+  Monitor,
+  HardDrive,
+  Radio,
+  Zap,
 } from "lucide-react";
-import { useTheme } from "@/context/ThemeContext";
 
-interface Tactical3DSceneProps {
+export interface PredictedNextHop {
+  sourceId: string;
+  targetId: string;
+  techniqueId?: string;
+  techniqueName?: string;
+  confidence?: number;
+  phase?: string;
+  explanation?: string;
+}
+
+export interface Tactical3DSceneProps {
   height?: string;
   assets?: any[];
   relationships?: any[];
   selectedAssetId?: string;
   onSelectAsset?: (asset: any) => void;
-  highlightPath?: string[];
-  compromisedNodes?: string[];
+  highlightPath?: string[]; // Traversed / detected nodes [e.g. "EXT-INTERNET", "FW-EDGE-01", "WS-ENG-04"]
+  compromisedNodes?: string[]; // Compromised node IDs
+  predictedNextHop?: PredictedNextHop | null; // MITRE predicted next move
+}
+
+export interface TopologyNode {
+  id: string;
+  name: string;
+  subtitle: string;
+  type: string;
+  x: number;
+  y: number;
+  icon: any;
+  isPurple?: boolean;
+  centerDark?: boolean;
+}
+
+// Exactly 12 enterprise assets matching reference screenshot
+const TOPOLOGY_NODES: TopologyNode[] = [
+  {
+    id: "EXT-INTERNET",
+    name: "EXT-INTERNET",
+    subtitle: "External Internet ...",
+    type: "Adversary Space",
+    x: 80,
+    y: 280,
+    icon: Globe,
+    centerDark: true,
+  },
+  {
+    id: "FW-EDGE-01",
+    name: "FW-EDGE-01",
+    subtitle: "Perimeter NextGen ...",
+    type: "Firewall",
+    x: 210,
+    y: 280,
+    icon: Shield,
+  },
+  {
+    id: "WEB-SRV-01",
+    name: "WEB-SRV-01",
+    subtitle: "Public Customer Po...",
+    type: "Application Server",
+    x: 310,
+    y: 195,
+    icon: Server,
+  },
+  {
+    id: "VPN-GW-01",
+    name: "VPN-GW-01",
+    subtitle: "Corporate SSL-VPN ...",
+    type: "VPN Gateway",
+    x: 310,
+    y: 365,
+    icon: Shield,
+  },
+  {
+    id: "WS-FIN-02",
+    name: "WS-FIN-02",
+    subtitle: "Finance Lead Works...",
+    type: "Workstation",
+    x: 460,
+    y: 175,
+    icon: Monitor,
+  },
+  {
+    id: "WS-ENG-04",
+    name: "WS-ENG-04",
+    subtitle: "Senior DevOps Engi...",
+    type: "Workstation",
+    x: 460,
+    y: 295,
+    icon: Monitor,
+  },
+  {
+    id: "APP-SRV-01",
+    name: "APP-SRV-01",
+    subtitle: "Core Banking & API...",
+    type: "Application Server",
+    x: 610,
+    y: 195,
+    icon: Server,
+  },
+  {
+    id: "DC-CORP-01",
+    name: "DC-CORP-01",
+    subtitle: "Corporate Active D...",
+    type: "Domain Controller",
+    x: 610,
+    y: 320,
+    icon: User,
+    isPurple: true,
+  },
+  {
+    id: "SIEM-SOC-01",
+    name: "SIEM-SOC-01",
+    subtitle: "Security Operation...",
+    type: "Security Monitoring",
+    x: 610,
+    y: 430,
+    icon: Radio,
+  },
+  {
+    id: "CLOUD-K8S-01",
+    name: "CLOUD-K8S-01",
+    subtitle: "AWS Production EKS...",
+    type: "Cloud Infrastructure",
+    x: 770,
+    y: 185,
+    icon: Cloud,
+  },
+  {
+    id: "DB-PROD-01",
+    name: "DB-PROD-01",
+    subtitle: "Primary Customer F...",
+    type: "Database",
+    x: 770,
+    y: 280,
+    icon: Database,
+    isPurple: true,
+  },
+  {
+    id: "VAULT-BACKUP-01",
+    name: "VAULT-BACKUP-01",
+    subtitle: "Immutable Ransomwa...",
+    type: "Crown Jewel Vault",
+    x: 910,
+    y: 325,
+    icon: HardDrive,
+    isPurple: true,
+  },
+];
+
+// Exactly 14 active routes matching reference screenshot
+const TOPOLOGY_ROUTES = [
+  { id: "R1", from: "EXT-INTERNET", to: "FW-EDGE-01", defaultTech: "T1190 / T1566" },
+  { id: "R2", from: "FW-EDGE-01", to: "WEB-SRV-01", defaultTech: "T1190" },
+  { id: "R3", from: "FW-EDGE-01", to: "VPN-GW-01", defaultTech: "T1133" },
+  { id: "R4", from: "WEB-SRV-01", to: "APP-SRV-01", defaultTech: "T1210" },
+  { id: "R5", from: "VPN-GW-01", to: "WS-ENG-04", defaultTech: "T1078" },
+  { id: "R6", from: "WS-FIN-02", to: "APP-SRV-01", defaultTech: "T1021.001" },
+  { id: "R7", from: "WS-ENG-04", to: "APP-SRV-01", defaultTech: "T1021.004" },
+  { id: "R8", from: "WS-ENG-04", to: "DC-CORP-01", defaultTech: "T1003" },
+  { id: "R9", from: "APP-SRV-01", to: "CLOUD-K8S-01", defaultTech: "T1078.004" },
+  { id: "R10", from: "APP-SRV-01", to: "DB-PROD-01", defaultTech: "T1005" },
+  { id: "R11", from: "DC-CORP-01", to: "DB-PROD-01", defaultTech: "T1021.002" },
+  { id: "R12", from: "DC-CORP-01", to: "SIEM-SOC-01", defaultTech: "T1562.001" },
+  { id: "R13", from: "CLOUD-K8S-01", to: "DB-PROD-01", defaultTech: "T1530" },
+  { id: "R14", from: "DB-PROD-01", to: "VAULT-BACKUP-01", defaultTech: "T1486" },
+];
+
+function generateRoutePath(fromNode: TopologyNode, toNode: TopologyNode): string {
+  const { x: x1, y: y1 } = fromNode;
+  const { x: x2, y: y2 } = toNode;
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+
+  if (Math.abs(dx) < 6) {
+    return `M ${x1} ${y1} L ${x2} ${y2}`;
+  }
+  if (Math.abs(dy) < 6) {
+    return `M ${x1} ${y1} L ${x2} ${y2}`;
+  }
+  const cx1 = x1 + dx * 0.45;
+  const cy1 = y1;
+  const cx2 = x2 - dx * 0.45;
+  const cy2 = y2;
+  return `M ${x1} ${y1} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${x2} ${y2}`;
 }
 
 export const Tactical3DScene: React.FC<Tactical3DSceneProps> = ({
-  height = "h-[420px]",
+  height = "h-[440px]",
   onSelectAsset,
+  highlightPath = [],
+  compromisedNodes = [],
+  predictedNextHop = null,
+  selectedAssetId,
 }) => {
-  const { theme } = useTheme();
-  const [viewMode, setViewMode] = useState<"3D" | "2D">("2D"); // 2D is the exact visual from screenshot
-  const [activeNode, setActiveNode] = useState<any | null>(null);
+  const [activeNodeId, setActiveNodeId] = useState<string | null>(selectedAssetId || null);
   const [zoomLevel, setZoomLevel] = useState(1);
-  const canvasContainerRef = useRef<HTMLDivElement>(null);
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
 
-  // Nodes exactly from the reference screenshot
-  const nodes = [
-    {
-      id: "internet",
-      name: "Internet",
-      type: "External Ingress",
-      status: "normal",
-      x: 140,
-      y: 190,
-      color: "#1E293B",
-      glowColor: "rgba(30, 41, 59, 0.15)",
-      icon: Globe,
-      assets: "1 asset",
-    },
-    {
-      id: "firewall",
-      name: "Firewall",
-      type: "Perimeter Security",
-      status: "compromised",
-      x: 270,
-      y: 180,
-      color: "#EF4444",
-      glowColor: "rgba(239, 68, 68, 0.25)",
-      icon: Shield,
-      assets: "1 asset",
-    },
-    {
-      id: "office",
-      name: "Office Network",
-      type: "User Workstations",
-      status: "normal",
-      x: 370,
-      y: 95,
-      color: "#0284C7",
-      glowColor: "rgba(2, 132, 199, 0.18)",
-      icon: Server,
-      assets: "12 assets",
-    },
-    {
-      id: "cloud",
-      name: "Cloud (AWS)",
-      type: "Cloud VPC / EKS",
-      status: "normal",
-      x: 620,
-      y: 90,
-      color: "#0284C7",
-      glowColor: "rgba(2, 132, 199, 0.18)",
-      icon: Cloud,
-      assets: "28 assets",
-    },
-    {
-      id: "web-tier",
-      name: "Web Tier",
-      type: "DMZ Ingress",
-      status: "at_risk",
-      x: 430,
-      y: 190,
-      color: "#F59E0B",
-      glowColor: "rgba(245, 158, 11, 0.25)",
-      icon: Server,
-      assets: "8 assets",
-    },
-    {
-      id: "identity",
-      name: "Identity (AD)",
-      type: "Directory Services",
-      status: "normal",
-      x: 350,
-      y: 285,
-      color: "#0284C7",
-      glowColor: "rgba(2, 132, 199, 0.18)",
-      icon: User,
-      assets: "6 assets",
-    },
-    {
-      id: "app-tier",
-      name: "App Tier",
-      type: "Core Microservices",
-      status: "normal",
-      x: 580,
-      y: 195,
-      color: "#0284C7",
-      glowColor: "rgba(2, 132, 199, 0.18)",
-      icon: Layers,
-      assets: "15 assets",
-    },
-    {
-      id: "internal",
-      name: "Internal Services",
-      type: "Internal VPC",
-      status: "normal",
-      x: 500,
-      y: 295,
-      color: "#0284C7",
-      glowColor: "rgba(2, 132, 199, 0.18)",
-      icon: Grid,
-      assets: "10 assets",
-    },
-    {
-      id: "database",
-      name: "Database",
-      type: "Production DB",
-      status: "normal",
-      x: 700,
-      y: 205,
-      color: "#0284C7",
-      glowColor: "rgba(2, 132, 199, 0.18)",
-      icon: Database,
-      assets: "4 assets",
-    },
-    {
-      id: "critical",
-      name: "Critical Assets",
-      type: "Tier-0 Crown Jewel",
-      status: "compromised",
-      x: 650,
-      y: 290,
-      color: "#DC2626",
-      glowColor: "rgba(220, 38, 38, 0.35)",
-      icon: Database,
-      assets: "3 assets",
-    },
-  ];
+  const nodeMap = new Map<string, TopologyNode>();
+  TOPOLOGY_NODES.forEach((n) => nodeMap.set(n.id, n));
 
-  // Attack Path (red curve through Internet -> Firewall -> Web Tier -> App Tier -> Critical Assets)
-  const attackPathD = "M 140 190 C 200 185, 220 180, 270 180 C 330 180, 380 190, 430 190 C 490 190, 520 195, 580 195 C 610 195, 620 250, 650 290";
+  // Determine if a route is in the detected (red) path
+  const isRouteDetected = (fromId: string, toId: string) => {
+    if (!highlightPath || highlightPath.length < 2) return false;
+    for (let i = 0; i < highlightPath.length - 1; i++) {
+      if (
+        (highlightPath[i] === fromId && highlightPath[i + 1] === toId) ||
+        (highlightPath[i] === toId && highlightPath[i + 1] === fromId)
+      ) {
+        return true;
+      }
+    }
+    return false;
+  };
 
-  // Trust Relationships (subtle blue dashed lines)
-  const trustPaths = [
-    "M 370 95 C 385 140, 410 160, 430 190", // Office -> Web
-    "M 620 90 C 610 135, 595 165, 580 195", // Cloud -> App
-    "M 350 285 C 440 255, 510 230, 580 195", // Identity -> App
-    "M 500 295 C 560 290, 600 290, 650 290", // Internal -> Critical
-    "M 700 205 C 685 240, 665 265, 650 290", // DB -> Critical
-  ];
+  // Determine if a route is the predicted next move (yellow)
+  const isRoutePredicted = (fromId: string, toId: string) => {
+    if (!predictedNextHop) return false;
+    return (
+      (predictedNextHop.sourceId === fromId && predictedNextHop.targetId === toId) ||
+      (predictedNextHop.sourceId === toId && predictedNextHop.targetId === fromId)
+    );
+  };
 
-  // 3D Scene Initialization
-  useEffect(() => {
-    if (viewMode !== "3D") return;
-    const container = canvasContainerRef.current;
-    if (!container) return;
-
-    const width = container.clientWidth || 800;
-    const height = container.clientHeight || 420;
-
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xF9FAFC);
-
-    const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 1000);
-    camera.position.set(16, 18, 16);
-    camera.lookAt(0, 0, 0);
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    container.replaceChildren(renderer.domElement);
-
-    const ambientLight = new THREE.AmbientLight(0xFFFFFF, 1.2);
-    scene.add(ambientLight);
-
-    const dirLight = new THREE.DirectionalLight(0xFFFFFF, 1.5);
-    dirLight.position.set(15, 25, 15);
-    scene.add(dirLight);
-
-    // Light grid
-    const grid = new THREE.GridHelper(40, 30, 0xE2E8F0, 0xEDF2F7);
-    grid.position.y = -0.01;
-    scene.add(grid);
-
-    // Procedural 3D nodes
-    const nodeGroup = new THREE.Group();
-    scene.add(nodeGroup);
-
-    nodes.forEach((n, idx) => {
-      const x3d = (n.x - 450) * 0.04;
-      const z3d = (n.y - 190) * 0.04;
-      const isCrit = n.status === "compromised";
-      const isRisk = n.status === "at_risk";
-      const cHex = isCrit ? 0xEF4444 : isRisk ? 0xF59E0B : 0x0284C7;
-
-      // Base cylinder
-      const baseGeo = new THREE.CylinderGeometry(0.8, 0.9, 0.25, 32);
-      const baseMat = new THREE.MeshStandardMaterial({ color: 0xFFFFFF, roughness: 0.2 });
-      const baseMesh = new THREE.Mesh(baseGeo, baseMat);
-      baseMesh.position.set(x3d, 0.12, z3d);
-      nodeGroup.add(baseMesh);
-
-      // Core shape
-      const coreGeo = new THREE.CylinderGeometry(0.5, 0.5, 0.8, 16);
-      const coreMat = new THREE.MeshStandardMaterial({ color: cHex, metalness: 0.3, roughness: 0.2 });
-      const coreMesh = new THREE.Mesh(coreGeo, coreMat);
-      coreMesh.position.set(x3d, 0.6, z3d);
-      nodeGroup.add(coreMesh);
-    });
-
-    let animId: number;
-    const animate = () => {
-      animId = requestAnimationFrame(animate);
-      nodeGroup.rotation.y += 0.002;
-      renderer.render(scene, camera);
-    };
-    animate();
-
-    const handleResize = () => {
-      if (!container) return;
-      const w = container.clientWidth;
-      const h = container.clientHeight;
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
-    };
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      cancelAnimationFrame(animId);
-      window.removeEventListener("resize", handleResize);
-      renderer.dispose();
-    };
-  }, [viewMode]);
+  // Find predicted target node if any
+  const predictedTargetNode = predictedNextHop ? nodeMap.get(predictedNextHop.targetId) : null;
 
   return (
     <div
       className={`relative w-full ${height} bg-[#FFFFFF] rounded-xl border border-[#E5E7EB] overflow-hidden select-none flex flex-col shadow-xs`}
     >
-      {/* 1. CARD HEADER */}
-      <div className="p-4 pb-2 flex items-center justify-between border-b border-[#F1F3F5] z-10 bg-white">
+      {/* 1. CARD HEADER (Matching Reference Screenshot) */}
+      <div className="p-4 pb-2.5 flex items-center justify-between border-b border-[#F1F3F5] z-10 bg-white">
         <div className="flex items-center gap-2.5">
           <div className="w-6 h-6 rounded-lg bg-[#FFF2EB] border border-[#FF5722]/30 flex items-center justify-center text-[#FF5722]">
             <Layers className="w-3.5 h-3.5" />
@@ -277,215 +261,405 @@ export const Tactical3DScene: React.FC<Tactical3DSceneProps> = ({
               Environment Digital Twin
             </h2>
             <p className="text-[10px] text-slate-500">
-              Live model of your infrastructure, identities and trust relationships.
+              Live model: 12 enterprise assets & 14 active routes
             </p>
           </div>
         </div>
 
-        {/* Right Controls: View Switcher, Search, Filter, Maximize */}
+        {/* Right Controls: View Switcher & Reload (Matching Photo) */}
         <div className="flex items-center gap-2">
           {/* Mode Pill Switcher */}
           <div className="flex rounded-lg bg-[#F1F4F8] p-0.5 text-xs font-semibold">
             <button
-              onClick={() => setViewMode("3D")}
-              className={`px-3 py-1 rounded-md transition-all text-xs ${
-                viewMode === "3D"
-                  ? "bg-[#181B20] text-white shadow-xs font-bold"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
+              className="px-3 py-1 rounded-md text-xs text-slate-400 cursor-not-allowed opacity-60"
+              title="3D mode disabled (2D Realtime Model Active)"
             >
               3D View
             </button>
             <button
-              onClick={() => setViewMode("2D")}
-              className={`px-3 py-1 rounded-md transition-all text-xs ${
-                viewMode === "2D"
-                  ? "bg-[#181B20] text-white shadow-xs font-bold"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
+              className="px-3 py-1 rounded-md transition-all text-xs bg-[#181B20] text-white shadow-xs font-bold"
             >
               2D View
             </button>
           </div>
 
-          <button className="w-7 h-7 rounded-lg border border-[#E5E7EB] hover:bg-slate-50 flex items-center justify-center text-slate-500 hover:text-slate-800 transition-colors">
-            <Search className="w-3.5 h-3.5" />
-          </button>
-          <button className="w-7 h-7 rounded-lg border border-[#E5E7EB] hover:bg-slate-50 flex items-center justify-center text-slate-500 hover:text-slate-800 transition-colors">
-            <Filter className="w-3.5 h-3.5" />
-          </button>
-          <button className="w-7 h-7 rounded-lg border border-[#E5E7EB] hover:bg-slate-50 flex items-center justify-center text-slate-500 hover:text-slate-800 transition-colors">
-            <Maximize2 className="w-3.5 h-3.5" />
+          <button
+            onClick={() => {
+              setZoomLevel(1);
+              setPanOffset({ x: 0, y: 0 });
+            }}
+            className="w-7 h-7 rounded-lg border border-[#E5E7EB] hover:bg-slate-50 flex items-center justify-center text-slate-500 hover:text-slate-800 transition-colors"
+            title="Reset Topology View"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
 
-      {/* 2. TOPOLOGY VIEWPORT */}
+      {/* 2. MITRE PREDICTED NEXT MOVE HUD (If active) */}
+      {predictedNextHop && (
+        <div className="px-4 py-1.5 bg-gradient-to-r from-amber-500/10 via-amber-400/5 to-transparent border-b border-amber-200/60 flex items-center justify-between text-xs z-10">
+          <div className="flex items-center gap-2">
+            <span className="flex h-2 w-2 relative">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+            </span>
+            <span className="text-[10px] font-mono font-bold text-amber-900 tracking-wider">
+              MITRE ATT&CK PREDICTED NEXT MOVE:
+            </span>
+            <span className="px-2 py-0.5 rounded bg-amber-400 text-slate-950 font-mono font-black text-[10px] shadow-xs">
+              {predictedNextHop.techniqueId || "T1003"}
+            </span>
+            <span className="text-slate-700 font-semibold text-[11px]">
+              {predictedNextHop.techniqueName || "OS Credential Dumping"}
+            </span>
+            <span className="text-slate-400">&rarr;</span>
+            <span className="font-mono font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded text-[10px]">
+              {predictedNextHop.targetId}
+            </span>
+          </div>
+
+          <div className="text-[10px] text-slate-500 font-mono flex items-center gap-1.5">
+            <Zap className="w-3 h-3 text-amber-500" />
+            <span>CONFIDENCE: <strong>{predictedNextHop.confidence || 94}%</strong></span>
+          </div>
+        </div>
+      )}
+
+      {/* 3. 2D TOPOLOGY VIEWPORT (Pure Vector Canvas matching photo) */}
       <div className="relative flex-1 w-full overflow-hidden bg-[#FAFBFC]">
-        {/* Subtle dot matrix grid */}
+        {/* Dot matrix grid */}
         <div
           className="absolute inset-0 opacity-40 pointer-events-none"
           style={{
-            backgroundImage: "radial-gradient(#CBD5E1 1px, transparent 1px)",
-            backgroundSize: "20px 20px",
+            backgroundImage: "radial-gradient(#CBD5E1 1.2px, transparent 1.2px)",
+            backgroundSize: "22px 22px",
           }}
         />
 
-        {/* 3D WebGL Canvas */}
-        {viewMode === "3D" && (
-          <div ref={canvasContainerRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
-        )}
+        {/* Scalable Vector Canvas */}
+        <div
+          className="relative w-full h-full"
+          style={{
+            transform: `scale(${zoomLevel}) translate(${panOffset.x}px, ${panOffset.y}px)`,
+            transformOrigin: "center center",
+            transition: "transform 0.15s ease-out",
+          }}
+        >
+          <svg className="w-full h-full" viewBox="0 0 990 500">
+            <defs>
+              {/* Soft Halos */}
+              <filter id="softCyanGlow" x="-60%" y="-60%" width="220%" height="220%">
+                <feGaussianBlur stdDeviation="9" result="coloredBlur" />
+                <feMerge>
+                  <feMergeNode in="coloredBlur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
 
-        {/* 2D Vector Canvas (Exact to Reference Photo) */}
-        {viewMode === "2D" && (
-          <div
-            className="relative w-full h-full"
-            style={{ transform: `scale(${zoomLevel})`, transformOrigin: "center center", transition: "transform 0.2s ease" }}
-          >
-            <svg className="w-full h-full" viewBox="0 0 820 380">
-              <defs>
-                {/* Glow Filter */}
-                <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
-                  <feGaussianBlur stdDeviation="8" result="coloredBlur" />
-                  <feMerge>
-                    <feMergeNode in="coloredBlur" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
-              </defs>
+              <filter id="softPurpleGlow" x="-60%" y="-60%" width="220%" height="220%">
+                <feGaussianBlur stdDeviation="11" result="coloredBlur" />
+                <feMerge>
+                  <feMergeNode in="coloredBlur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
 
-              {/* Trust Relationship Dashed Curves */}
-              {trustPaths.map((d, i) => (
+              <filter id="redDetectedGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="6" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+
+              <filter id="yellowPredictedGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="7" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
+
+            {/* 1. BASE TRUST ROUTES (Dashed gray lines matching screenshot) */}
+            {TOPOLOGY_ROUTES.map((route) => {
+              const from = nodeMap.get(route.from);
+              const to = nodeMap.get(route.to);
+              if (!from || !to) return null;
+              const d = generateRoutePath(from, to);
+              const detected = isRouteDetected(route.from, route.to);
+              const predicted = isRoutePredicted(route.from, route.to);
+
+              // Don't render base line if highlighted as detected or predicted
+              if (detected || predicted) return null;
+
+              return (
                 <path
-                  key={`trust-${i}`}
+                  key={`base-route-${route.id}`}
                   d={d}
                   fill="none"
                   stroke="#94A3B8"
-                  strokeWidth="1.2"
+                  strokeWidth="1.25"
                   strokeDasharray="4,4"
-                  strokeOpacity="0.7"
+                  strokeOpacity="0.65"
                 />
-              ))}
+              );
+            })}
 
-              {/* Attack Path Conduit (Glowing Red/Orange) */}
-              {/* Outer Glow */}
-              <path
-                d={attackPathD}
-                fill="none"
-                stroke="#FF5722"
-                strokeWidth="7"
-                strokeOpacity="0.2"
-                strokeLinecap="round"
-              />
-              {/* Core Solid Line */}
-              <path
-                d={attackPathD}
-                fill="none"
-                stroke="#FF3D00"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-              />
+            {/* 2. DETECTED ATTACK PATH (RED: stroke #EF4444 / #DC2626) */}
+            {TOPOLOGY_ROUTES.map((route) => {
+              const detected = isRouteDetected(route.from, route.to);
+              if (!detected) return null;
+              const from = nodeMap.get(route.from);
+              const to = nodeMap.get(route.to);
+              if (!from || !to) return null;
+              const d = generateRoutePath(from, to);
 
-              {/* Animated Attack Pulse */}
-              <circle r="4" fill="#FF5722">
-                <animateMotion path={attackPathD} dur="4s" repeatCount="indefinite" />
-              </circle>
+              return (
+                <g key={`detected-route-${route.id}`}>
+                  {/* Outer Red Glow */}
+                  <path
+                    d={d}
+                    fill="none"
+                    stroke="#EF4444"
+                    strokeWidth="8"
+                    strokeOpacity="0.25"
+                    strokeLinecap="round"
+                    filter="url(#redDetectedGlow)"
+                  />
+                  {/* Core Red Conduit Line */}
+                  <path
+                    d={d}
+                    fill="none"
+                    stroke="#DC2626"
+                    strokeWidth="2.6"
+                    strokeLinecap="round"
+                  />
+                  {/* Flowing Red Particle Pulse */}
+                  <circle r="4" fill="#EF4444">
+                    <animateMotion path={d} dur="2.4s" repeatCount="indefinite" />
+                  </circle>
+                </g>
+              );
+            })}
 
-              {/* Render Nodes */}
-              {nodes.map((n) => {
-                const isSelected = activeNode?.id === n.id;
-                const isCrit = n.status === "compromised";
-                const isRisk = n.status === "at_risk";
-                const Icon = n.icon;
+            {/* 3. PREDICTED NEXT MOVE PATH (YELLOW: stroke #EAB308 / #FACC15 based on MITRE) */}
+            {TOPOLOGY_ROUTES.map((route) => {
+              const predicted = isRoutePredicted(route.from, route.to);
+              if (!predicted) return null;
+              const from = nodeMap.get(route.from);
+              const to = nodeMap.get(route.to);
+              if (!from || !to) return null;
+              const d = generateRoutePath(from, to);
 
-                return (
-                  <g
-                    key={n.id}
-                    transform={`translate(${n.x}, ${n.y})`}
-                    onClick={() => {
-                      setActiveNode(n);
-                      if (onSelectAsset) onSelectAsset(n);
-                    }}
-                    className="cursor-pointer group/node"
-                  >
-                    {/* Soft Glowing Circular Halo */}
+              return (
+                <g key={`predicted-route-${route.id}`}>
+                  {/* Outer Gold Glow */}
+                  <path
+                    d={d}
+                    fill="none"
+                    stroke="#FACC15"
+                    strokeWidth="8"
+                    strokeOpacity="0.35"
+                    strokeLinecap="round"
+                    filter="url(#yellowPredictedGlow)"
+                  />
+                  {/* Core Pulsing Yellow Dashed Line */}
+                  <path
+                    d={d}
+                    fill="none"
+                    stroke="#EAB308"
+                    strokeWidth="2.8"
+                    strokeDasharray="6,4"
+                    strokeLinecap="round"
+                  />
+                  {/* Fast Golden Particle Pulse */}
+                  <circle r="4.5" fill="#FACC15">
+                    <animateMotion path={d} dur="1.6s" repeatCount="indefinite" />
+                  </circle>
+                </g>
+              );
+            })}
+
+            {/* 4. RENDER 12 TOPOLOGY NODES */}
+            {TOPOLOGY_NODES.map((n) => {
+              const isSelected = activeNodeId === n.id || selectedAssetId === n.id;
+              const isTraversed = highlightPath.includes(n.id);
+              const isCompromised = compromisedNodes.includes(n.id) || (isTraversed && n.id !== "EXT-INTERNET");
+              const isPredictedTarget = predictedNextHop?.targetId === n.id;
+              const Icon = n.icon;
+
+              return (
+                <g
+                  key={n.id}
+                  transform={`translate(${n.x}, ${n.y})`}
+                  onClick={() => {
+                    setActiveNodeId(n.id);
+                    if (onSelectAsset) onSelectAsset(n);
+                  }}
+                  className="cursor-pointer group/node"
+                >
+                  {/* Animated Golden Radar Ring for Predicted Next Move */}
+                  {isPredictedTarget && (
                     <circle
-                      r={n.id === "critical" ? 36 : 28}
-                      fill={n.glowColor}
-                      filter="url(#softGlow)"
-                    />
-
-                    {/* Outer Border / Ring */}
-                    <circle
-                      r={n.id === "critical" ? 22 : 18}
-                      fill="#FFFFFF"
-                      stroke={isCrit ? "#EF4444" : isRisk ? "#F59E0B" : "#0284C7"}
-                      strokeWidth={isSelected ? 3 : 2}
-                      className="transition-all duration-200"
-                    />
-
-                    {/* Icon or Graphic inside */}
-                    {n.id === "internet" ? (
-                      <circle r="14" fill="#1E293B" />
-                    ) : n.id === "firewall" ? (
-                      <rect x="-8" y="-8" width="16" height="16" rx="3" fill="#EF4444" />
-                    ) : n.id === "critical" ? (
-                      <rect x="-9" y="-9" width="18" height="18" rx="4" fill="#DC2626" />
-                    ) : (
-                      <circle
-                        r="14"
-                        fill={isCrit ? "#FEE2E2" : isRisk ? "#FEF3C7" : "#E0F2FE"}
+                      r="32"
+                      fill="none"
+                      stroke="#EAB308"
+                      strokeWidth="2"
+                      strokeDasharray="4,3"
+                      opacity="0.9"
+                    >
+                      <animate
+                        attributeName="r"
+                        values="22;38;22"
+                        dur="2s"
+                        repeatCount="indefinite"
                       />
-                    )}
+                      <animate
+                        attributeName="opacity"
+                        values="0.9;0.1;0.9"
+                        dur="2s"
+                        repeatCount="indefinite"
+                      />
+                    </circle>
+                  )}
 
-                    {/* Center Icon */}
-                    <foreignObject x="-9" y="-9" width="18" height="18">
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Icon
-                          className={`w-3.5 h-3.5 ${
-                            n.id === "internet" || n.id === "firewall" || n.id === "critical"
-                              ? "text-white"
-                              : isRisk
-                              ? "text-amber-600"
-                              : "text-sky-600"
-                          }`}
-                        />
+                  {/* Soft Diffuse Halo (Cyan or Purple or Red or Yellow) */}
+                  <circle
+                    r={n.isPurple ? 38 : 30}
+                    fill={
+                      isCompromised
+                        ? "rgba(239, 68, 68, 0.28)"
+                        : isPredictedTarget
+                        ? "rgba(234, 179, 8, 0.32)"
+                        : n.isPurple
+                        ? "rgba(168, 85, 247, 0.22)"
+                        : "rgba(2, 132, 199, 0.20)"
+                    }
+                    filter={n.isPurple ? "url(#softPurpleGlow)" : "url(#softCyanGlow)"}
+                  />
+
+                  {/* Secondary Inner Halo */}
+                  <circle
+                    r={n.isPurple ? 28 : 24}
+                    fill={
+                      isCompromised
+                        ? "rgba(239, 68, 68, 0.15)"
+                        : isPredictedTarget
+                        ? "rgba(234, 179, 8, 0.2)"
+                        : n.isPurple
+                        ? "rgba(168, 85, 247, 0.14)"
+                        : "rgba(2, 132, 199, 0.12)"
+                    }
+                  />
+
+                  {/* Outer Ring Circle */}
+                  <circle
+                    r={20}
+                    fill="#FFFFFF"
+                    stroke={
+                      isCompromised
+                        ? "#EF4444"
+                        : isPredictedTarget
+                        ? "#EAB308"
+                        : isSelected
+                        ? "#FF5722"
+                        : n.isPurple
+                        ? "#8B5CF6"
+                        : "#0284C7"
+                    }
+                    strokeWidth={isSelected ? 3 : isCompromised || isPredictedTarget ? 2.5 : 2}
+                    className="transition-all duration-200"
+                  />
+
+                  {/* Inner Node Graphic */}
+                  {n.centerDark ? (
+                    <circle r="14" fill="#0F172A" />
+                  ) : (
+                    <circle
+                      r="14"
+                      fill={
+                        isCompromised
+                          ? "#FEE2E2"
+                          : isPredictedTarget
+                          ? "#FEF9C3"
+                          : n.isPurple
+                          ? "#F3E8FF"
+                          : "#E0F2FE"
+                      }
+                    />
+                  )}
+
+                  {/* Center Icon */}
+                  <foreignObject x="-9" y="-9" width="18" height="18">
+                    <div className="w-full h-full flex items-center justify-center pointer-events-none">
+                      <Icon
+                        className={`w-3.5 h-3.5 ${
+                          n.centerDark
+                            ? "text-white"
+                            : isCompromised
+                            ? "text-red-600"
+                            : isPredictedTarget
+                            ? "text-amber-700"
+                            : n.isPurple
+                            ? "text-purple-600"
+                            : "text-sky-600"
+                        }`}
+                      />
+                    </div>
+                  </foreignObject>
+
+                  {/* Floating MITRE Technique Tag on Predicted Target */}
+                  {isPredictedTarget && (
+                    <foreignObject x="-60" y="-48" width="120" height="26">
+                      <div className="w-full flex items-center justify-center">
+                        <span className="px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[8.5px] font-black font-mono shadow-md border border-amber-300 animate-bounce">
+                          ⚡ {predictedNextHop?.techniqueId || "NEXT"}
+                        </span>
                       </div>
                     </foreignObject>
+                  )}
 
-                    {/* Node Text Label */}
-                    <text
-                      y={n.y > 220 ? -26 : 30}
-                      textAnchor="middle"
-                      fill={isCrit ? "#DC2626" : "#0F172A"}
-                      fontSize="9.5"
-                      fontWeight="bold"
-                      fontFamily="Inter, sans-serif"
-                    >
-                      {n.name}
-                    </text>
-                    {n.assets && (
-                      <text
-                        y={n.y > 220 ? -16 : 41}
-                        textAnchor="middle"
-                        fill="#64748B"
-                        fontSize="8"
-                        fontFamily="Inter, sans-serif"
-                      >
-                        {n.assets}
-                      </text>
-                    )}
-                  </g>
-                );
-              })}
-            </svg>
-          </div>
-        )}
+                  {/* Node Title Label (Purple for Crown Jewels, Dark for Others, Red if Compromised) */}
+                  <text
+                    y={32}
+                    textAnchor="middle"
+                    fill={
+                      isCompromised
+                        ? "#DC2626"
+                        : n.isPurple
+                        ? "#7C3AED"
+                        : "#0F172A"
+                    }
+                    fontSize="9.5"
+                    fontWeight="bold"
+                    fontFamily="Inter, sans-serif"
+                    letterSpacing="0.01em"
+                  >
+                    {n.name}
+                  </text>
 
-        {/* Floating Zoom Controls (Left) */}
+                  {/* Node Subtitle */}
+                  <text
+                    y={43}
+                    textAnchor="middle"
+                    fill="#64748B"
+                    fontSize="8"
+                    fontFamily="Inter, sans-serif"
+                  >
+                    {n.subtitle}
+                  </text>
+                </g>
+              );
+            })}
+          </svg>
+        </div>
+
+        {/* Floating Zoom Controls (Left, Matching Photo) */}
         <div className="absolute top-4 left-4 flex flex-col bg-white rounded-lg border border-[#E5E7EB] shadow-sm z-20 overflow-hidden">
           <button
-            onClick={() => setZoomLevel((z) => Math.min(1.4, z + 0.1))}
+            onClick={() => setZoomLevel((z) => Math.min(1.5, z + 0.1))}
             className="w-7 h-7 flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors border-b border-[#F1F3F5]"
             title="Zoom In"
           >
@@ -499,7 +673,10 @@ export const Tactical3DScene: React.FC<Tactical3DSceneProps> = ({
             <Minus className="w-3.5 h-3.5" />
           </button>
           <button
-            onClick={() => setZoomLevel(1)}
+            onClick={() => {
+              setZoomLevel(1);
+              setPanOffset({ x: 0, y: 0 });
+            }}
             className="w-7 h-7 flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
             title="Reset View"
           >
@@ -507,8 +684,8 @@ export const Tactical3DScene: React.FC<Tactical3DSceneProps> = ({
           </button>
         </div>
 
-        {/* Bottom Legend (Matching Exact Reference Photo) */}
-        <div className="absolute bottom-3 left-4 flex items-center gap-4 bg-white/90 backdrop-blur-xs px-3 py-1.5 rounded-lg border border-[#E5E7EB] text-[10px] font-sans shadow-xs z-10">
+        {/* Bottom Legend (Matching Exact Reference Photo + MITRE Predicted Path) */}
+        <div className="absolute bottom-3 left-4 flex items-center gap-3.5 bg-white/95 backdrop-blur-xs px-3 py-1.5 rounded-lg border border-[#E5E7EB] text-[10px] font-sans shadow-xs z-10">
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-[#0284C7]" />
             <span className="text-slate-700 font-medium">Normal</span>
@@ -522,12 +699,16 @@ export const Tactical3DScene: React.FC<Tactical3DSceneProps> = ({
             <span className="text-slate-700 font-medium">Compromised</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-4 h-0.5 bg-[#FF3D00] rounded" />
+            <span className="w-4 h-0.5 bg-[#DC2626] rounded" />
             <span className="text-slate-700 font-medium">Attack Path</span>
           </div>
           <div className="flex items-center gap-1.5">
+            <span className="w-4 h-0.5 bg-[#EAB308] border-b border-dashed border-amber-500" />
+            <span className="text-slate-700 font-medium">Predicted Next Move (MITRE)</span>
+          </div>
+          <div className="flex items-center gap-1.5">
             <span className="w-4 h-0.5 border-t border-dashed border-[#94A3B8]" />
-            <span className="text-slate-700 font-medium">Trust Relationship</span>
+            <span className="text-slate-700 font-medium">Trust Route</span>
           </div>
         </div>
       </div>

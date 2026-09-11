@@ -73,7 +73,10 @@ export const DigitalTwinPage: React.FC = () => {
             assets={twin.assets}
             relationships={twin.relationships}
             selectedAssetId={selectedAsset?.id}
-            onSelectAsset={(a) => setSelectedAsset(a)}
+            onSelectAsset={(node) => {
+              const matched = twin.assets.find((a) => a.id === node.id);
+              if (matched) setSelectedAsset(matched);
+            }}
             height="h-full min-h-[500px]"
           />
         </div>
