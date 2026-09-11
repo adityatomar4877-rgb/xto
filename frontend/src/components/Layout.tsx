@@ -216,19 +216,23 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             >
               {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
-
-            {/* Avatar */}
-            <div className="flex items-center gap-2 ml-2">
-              <div className="w-8 h-8 rounded-full bg-[#F25C1F] dark:bg-[#FF6B3D] flex items-center justify-center text-white font-bold text-[12px]">
+            {/* Analyst Profile */}
+            <div className="flex items-center gap-2 pl-2 border-l border-[#ECECEF] dark:border-[#25252A]">
+              <div
+                className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#F25C1F] to-amber-500 text-white flex items-center justify-center font-bold text-xs shadow-xs cursor-pointer hover:opacity-90 transition-opacity"
+                title="Active Operator: Aditya"
+              >
                 A
               </div>
-              <ChevronDown className="w-3.5 h-3.5 text-[#A1A1AA]" />
+              <span className="text-xs font-semibold text-slate-800 dark:text-white hidden md:inline">
+                Aditya
+              </span>
             </div>
           </div>
         </header>
 
-        {/* Content — generous padding */}
-        <main id="main-viewport" className="flex-1 overflow-y-auto overflow-x-hidden px-8 py-6">
+        {/* Content — generous padding and native smooth scroll */}
+        <main id="main-viewport" className="flex-1 overflow-y-auto overflow-x-hidden px-8 py-6 relative">
           {children}
         </main>
       </div>
