@@ -97,16 +97,16 @@ export const AttackSimulationPage: React.FC = () => {
   const pathNodes = activeEvents.map((e) => e.target_asset_id);
 
   return (
-    <div className="space-y-4 font-mono">
+    <div className="space-y-4 font-sans">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-            <Terminal className="w-5 h-5 text-red-500" />
+          <h1 className="text-xl font-bold tracking-tight text-white font-display flex items-center gap-2">
+            <Terminal className="w-5 h-5 text-[#FF5722]" />
             AGENT-BASED ATTACK SIMULATION
           </h1>
           <p className="text-xs text-slate-400 mt-0.5">
-            Autonomous red-team agent evaluates reachable transitions, exploits prerequisites, and dumps credentials.
+            Autonomous adversary agent evaluates reachable transitions, exploits prerequisites, and models compromise paths.
           </p>
         </div>
 
@@ -116,22 +116,22 @@ export const AttackSimulationPage: React.FC = () => {
               `/defense?threat=${threatId}&persona=${persona}&foothold=${footholdId}&target=${targetId}`
             )
           }
-          className="px-4 py-2 rounded bg-amber-500/20 border border-amber-500/50 text-amber-300 hover:bg-amber-500/30 text-xs font-bold flex items-center gap-2 shadow-[0_0_15px_rgba(255,179,0,0.2)]"
+          className="px-4 py-2 rounded-xl bg-gradient-to-r from-orange-600/30 to-amber-600/20 border border-orange-500/40 text-orange-300 hover:bg-orange-500/30 text-xs font-semibold flex items-center gap-2 shadow-[0_0_15px_rgba(255,87,34,0.15)] transition-all"
         >
           <Sliders className="w-4 h-4" />
-          TEST DEFENSES IN SANDBOX &rarr;
+          TEST CONTROLS IN SANDBOX &rarr;
         </button>
       </div>
 
       {/* Scenario Builder Bar */}
-      <div className="p-3.5 rounded-lg bg-[#0B0E14]/90 border border-slate-800 grid grid-cols-5 gap-3 text-xs">
+      <div className="p-4 rounded-xl bg-[#0D111A] border border-[#1E2638] grid grid-cols-5 gap-3 text-xs shadow-lg">
         {/* Threat Vector */}
         <div>
-          <label className="text-[10px] text-slate-400 uppercase font-bold block mb-1">THREAT VECTOR</label>
+          <label className="text-[10px] text-slate-400 uppercase font-semibold font-mono block mb-1">THREAT VECTOR</label>
           <select
             value={threatId}
             onChange={(e) => setThreatId(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-700 text-white rounded px-2.5 py-1 text-xs outline-none focus:border-[#00E5FF]"
+            className="w-full bg-[#080A0F] border border-slate-700 text-white rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-orange-500 font-mono"
           >
             {vectors.map((v) => (
               <option key={v.id} value={v.id}>
@@ -143,11 +143,11 @@ export const AttackSimulationPage: React.FC = () => {
 
         {/* Attacker Persona */}
         <div>
-          <label className="text-[10px] text-slate-400 uppercase font-bold block mb-1">ATTACKER PERSONA</label>
+          <label className="text-[10px] text-slate-400 uppercase font-semibold font-mono block mb-1">ATTACKER PERSONA</label>
           <select
             value={persona}
             onChange={(e) => setPersona(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-700 text-white rounded px-2.5 py-1 text-xs outline-none focus:border-[#00E5FF]"
+            className="w-full bg-[#080A0F] border border-slate-700 text-white rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-orange-500 font-mono"
           >
             {attackers.map((a) => (
               <option key={a.persona} value={a.persona}>
@@ -159,11 +159,11 @@ export const AttackSimulationPage: React.FC = () => {
 
         {/* Initial Foothold */}
         <div>
-          <label className="text-[10px] text-slate-400 uppercase font-bold block mb-1">INITIAL FOOTHOLD</label>
+          <label className="text-[10px] text-slate-400 uppercase font-semibold font-mono block mb-1">INITIAL FOOTHOLD</label>
           <select
             value={footholdId}
             onChange={(e) => setFootholdId(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-700 text-white rounded px-2.5 py-1 text-xs outline-none focus:border-[#00E5FF]"
+            className="w-full bg-[#080A0F] border border-slate-700 text-white rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-orange-500 font-mono"
           >
             {twin.assets.map((a) => (
               <option key={a.id} value={a.id}>
@@ -175,31 +175,38 @@ export const AttackSimulationPage: React.FC = () => {
 
         {/* Objective Crown Jewel */}
         <div>
-          <label className="text-[10px] text-slate-400 uppercase font-bold block mb-1">TARGET OBJECTIVE</label>
+          <label className="text-[10px] text-slate-400 uppercase font-semibold font-mono block mb-1">TARGET OBJECTIVE</label>
           <select
             value={targetId}
             onChange={(e) => setTargetId(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-700 text-white rounded px-2.5 py-1 text-xs outline-none focus:border-[#00E5FF]"
+            className="w-full bg-[#080A0F] border border-slate-700 text-white rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-orange-500 font-mono"
           >
-            {twin.assets
-              .filter((a) => a.criticality === "CRITICAL" || a.criticality === "HIGH")
-              .map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.name} ({a.id})
-                </option>
-              ))}
+            {twin.assets.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name} ({a.id})
+              </option>
+            ))}
           </select>
         </div>
 
-        {/* Execute Simulation Button */}
+        {/* Execute Button */}
         <div className="flex items-end">
           <button
             onClick={handleRunSimulation}
             disabled={isSimulating}
-            className="w-full py-1.5 px-3 rounded bg-red-950/80 border border-red-500/50 text-red-300 hover:bg-red-900 transition-all font-bold flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(255,59,48,0.2)]"
+            className="w-full py-2 px-3 rounded-lg bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 disabled:opacity-50 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all shadow-[0_0_15px_rgba(255,59,48,0.3)] cursor-pointer"
           >
-            <Play className="w-4 h-4" />
-            {isSimulating ? "SIMULATING..." : "RUN SIMULATION"}
+            {isSimulating ? (
+              <>
+                <Activity className="w-3.5 h-3.5 animate-spin" />
+                SIMULATING...
+              </>
+            ) : (
+              <>
+                <Play className="w-3.5 h-3.5" />
+                RUN SIMULATION
+              </>
+            )}
           </button>
         </div>
       </div>

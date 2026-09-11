@@ -1,203 +1,425 @@
-import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
-  ShieldAlert,
-  Activity,
-  AlertTriangle,
-  GitCommit,
-  Radio,
-  Sliders,
-  Award,
-  ArrowRight,
-  TrendingDown,
   Layers,
+  ArrowRight,
   CheckCircle2,
+  Flame,
+  Sliders,
+  Activity,
+  Play,
+  Eye,
+  ShieldAlert,
+  Radio,
 } from "lucide-react";
-import { api, DigitalTwinTopology, RemediationPriority } from "@/lib/api";
 import { Tactical3DScene } from "@/components/Tactical3DScene";
 
 export const CommandCenterPage: React.FC = () => {
-  const [twin, setTwin] = useState<DigitalTwinTopology | null>(null);
-  const [remediations, setRemediations] = useState<RemediationPriority[]>([]);
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const [selectedAsset, setSelectedAsset] = useState("db-01");
+  const [selectedControl, setSelectedControl] = useState("Network Segmentation");
 
-  useEffect(() => {
-    Promise.all([api.getTwin(), api.getRemediationPriorities()])
-      .then(([twinData, remData]) => {
-        setTwin(twinData);
-        setRemediations(remData);
-      })
-      .finally(() => setLoading(false));
-  }, []);
+  // Dynamic blast stats based on asset
+  const blastStats: Record<string, { reachable: number; critical: number; external: number }> = {
+    "db-01": { reachable: 18, critical: 3, external: 5 },
+    "ws-eng-04": { reachable: 8, critical: 1, external: 2 },
+    "dc-corp-01": { reachable: 24, critical: 4, external: 7 },
+  };
 
-  if (loading || !twin) {
-    return (
-      <div className="flex items-center justify-center h-full font-mono text-cyan-400">
-        <Activity className="w-5 h-5 animate-spin mr-2" />
-        INITIALIZING CYBER WAR ROOM TELEMETRY...
-      </div>
-    );
-  }
-
-  const topRemediation = remediations[0];
+  const currentBlast = blastStats[selectedAsset] || blastStats["db-01"];
 
   return (
-    <div className="space-y-6">
-      {/* Top Banner / Core Questions Answer Bar */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5 font-mono">
-            COMMAND CENTER // WAR ROOM HUD
-          </h1>
-          <p className="text-xs text-slate-400 font-mono mt-1">
-            Real-time security posture derived from active digital twin graph reachability and attacker agent models.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Link
-            to="/simulation"
-            className="px-3.5 py-1.5 rounded bg-red-950/60 border border-red-500/50 text-red-300 hover:bg-red-900/60 text-xs font-mono font-bold flex items-center gap-2 transition-all shadow-[0_0_15px_rgba(255,59,48,0.2)]"
-          >
-            <ShieldAlert className="w-4 h-4 text-red-400" />
-            SIMULATE ATTACK
-          </Link>
-          <Link
-            to="/defense"
-            className="px-3.5 py-1.5 rounded bg-[#00E5FF]/20 border border-[#00E5FF]/50 text-[#00E5FF] hover:bg-[#00E5FF]/30 text-xs font-mono font-bold flex items-center gap-2 transition-all shadow-[0_0_15px_rgba(0,229,255,0.25)]"
-          >
-            <Sliders className="w-4 h-4" />
-            TEST DEFENSE SANDBOX
-          </Link>
-        </div>
-      </div>
-
-      {/* 5 Core Decision Metrics (PS #13 Pillars) */}
-      <div className="grid grid-cols-5 gap-4 font-mono">
-        {/* 1. What is Exposed? */}
-        <div className="p-4 rounded-lg bg-[#0B0E14]/90 border border-red-500/30 relative overflow-hidden">
-          <div className="text-[10px] text-red-400 font-bold uppercase tracking-wider">1. WHAT IS EXPOSED?</div>
-          <div className="text-2xl font-bold text-white mt-1">17 PATHS</div>
-          <div className="text-[11px] text-slate-400 mt-1">Direct routes to Crown Jewels from Corporate Workstations</div>
-          <div className="mt-3 text-[10px] text-red-400 flex items-center gap-1 font-semibold">
-            <AlertTriangle className="w-3 h-3" />
-            Vulnerable to Ransomware
-          </div>
-        </div>
-
-        {/* 2. What can an Attacker Reach? */}
-        <div className="p-4 rounded-lg bg-[#0B0E14]/90 border border-amber-500/30 relative overflow-hidden">
-          <div className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">2. BLAST RADIUS REACH</div>
-          <div className="text-2xl font-bold text-white mt-1">61.0%</div>
-          <div className="text-[11px] text-slate-400 mt-1">8 of 12 internal assets reachable from WS-ENG-04 foothold</div>
-          <div className="mt-3 text-[10px] text-amber-400 flex items-center gap-1 font-semibold">
-            <Radio className="w-3 h-3" />
-            Includes 3 Critical Jewels
-          </div>
-        </div>
-
-        {/* 3. Most Dangerous Path */}
-        <div className="p-4 rounded-lg bg-[#0B0E14]/90 border border-cyan-500/30 relative overflow-hidden">
-          <div className="text-[10px] text-cyan-400 font-bold uppercase tracking-wider">3. CRITICAL CHOKEPOINT</div>
-          <div className="text-2xl font-bold text-white mt-1">DC-CORP-01</div>
-          <div className="text-[11px] text-slate-400 mt-1">Active Directory DC intersects 88% of all viable attack paths</div>
-          <div className="mt-3 text-[10px] text-[#00E5FF] flex items-center gap-1 font-semibold">
-            <GitCommit className="w-3 h-3" />
-            Single point of lateral failure
-          </div>
-        </div>
-
-        {/* 4. What Should We Fix? */}
-        <div className="p-4 rounded-lg bg-[#0B0E14]/90 border border-emerald-500/30 relative overflow-hidden">
-          <div className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">4. TOP REMEDIATION</div>
-          <div className="text-lg font-bold text-white mt-1 truncate">SEGMENT VAULT</div>
-          <div className="text-[11px] text-slate-400 mt-1">Eliminates 11 critical paths instantly</div>
-          <div className="mt-3 text-[10px] text-emerald-400 flex items-center gap-1 font-semibold">
-            <TrendingDown className="w-3 h-3" />
-            -47% Blast Radius drop
-          </div>
-        </div>
-
-        {/* 5. What Changed? */}
-        <div className="p-4 rounded-lg bg-[#0B0E14]/90 border border-slate-800 relative overflow-hidden">
-          <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">5. ENVIRONMENT SYNC</div>
-          <div className="text-2xl font-bold text-cyan-400 mt-1">{twin.snapshot_id}</div>
-          <div className="text-[11px] text-slate-400 mt-1">Version {twin.version} // Real-time state synchronized</div>
-          <div className="mt-3 text-[10px] text-slate-400 flex items-center gap-1">
-            <CheckCircle2 className="w-3 h-3 text-cyan-400" />
-            Zero stale attack paths
-          </div>
-        </div>
-      </div>
-
-      {/* Main Grid: Interactive Topology + Live Remediation Priority Card */}
-      <div className="grid grid-cols-12 gap-6">
-        {/* Left Column: Interactive Topology View */}
-        <div className="col-span-8 p-4 rounded-lg bg-[#0B0E14]/90 border border-cyan-950/40">
-          <div className="flex items-center justify-between mb-3 font-mono text-xs">
-            <div className="flex items-center gap-2">
-              <Layers className="w-4 h-4 text-[#00E5FF]" />
-              <span className="font-bold text-white">INFRASTRUCTURE SECURITY DIGITAL TWIN</span>
+    <div className="space-y-4 font-sans text-slate-200">
+      {/* 1. HERO / OVERVIEW SECTION */}
+      <div className="relative overflow-hidden py-1 px-1">
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-6 relative z-10">
+          {/* Left Title, Subtitle, and Action Buttons */}
+          <div className="space-y-2.5 flex-1 max-w-lg">
+            <div className="flex items-center gap-2 text-[10px] font-mono font-bold text-[#FF5722] tracking-wider uppercase">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#FF5722] animate-pulse" />
+              LIVE ENVIRONMENT • DIGITAL TWIN ACTIVE
             </div>
-            <Link to="/twin" className="text-cyan-400 hover:underline flex items-center gap-1 text-[11px]">
-              OPEN 3D EXPLORER &rarr;
-            </Link>
+
+            <h1 className="text-3xl lg:text-[38px] font-black tracking-wide text-white font-display leading-[1.1] uppercase">
+              SEE TOMORROW'S
+              <br />
+              <span className="text-[#FF3D00]">ATTACKS TODAY.</span>
+            </h1>
+
+            <p className="text-xs text-slate-400 font-medium tracking-wide">
+              Model. Simulate. Analyze. Prevent.
+            </p>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2.5 pt-1">
+              <Link
+                to="/simulation"
+                className="px-3.5 py-1.5 rounded-lg bg-[#FF5722] hover:bg-[#F4511E] text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-[0_0_15px_rgba(249,115,22,0.3)]"
+              >
+                <Play className="w-3.5 h-3.5" />
+                <span>Run Simulation</span>
+              </Link>
+              <Link
+                to="/twin"
+                className="px-3.5 py-1.5 rounded-lg bg-[#0C0E14] hover:bg-[#151924] border border-[#171B26] text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-all"
+              >
+                <Eye className="w-3.5 h-3.5 text-slate-400" />
+                <span>Explore Digital Twin</span>
+              </Link>
+            </div>
           </div>
-          <div className="h-96">
-            <Tactical3DScene
-              assets={twin.assets}
-              relationships={twin.relationships}
-              highlightPath={["WS-ENG-04", "DC-CORP-01", "VAULT-BACKUP-01"]}
-              compromisedNodes={["WS-ENG-04"]}
+
+          {/* Center: Globe & Environment Metrics from reference photo */}
+          <div className="flex items-center justify-center">
+            <img
+              src="/hero_globe.png"
+              alt="Live Environment Digital Twin Active"
+              className="h-[145px] object-contain block"
             />
           </div>
-        </div>
 
-        {/* Right Column: Top Remediations & USP Pitch */}
-        <div className="col-span-4 space-y-4">
-          {/* Core USP Callout Card */}
-          <div className="p-4 rounded-lg bg-gradient-to-br from-cyan-950/40 via-[#0B0E14] to-slate-950 border border-cyan-500/40 shadow-[0_0_20px_rgba(0,229,255,0.08)]">
-            <div className="font-mono text-xs text-amber-400 font-bold flex items-center gap-1.5 uppercase">
-              <Award className="w-4 h-4" />
-              THE XTO DECISION ADVANTAGE
+          {/* Right Quote Callout */}
+          <div className="hidden xl:block max-w-[260px] pl-6 border-l border-[#171B26] text-left space-y-2">
+            <div className="text-xs text-slate-200 font-serif italic leading-snug">
+              “A digital twin
+              <br />
+              for a safer tomorrow.”
             </div>
-            <p className="text-xs text-slate-300 font-mono mt-2 leading-relaxed">
-              Don't guess control effectiveness. Test interventions in the <span className="text-[#00E5FF] font-semibold">Defense Sandbox</span> without touching production, re-run autonomous adversaries, and export a mathematical <span className="text-emerald-400 font-semibold">Decision Proof</span>.
-            </p>
-            <Link
-              to="/defense"
-              className="mt-3 block text-center py-2 px-3 rounded bg-amber-500/20 border border-amber-500/50 text-amber-300 hover:bg-amber-500/30 transition-all font-mono text-xs font-bold"
-            >
-              LAUNCH DEFENSE SANDBOX NOW &rarr;
-            </Link>
+            <div className="text-[10px] text-slate-400 leading-relaxed font-sans">
+              Model your world.
+              <br />
+              Stop attacks before they happen.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. MAIN DIGITAL TWIN & RIGHT-SIDE SECURITY PANEL */}
+      <div className="grid grid-cols-12 gap-4">
+        {/* Left 8 Cols: Main Digital Twin (Centerpiece) */}
+        <div className="col-span-12 lg:col-span-8 rounded-xl bg-[#0C0E14] border border-[#171B26] p-3 flex flex-col shadow-xl">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-md bg-[#211410] border border-[#FF5722]/40 flex items-center justify-center text-[#FF5722]">
+                <Layers className="w-3.5 h-3.5" />
+              </div>
+              <div>
+                <h2 className="text-xs font-bold text-white tracking-wide font-display">
+                  Environment Digital Twin
+                </h2>
+                <p className="text-[10px] text-slate-400">
+                  Live model of your infrastructure, identities and trust relationships.
+                </p>
+              </div>
+            </div>
           </div>
 
-          {/* Top Remediation Priorities Card */}
-          <div className="p-4 rounded-lg bg-[#0B0E14]/90 border border-slate-800 space-y-3 font-mono">
-            <div className="flex items-center justify-between text-xs border-b border-slate-800 pb-2">
-              <span className="font-bold text-slate-200">PATH-SEVERING PRIORITIES</span>
-              <Link to="/remediation" className="text-cyan-400 hover:underline text-[10px]">
-                VIEW ALL (5) &rarr;
+          {/* Interactive Topology Viewport (3D & 2D Flow Modes) */}
+          <div className="flex-1 min-h-[380px]">
+            <Tactical3DScene height="h-[380px]" />
+          </div>
+        </div>
+
+        {/* Right 4 Cols: Active Simulation & Top Threat Vectors */}
+        <div className="col-span-12 lg:col-span-4 space-y-4">
+          {/* Active Simulation Card */}
+          <div className="rounded-xl bg-[#0C0E14] border border-[#171B26] p-3.5 shadow-xl space-y-3">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 rounded-md bg-[#211410] border border-[#FF5722]/40 flex items-center justify-center text-[#FF5722]">
+                  <Activity className="w-3 h-3" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-white tracking-wide">
+                    Active Simulation
+                  </h3>
+                  <p className="text-[9.5px] text-slate-400">Adversary agent in action...</p>
+                </div>
+              </div>
+
+              <Link
+                to="/simulation"
+                className="px-2.5 py-0.5 rounded-md bg-[#211410] border border-[#FF5722]/50 text-[#FF5722] hover:bg-orange-950/40 text-[10px] font-semibold flex items-center gap-1 transition-all"
+              >
+                <span>Running</span>
+                <ArrowRight className="w-3 h-3" />
               </Link>
             </div>
 
-            {remediations.slice(0, 3).map((rem) => (
-              <div key={rem.rank} className="p-2.5 rounded bg-slate-950/60 border border-slate-800/80 space-y-1">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold text-slate-200">
-                    #{rem.rank} {rem.control_name}
-                  </span>
-                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-950 text-emerald-300 border border-emerald-500/40 font-bold">
-                    SCORE {rem.priority_score}
-                  </span>
+            {/* Gauge & Stepper Grid */}
+            <div className="grid grid-cols-12 gap-2 pt-1 items-center">
+              {/* Left: Circular Progress Gauge */}
+              <div className="col-span-5 flex flex-col items-center justify-center">
+                <img
+                  src="/simulation_gauge.png"
+                  alt="72% Simulation Progress"
+                  className="w-[100px] object-contain block"
+                />
+              </div>
+
+              {/* Right: Kill Chain Stepper Checklist */}
+              <div className="col-span-7 space-y-1.5 pl-2 border-l border-slate-800/80">
+                <div className="text-[9px] text-slate-400 uppercase font-mono tracking-wider">
+                  Current Phase
                 </div>
-                <div className="text-[10px] text-slate-400 flex items-center justify-between">
-                  <span className="text-emerald-400">-{rem.critical_paths_eliminated} CRITICAL PATHS</span>
-                  <span className="text-cyan-400">-{rem.blast_radius_reduction_percent}% BLAST RADIUS</span>
+                <div className="space-y-1 text-[10px]">
+                  <div className="flex items-center gap-1.5 text-emerald-400">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-400 flex-shrink-0" />
+                    <span>Reconnaissance</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-emerald-400">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-400 flex-shrink-0" />
+                    <span>Initial Access</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-emerald-400">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-400 flex-shrink-0" />
+                    <span>Credential Access</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[#FF5722] font-semibold">
+                    <div className="w-3 h-3 rounded-full border border-[#FF5722] flex items-center justify-center flex-shrink-0">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#FF5722] animate-pulse" />
+                    </div>
+                    <span>Privilege Escalation</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-slate-600">
+                    <div className="w-3 h-3 rounded-full border border-slate-700 flex-shrink-0" />
+                    <span>Lateral Movement</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-slate-600">
+                    <div className="w-3 h-3 rounded-full border border-slate-700 flex-shrink-0" />
+                    <span>Objective Reached</span>
+                  </div>
                 </div>
               </div>
-            ))}
+            </div>
           </div>
+
+          {/* Top Threat Vectors Card */}
+          <div className="rounded-xl bg-[#0C0E14] border border-[#171B26] p-3.5 shadow-xl space-y-2.5">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold text-white tracking-wide font-display">
+                Top Threat Vectors
+              </h3>
+              <Link
+                to="/threat-vectors"
+                className="text-[10px] text-[#FF5722] hover:underline flex items-center gap-0.5 font-medium"
+              >
+                <span>View All</span>
+                <ArrowRight className="w-2.5 h-2.5" />
+              </Link>
+            </div>
+
+            <div className="space-y-1.5">
+              {[
+                { code: "T1003", name: "Credential Dumping", level: "High", color: "bg-red-950/80 text-red-400 border-red-500/40" },
+                { code: "T1021", name: "Remote Services", level: "High", color: "bg-red-950/80 text-red-400 border-red-500/40" },
+                { code: "T1068", name: "Privilege Escalation", level: "Medium", color: "bg-amber-950/80 text-amber-400 border-amber-500/40" },
+                { code: "T1190", name: "Exploit Public-Facing App", level: "Medium", color: "bg-amber-950/80 text-amber-400 border-amber-500/40" },
+                { code: "T1041", name: "Exfiltration Over C2", level: "Low", color: "bg-emerald-950/80 text-emerald-400 border-emerald-500/40" },
+              ].map((t) => (
+                <div
+                  key={t.code}
+                  className="flex items-center justify-between py-1 px-2 rounded-md bg-[#080B10]/80 border border-slate-800/60 text-xs"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono text-[#FF5722] font-semibold">
+                      | {t.code}
+                    </span>
+                    <span className="text-slate-200 text-[10.5px] truncate max-w-[140px]">
+                      {t.name}
+                    </span>
+                  </div>
+                  <span className={`text-[8.5px] font-bold px-1.5 py-0.2 rounded border ${t.color}`}>
+                    {t.level}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. LOWER ANALYTICS: BLAST RADIUS, CONTROL EFFECTIVENESS, REMEDIATION PRIORITIZATION */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+        {/* Module 1: Blast Radius (4 cols) */}
+        <div className="md:col-span-4 rounded-xl bg-[#0C0E14] border border-[#171B26] p-3.5 shadow-xl space-y-2 flex flex-col justify-between">
+          <div>
+            {/* Header */}
+            <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 rounded-md bg-[#211410] border border-[#FF5722]/40 flex items-center justify-center text-[#FF5722]">
+                  <Flame className="w-3 h-3" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-white tracking-wide">Blast Radius</h3>
+                  <p className="text-[9px] text-slate-400">If this asset falls, what's next?</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1">
+                <select
+                  value={selectedAsset}
+                  onChange={(e) => setSelectedAsset(e.target.value)}
+                  className="bg-[#080B10] border border-slate-700 text-slate-200 rounded px-1.5 py-0.5 text-[10px] focus:outline-none focus:border-[#FF5722] font-mono"
+                >
+                  <option value="db-01">db-01</option>
+                  <option value="ws-eng-04">ws-eng-04</option>
+                  <option value="dc-corp-01">dc-corp-01</option>
+                </select>
+                <Link to="/blast-radius" className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300">
+                  <ArrowRight className="w-2.5 h-2.5" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Spider Graph & Metrics Split */}
+            <div className="grid grid-cols-12 gap-2 items-center pt-1">
+              <div className="col-span-7 h-36 flex items-center justify-center overflow-hidden">
+                <img
+                  src="/blast_radius_spider.png"
+                  alt="db-01 Blast Radius Network"
+                  className="h-full w-full object-contain rounded-lg"
+                />
+              </div>
+
+              <div className="col-span-5 space-y-2.5 font-mono pl-1">
+                <div>
+                  <div className="text-xl font-black text-white leading-none font-display">
+                    {currentBlast.reachable}
+                  </div>
+                  <div className="text-[8.5px] text-slate-400 mt-0.5">Assets Reachable</div>
+                </div>
+                <div>
+                  <div className="text-xl font-black text-[#FF3D00] leading-none font-display">
+                    {currentBlast.critical}
+                  </div>
+                  <div className="text-[8.5px] text-slate-400 mt-0.5">Critical Systems</div>
+                </div>
+                <div>
+                  <div className="text-xl font-black text-[#FF9800] leading-none font-display">
+                    {currentBlast.external}
+                  </div>
+                  <div className="text-[8.5px] text-slate-400 mt-0.5">External Connections</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Module 2: Control Effectiveness (4 cols) */}
+        <div className="md:col-span-4 rounded-xl bg-[#0C0E14] border border-[#171B26] p-3.5 shadow-xl space-y-2 flex flex-col justify-between">
+          <div>
+            {/* Header */}
+            <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 rounded-md bg-[#211410] border border-[#FF5722]/40 flex items-center justify-center text-[#FF5722]">
+                  <Sliders className="w-3 h-3" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-white tracking-wide">
+                    Control Effectiveness
+                  </h3>
+                  <p className="text-[9px] text-slate-400">Test how a control reduces risk.</p>
+                </div>
+              </div>
+
+              <div className="relative">
+                <select
+                  value={selectedControl}
+                  onChange={(e) => setSelectedControl(e.target.value)}
+                  className="bg-[#080B10] border border-slate-700 text-slate-200 rounded px-1.5 py-0.5 text-[9.5px] focus:outline-none focus:border-[#FF5722] truncate max-w-[125px]"
+                >
+                  <option value="Network Segmentation">Network Segmentation</option>
+                  <option value="Enforce MFA">Enforce MFA (Admin)</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Split Before / After + 75% Risk Reduction */}
+            <div className="grid grid-cols-12 gap-1 items-center h-36 pt-1">
+              <div className="col-span-8 h-full flex items-center justify-center overflow-hidden">
+                <img
+                  src="/control_effectiveness.png"
+                  alt="Before and After Risk Reduction"
+                  className="h-full w-full object-contain rounded-lg"
+                />
+              </div>
+
+              <div className="col-span-4 flex flex-col items-center justify-center space-y-1 text-center pl-1">
+                <div className="text-2xl font-black text-emerald-400 font-display leading-none">
+                  75%
+                </div>
+                <div className="text-[8px] text-slate-400 uppercase font-mono">Risk Reduction</div>
+                <Link
+                  to="/defense"
+                  className="mt-1 px-2 py-0.5 rounded border border-emerald-500/40 text-emerald-400 hover:bg-emerald-950/40 text-[9px] font-medium flex items-center gap-0.5 transition-all"
+                >
+                  <span>View Comparison</span>
+                  <ArrowRight className="w-2.5 h-2.5" />
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Module 3: Remediation Prioritization (4 cols) */}
+        <div className="md:col-span-4 rounded-xl bg-[#0C0E14] border border-[#171B26] p-3.5 shadow-xl space-y-2.5 flex flex-col justify-between">
+          <div>
+            {/* Header */}
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 rounded-md bg-[#211410] border border-[#FF5722]/40 flex items-center justify-center text-[#FF5722]">
+                  <Layers className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-white tracking-wide">
+                    Remediation Prioritization
+                  </h3>
+                  <p className="text-[9px] text-slate-400">Ranked by critical paths eliminated.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Ranked List */}
+            <div className="space-y-1 pt-0.5 text-xs">
+              {[
+                { rank: 1, name: "Segment DB Network", paths: "11 paths" },
+                { rank: 2, name: "Enforce MFA (Admin)", paths: "7 paths" },
+                { rank: 3, name: "Restrict App Server Egress", paths: "5 paths" },
+                { rank: 4, name: "Patch Public-Facing Service", paths: "3 paths" },
+                { rank: 5, name: "Update Firewall Rules", paths: "2 paths" },
+              ].map((item) => (
+                <div
+                  key={item.rank}
+                  className="flex items-center justify-between py-1 px-1.5 rounded hover:bg-slate-900/40 transition-colors"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-3 text-center font-mono text-slate-500 font-bold text-[10px]">
+                      {item.rank}
+                    </span>
+                    <span className="text-slate-200 text-[10.5px] font-medium truncate max-w-[150px]">
+                      {item.name}
+                    </span>
+                  </div>
+                  <span className="text-[9px] font-mono text-emerald-400 font-semibold flex items-center gap-0.5">
+                    <span>↓</span>
+                    <span>{item.paths}</span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Solid Coral/Orange Button */}
+          <Link
+            to="/remediation"
+            className="w-full mt-1.5 py-1.5 px-3 rounded-lg bg-gradient-to-r from-[#FF5722] to-[#FF3D00] hover:from-[#F4511E] hover:to-[#E64A19] text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-all shadow-[0_0_15px_rgba(255,87,34,0.35)]"
+          >
+            <span>Generate Remediation Plan</span>
+            <ArrowRight className="w-3 h-3" />
+          </Link>
         </div>
       </div>
     </div>

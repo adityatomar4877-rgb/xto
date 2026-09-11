@@ -46,20 +46,20 @@ export const DigitalTwinPage: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-white font-mono flex items-center gap-2">
-            <Layers className="w-5 h-5 text-[#00E5FF]" />
+          <h1 className="text-xl font-bold tracking-tight text-white font-display flex items-center gap-2">
+            <Layers className="w-5 h-5 text-[#FF5722]" />
             INTERACTIVE SECURITY DIGITAL TWIN
           </h1>
-          <p className="text-xs text-slate-400 font-mono mt-0.5">
+          <p className="text-xs text-slate-400 font-sans mt-0.5">
             Queryable environment model with typed directional reachability, identities, and trust boundaries.
           </p>
         </div>
 
         <div className="flex items-center gap-2 font-mono text-xs text-slate-400">
-          <span className="px-2.5 py-1 rounded bg-slate-900 border border-slate-800">
-            SNAPSHOT: <span className="text-[#00E5FF] font-bold">{twin.snapshot_id}</span>
+          <span className="px-2.5 py-1 rounded bg-[#0D111A] border border-slate-800">
+            SNAPSHOT: <span className="text-orange-400 font-bold">{twin.snapshot_id}</span>
           </span>
-          <span className="px-2.5 py-1 rounded bg-slate-900 border border-slate-800">
+          <span className="px-2.5 py-1 rounded bg-[#0D111A] border border-slate-800">
             TOTAL ASSETS: <span className="text-white font-bold">{twin.assets.length}</span>
           </span>
         </div>
@@ -74,45 +74,46 @@ export const DigitalTwinPage: React.FC = () => {
             relationships={twin.relationships}
             selectedAssetId={selectedAsset?.id}
             onSelectAsset={(a) => setSelectedAsset(a)}
+            height="h-full min-h-[500px]"
           />
         </div>
 
         {/* Right: Detailed Entity Inspector */}
-        <div className="col-span-4 h-full overflow-y-auto p-4 rounded-lg bg-[#0B0E14]/90 border border-cyan-950/40 font-mono space-y-4">
+        <div className="col-span-4 h-full overflow-y-auto p-4 rounded-xl bg-[#0D111A] border border-[#1E2638] font-sans space-y-4">
           {selectedAsset ? (
             <>
               {/* Asset Header */}
               <div className="border-b border-slate-800 pb-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-slate-400">{selectedAsset.type}</span>
+                  <span className="text-xs text-slate-400 font-mono">{selectedAsset.type}</span>
                   <span
-                    className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
+                    className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase font-mono ${
                       selectedAsset.criticality === "CRITICAL"
-                        ? "bg-red-950 text-red-400 border border-red-500/40"
+                        ? "bg-red-950/80 text-red-400 border border-red-500/40"
                         : selectedAsset.criticality === "HIGH"
-                        ? "bg-amber-950 text-amber-400 border border-amber-500/40"
+                        ? "bg-amber-950/80 text-amber-400 border border-amber-500/40"
                         : "bg-slate-900 text-slate-300"
                     }`}
                   >
                     {selectedAsset.criticality} CRITICALITY
                   </span>
                 </div>
-                <div className="text-lg font-bold text-white mt-1">{selectedAsset.name}</div>
-                <div className="text-xs text-[#00E5FF]">{selectedAsset.id} // {selectedAsset.ip_address}</div>
+                <div className="text-lg font-bold text-white mt-1 font-display">{selectedAsset.name}</div>
+                <div className="text-xs text-orange-400 font-mono">{selectedAsset.id} // {selectedAsset.ip_address}</div>
               </div>
 
               {/* Action Triggers */}
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => navigate(`/simulation?foothold=${selectedAsset.id}`)}
-                  className="py-2 px-3 rounded bg-red-950/70 border border-red-500/40 text-red-300 hover:bg-red-900/60 transition-all text-xs font-bold flex items-center justify-center gap-1.5 shadow-[0_0_12px_rgba(255,59,48,0.15)]"
+                  className="py-2 px-3 rounded-lg bg-red-950/70 border border-red-500/40 text-red-300 hover:bg-red-900/60 transition-all text-xs font-semibold flex items-center justify-center gap-1.5 shadow-[0_0_12px_rgba(255,59,48,0.15)]"
                 >
                   <Play className="w-3.5 h-3.5" />
                   SET AS FOOTHOLD
                 </button>
                 <button
                   onClick={() => navigate(`/blast-radius?asset=${selectedAsset.id}`)}
-                  className="py-2 px-3 rounded bg-cyan-950/70 border border-[#00E5FF]/40 text-[#00E5FF] hover:bg-cyan-900/60 transition-all text-xs font-bold flex items-center justify-center gap-1.5"
+                  className="py-2 px-3 rounded-lg bg-orange-950/40 border border-orange-500/40 text-orange-300 hover:bg-orange-900/40 transition-all text-xs font-semibold flex items-center justify-center gap-1.5"
                 >
                   <Radio className="w-3.5 h-3.5" />
                   BLAST RADIUS
