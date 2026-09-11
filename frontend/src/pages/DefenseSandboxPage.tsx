@@ -144,16 +144,16 @@ export const DefenseSandboxPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 font-mono">
+    <div className="space-y-6 font-sans">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-              <Sliders className="w-5 h-5 text-[#FFB300]" />
+            <span className="text-xl font-bold tracking-tight text-white font-display flex items-center gap-2">
+              <Sliders className="w-5 h-5 text-[#FF5722]" />
               DEFENSE SANDBOX // VIRTUAL CONTROL VALIDATOR
             </span>
-            <span className="px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-500/50 text-[10px] font-bold">
+            <span className="px-2 py-0.5 rounded-full bg-orange-950/70 text-orange-400 border border-orange-500/40 text-[10px] font-bold font-mono">
               CORE USP
             </span>
           </div>
@@ -166,7 +166,7 @@ export const DefenseSandboxPage: React.FC = () => {
           <button
             onClick={() => runSandbox(activeDefenses)}
             disabled={isSimulating}
-            className="px-4 py-2 rounded bg-amber-500/20 border border-amber-500/50 text-amber-300 hover:bg-amber-500/30 text-xs font-bold flex items-center gap-2 transition-all shadow-[0_0_15px_rgba(255,179,0,0.2)]"
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white text-xs font-semibold flex items-center gap-2 transition-all shadow-[0_0_15px_rgba(255,87,34,0.3)] cursor-pointer"
           >
             <Play className="w-4 h-4" />
             {isSimulating ? "RE-SIMULATING..." : "RE-SIMULATE ATTACK"}
@@ -175,7 +175,7 @@ export const DefenseSandboxPage: React.FC = () => {
       </div>
 
       {/* Scenario Parameters Bar */}
-      <div className="p-3.5 rounded-lg bg-[#0B0E14]/90 border border-slate-800 flex items-center justify-between text-xs text-slate-300">
+      <div className="p-4 rounded-xl bg-[#0D111A] border border-[#1E2638] flex items-center justify-between text-xs text-slate-300 shadow-lg">
         <div className="flex items-center gap-6">
           <div>
             THREAT: <span className="text-[#00E5FF] font-bold">{threatId}</span>

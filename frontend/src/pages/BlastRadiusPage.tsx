@@ -49,12 +49,12 @@ export const BlastRadiusPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 font-mono">
+    <div className="space-y-5 font-sans">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-            <Radio className="w-5 h-5 text-amber-400 animate-pulse" />
+          <h1 className="text-xl font-bold tracking-tight text-white font-display flex items-center gap-2">
+            <Radio className="w-5 h-5 text-[#FF5722] animate-pulse" />
             BLAST RADIUS PROPAGATION ENGINE
           </h1>
           <p className="text-xs text-slate-400 mt-0.5">
@@ -62,19 +62,19 @@ export const BlastRadiusPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="text-xs text-slate-400">
-          MODE: <span className="text-amber-400 font-bold">COMPROMISE IMPACT MODELING</span>
+        <div className="text-xs text-slate-400 font-mono">
+          MODE: <span className="text-orange-400 font-bold">COMPROMISE IMPACT MODELING</span>
         </div>
       </div>
 
       {/* Asset Selector */}
-      <div className="p-4 rounded-lg bg-[#0B0E14]/90 border border-slate-800 flex items-center justify-between text-xs">
+      <div className="p-4 rounded-xl bg-[#0D111A] border border-[#1E2638] flex items-center justify-between text-xs shadow-lg">
         <div className="flex items-center gap-3">
-          <label className="text-slate-300 font-bold uppercase">WHAT HAPPENS IF THIS ASSET FALLS?</label>
+          <label className="text-slate-300 font-semibold font-mono uppercase">WHAT HAPPENS IF THIS ASSET FALLS?</label>
           <select
             value={selectedAssetId}
             onChange={(e) => handleSelectAsset(e.target.value)}
-            className="bg-slate-950 border border-slate-700 text-white rounded px-3 py-1.5 text-xs outline-none focus:border-amber-400"
+            className="bg-[#080A0F] border border-slate-700 text-white rounded-lg px-3 py-1.5 text-xs outline-none focus:border-orange-500 font-mono"
           >
             {twin.assets.map((a) => (
               <option key={a.id} value={a.id}>
@@ -85,12 +85,12 @@ export const BlastRadiusPage: React.FC = () => {
         </div>
 
         {blastData && (
-          <div className="flex items-center gap-4 text-xs">
+          <div className="flex items-center gap-4 text-xs font-mono">
             <span>
               TOTAL REACHABLE: <strong className="text-white">{blastData.total_reachable_assets} NODES</strong>
             </span>
             <span>
-              INFRASTRUCTURE EXPOSURE: <strong className="text-red-400 font-bold">{blastData.total_blast_radius_percent}%</strong>
+              EXPOSURE: <strong className="text-red-400 font-bold">{blastData.total_blast_radius_percent}%</strong>
             </span>
           </div>
         )}
@@ -99,27 +99,27 @@ export const BlastRadiusPage: React.FC = () => {
       {/* Metric Summary Ribbon */}
       {blastData && (
         <div className="grid grid-cols-4 gap-4">
-          <div className="p-4 rounded-lg bg-[#0B0E14]/90 border border-amber-500/30">
-            <div className="text-[10px] text-amber-400 uppercase font-bold">DIRECT 1-HOP REACHABILITY</div>
-            <div className="text-2xl font-bold text-white mt-1">{blastData.direct_impact_count} ASSETS</div>
+          <div className="p-4 rounded-xl bg-[#0D111A] border border-orange-500/30 shadow-lg">
+            <div className="text-[10px] text-orange-400 uppercase font-mono font-bold">DIRECT 1-HOP REACHABILITY</div>
+            <div className="text-2xl font-bold text-white mt-1 font-display">{blastData.direct_impact_count} ASSETS</div>
             <div className="text-[11px] text-slate-400 mt-0.5">Immediate lateral jump targets</div>
           </div>
 
-          <div className="p-4 rounded-lg bg-[#0B0E14]/90 border border-cyan-500/30">
-            <div className="text-[10px] text-cyan-400 uppercase font-bold">TRANSITIVE K-HOP REACHABILITY</div>
-            <div className="text-2xl font-bold text-white mt-1">{blastData.indirect_impact_count} ASSETS</div>
+          <div className="p-4 rounded-xl bg-[#0D111A] border border-slate-800 shadow-lg">
+            <div className="text-[10px] text-slate-400 uppercase font-mono font-bold">TRANSITIVE K-HOP REACHABILITY</div>
+            <div className="text-2xl font-bold text-white mt-1 font-display">{blastData.indirect_impact_count} ASSETS</div>
             <div className="text-[11px] text-slate-400 mt-0.5">Downstream network reachability</div>
           </div>
 
-          <div className="p-4 rounded-lg bg-[#0B0E14]/90 border border-red-500/30">
-            <div className="text-[10px] text-red-400 uppercase font-bold">CRITICAL CROWN JEWELS AT RISK</div>
-            <div className="text-2xl font-bold text-red-400 mt-1">{blastData.critical_crown_jewels_threatened.length} JEWELS</div>
+          <div className="p-4 rounded-xl bg-[#0D111A] border border-red-500/30 shadow-lg">
+            <div className="text-[10px] text-red-400 uppercase font-mono font-bold">CRITICAL CROWN JEWELS AT RISK</div>
+            <div className="text-2xl font-bold text-red-400 mt-1 font-display">{blastData.critical_crown_jewels_threatened.length} JEWELS</div>
             <div className="text-[11px] text-slate-400 mt-0.5">Tier-0 Domain & Backup systems</div>
           </div>
 
-          <div className="p-4 rounded-lg bg-[#0B0E14]/90 border border-slate-800">
-            <div className="text-[10px] text-slate-400 uppercase font-bold">TOTAL BLAST RADIUS</div>
-            <div className="text-2xl font-bold text-emerald-400 mt-1">{blastData.total_blast_radius_percent}%</div>
+          <div className="p-4 rounded-xl bg-[#0D111A] border border-emerald-500/30 shadow-lg">
+            <div className="text-[10px] text-emerald-400 uppercase font-mono font-bold">TOTAL BLAST RADIUS</div>
+            <div className="text-2xl font-bold text-emerald-400 mt-1 font-display">{blastData.total_blast_radius_percent}%</div>
             <div className="text-[11px] text-slate-400 mt-0.5">Percentage of entire digital twin</div>
           </div>
         </div>
