@@ -317,3 +317,75 @@ class NaturalLanguageQueryResult(BaseModel):
     supporting_metrics: Dict[str, Any]
     relevant_paths: Optional[List[Dict[str, Any]]] = None
     recommended_action: Optional[str] = None
+
+
+# ── Feature #12: Autonomous Vulnerability, Path & Remediation Audit ───────────
+
+class VulnerabilityFinding(BaseModel):
+    cve: str
+    name: str
+    severity: str
+    cvss_score: float
+    affected_asset_id: str
+    affected_asset_name: str
+    affected_service: Optional[str] = None
+    exploitable_technique: str
+    description: str
+    patch_available: bool
+    remediation_action: str
+
+
+class AuditedAttackPath(BaseModel):
+    path_id: str
+    entry_cve: Optional[str] = None
+    source_asset_id: str
+    source_asset_name: str
+    target_crown_jewel_id: str
+    target_crown_jewel_name: str
+    hop_count: int
+    attacker_effort_score: float
+    damage_score: float
+    damage_tier: str
+    nodes_sequence: List[str]
+    techniques_used: List[str]
+    critical_chokepoint_node: Optional[str] = None
+
+
+class ChokepointAnalysis(BaseModel):
+    asset_id: str
+    asset_name: str
+    paths_intersected: int
+    paths_eliminated_percent: float
+    recommended_control: str
+
+
+class RemediationTask(BaseModel):
+    rank: int
+    title: str
+    control_type: str
+    target_assets_or_identities: List[str]
+    critical_paths_severed: int
+    blast_radius_reduction_percent: float
+    attacker_effort_increase: float
+    priority_score: float
+    implementation_complexity: str
+    jira_ticket_template: Dict[str, str]
+    remediation_command: str
+    reasoning: str
+
+
+class AutomatedAuditReport(BaseModel):
+    audit_id: str
+    generated_at: str
+    assets_scanned_count: int
+    vulnerabilities_detected_count: int
+    vulnerabilities: List[VulnerabilityFinding]
+    viable_attack_paths_count: int
+    attack_paths: List[AuditedAttackPath]
+    chokepoints: List[ChokepointAnalysis]
+    baseline_resilience_score: float
+    projected_resilience_score: float
+    resilience_improvement_percent: float
+    remediation_tasks: List[RemediationTask]
+    executive_verdict: str
+    executive_summary: str

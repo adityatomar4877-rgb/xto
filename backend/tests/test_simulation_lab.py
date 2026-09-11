@@ -359,3 +359,21 @@ def test_feature11_simulation_history_and_path_retrieval():
     assert "transitions" in ev_data
     assert "damage_assessment" in ev_data
     assert "compromised_area" in ev_data
+
+
+# ── Feature #12: Autonomous Vulnerability, Path & Remediation Audit ───────────
+
+def test_feature12_autonomous_audit_and_remediation():
+    res = client.post("/api/automation/audit")
+    assert res.status_code == 200
+    data = res.json()
+    assert "audit_id" in data
+    assert data["vulnerabilities_detected_count"] > 0
+    assert len(data["vulnerabilities"]) > 0
+    assert data["viable_attack_paths_count"] > 0
+    assert len(data["attack_paths"]) > 0
+    assert len(data["chokepoints"]) > 0
+    assert len(data["remediation_tasks"]) > 0
+    assert data["projected_resilience_score"] > data["baseline_resilience_score"]
+    assert "executive_summary" in data
+    assert "executive_verdict" in data

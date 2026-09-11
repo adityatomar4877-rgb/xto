@@ -19,6 +19,7 @@ import {
   Sun,
   Moon,
   ShieldCheck,
+  Zap,
 } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 
@@ -89,6 +90,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     { path: "/command", label: "Overview", icon: LayoutGrid },
     { path: "/twin", label: "Digital Twin", icon: Layers },
     { path: "/simulation", label: "Attack Simulation", icon: Target },
+    { path: "/audit", label: "Auto Audit & Report", icon: Zap },
     { path: "/blast-radius", label: "Blast Radius", icon: Compass },
     { path: "/defense", label: "Controls & What-If", icon: Sliders },
     { path: "/mitre", label: "MITRE ATT&CK", icon: ShieldCheck },
