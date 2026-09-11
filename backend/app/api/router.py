@@ -54,6 +54,7 @@ from app.schemas.lab import (
     NaturalLanguageQueryRequest,
     NaturalLanguageQueryResult,
     SimulationSummaryItem,
+    AutomatedAuditReport,
 )
 from app.core.dependencies import (
     get_twin,
@@ -73,6 +74,7 @@ from app.core.dependencies import (
     get_resilience_engine,
     get_nl_query_engine,
     get_defense_sandbox,
+    get_audit_engine,
 )
 from xto_core.graph.security_graph import SecurityGraph
 from xto_core.graph.path_engine import AttackPathEngine
@@ -620,3 +622,22 @@ def process_natural_language_query(req: NaturalLanguageQueryRequest):
         return nl_engine.process_query(req)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Natural language query error: {str(e)}")
+
+
+# ── Feature #12: Autonomous Vulnerability, Path & Remediation Audit ───────────
+
+@router.post("/automation/audit", response_model=AutomatedAuditReport)
+@router.get("/automation/audit", response_model=AutomatedAuditReport)
+def run_autonomous_audit():
+    """Execute end-to-end automated security audit:
+    1. Scan all enterprise assets for CVE vulnerabilities and credential risks.
+    2. Map viable lateral attack paths from vulnerable assets to Crown Jewels.
+    3. Identify critical graph chokepoints and calculate damage scores.
+    4. Synthesize optimal prioritized remediations with Jira tickets and scripts.
+    5. Compile complete executive and technical report with resilience posture delta.
+    """
+    audit_engine = get_audit_engine()
+    try:
+        return audit_engine.run_full_audit()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Automated audit execution failure: {str(e)}")

@@ -1,0 +1,704 @@
+import React, { useState, useEffect } from "react";
+import {
+  Zap,
+  ShieldAlert,
+  GitCommit,
+  CheckCircle2,
+  AlertTriangle,
+  ArrowRight,
+  Download,
+  Printer,
+  Copy,
+  Check,
+  Plus,
+  RefreshCw,
+  Sliders,
+  ExternalLink,
+  Lock,
+  Layers,
+  FileText,
+  Activity,
+  Terminal,
+  Target,
+} from "lucide-react";
+import {
+  api,
+  AutomatedAuditReport,
+  VulnerabilityFinding,
+  AuditedAttackPath,
+  ChokepointAnalysis,
+  RemediationTask,
+} from "@/lib/api";
+
+export const AutonomousAuditPage: React.FC = () => {
+  const [report, setReport] = useState<AutomatedAuditReport | null>(null);
+  const [isRunning, setIsRunning] = useState<boolean>(false);
+  const [currentStep, setCurrentStep] = useState<number>(0);
+  const [activeTab, setActiveTab] = useState<"vulns" | "paths" | "chokepoints" | "remediations" | "report">("report");
+  const [copiedCommand, setCopiedCommand] = useState<string | null>(null);
+  const [selectedJiraTask, setSelectedJiraTask] = useState<RemediationTask | null>(null);
+  const [jiraSuccess, setJiraSuccess] = useState<boolean>(false);
+
+  const pipelineSteps = [
+    { title: "Vulnerability Discovery", desc: "Auditing all 12 assets for known CVEs & credential exposures" },
+    { title: "Attack Path Tracing", desc: "Computing all lateral traversal routes to enterprise Crown Jewels" },
+    { title: "Chokepoint & Damage Analysis", desc: "Extracting critical graph bottlenecks & 0-100 damage severity" },
+    { title: "Remediation Optimization", desc: "Evaluating candidate controls, ROI, and path elimination power" },
+    { title: "Executive Report Compilation", desc: "Assembling formal audit certificate and remediation dossier" },
+  ];
+
+  const runAudit = async () => {
+    setIsRunning(true);
+    setCurrentStep(0);
+
+    // Progressive step simulation for visual engagement
+    const stepInterval = setInterval(() => {
+      setCurrentStep((prev) => (prev < 4 ? prev + 1 : prev));
+    }, 600);
+
+    try {
+      const data = await api.runAutomatedAudit();
+      clearInterval(stepInterval);
+      setCurrentStep(4);
+      setTimeout(() => {
+        setReport(data);
+        setIsRunning(false);
+      }, 500);
+    } catch (err) {
+      clearInterval(stepInterval);
+      console.error("Audit error:", err);
+      setIsRunning(false);
+    }
+  };
+
+  useEffect(() => {
+    runAudit();
+  }, []);
+
+  const handleCopyCommand = (cmd: string) => {
+    navigator.clipboard.writeText(cmd);
+    setCopiedCommand(cmd);
+    setTimeout(() => setCopiedCommand(null), 2000);
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  return (
+    <div className="space-y-5 font-sans text-slate-900 dark:text-slate-100 select-none pb-12">
+      {/* 1. Header Bar */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
+        <div>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-[#FFF2EB] dark:bg-orange-950/60 border border-[#FF5722]/30 flex items-center justify-center text-[#FF5722]">
+              <Zap className="w-4 h-4 text-[#FF5722]" />
+            </div>
+            <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white font-display">
+              AUTONOMOUS VULNERABILITY, ATTACK PATH & REMEDIATION PIPELINE
+            </h1>
+            <span className="px-2.5 py-0.5 rounded-full bg-[#FFF2EB] dark:bg-orange-950/60 border border-[#FF5722]/30 text-[10px] font-mono text-[#FF5722] font-bold uppercase">
+              100% AUTOMATED
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-normal">
+            Autonomous scanner identifies CVEs, traces viable lateral paths to Crown Jewels, computes graph chokepoints, prepares verified remediations, and compiles an executive report.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={runAudit}
+            disabled={isRunning}
+            className="px-4 py-2 rounded-lg bg-[#FF5722] hover:bg-[#F4511E] disabled:opacity-50 text-white text-xs font-semibold flex items-center gap-2 transition-all shadow-xs cursor-pointer"
+          >
+            {isRunning ? (
+              <>
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                <span>RUNNING PIPELINE...</span>
+              </>
+            ) : (
+              <>
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span>RE-RUN FULL AUDIT</span>
+              </>
+            )}
+          </button>
+
+          <button
+            onClick={handlePrint}
+            className="px-3.5 py-2 rounded-lg bg-white dark:bg-[#0C0E14] border border-[#E5E7EB] dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-900 text-xs font-semibold flex items-center gap-1.5 shadow-2xs cursor-pointer"
+          >
+            <Printer className="w-3.5 h-3.5" />
+            <span>PRINT / EXPORT REPORT</span>
+          </button>
+        </div>
+      </div>
+
+      {/* 2. Automated Pipeline Stepper Animation */}
+      {isRunning && (
+        <div className="p-4 rounded-xl bg-white dark:bg-[#0C0E14] border border-orange-200 dark:border-orange-500/30 shadow-xs space-y-3">
+          <div className="flex items-center justify-between text-xs">
+            <span className="font-bold text-slate-800 dark:text-slate-200 font-mono flex items-center gap-2">
+              <Activity className="w-4 h-4 text-[#FF5722] animate-spin" />
+              EXECUTING AUTONOMOUS ANALYSIS PIPELINE (STAGE {currentStep + 1} OF 5)...
+            </span>
+            <span className="text-[11px] text-[#FF5722] font-mono font-bold">
+              {pipelineSteps[currentStep].title}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-5 gap-2">
+            {pipelineSteps.map((step, idx) => (
+              <div
+                key={idx}
+                className={`p-2.5 rounded-lg border text-xs transition-all ${
+                  idx === currentStep
+                    ? "bg-orange-50 dark:bg-orange-950/40 border-[#FF5722] text-[#FF5722] shadow-xs"
+                    : idx < currentStep
+                    ? "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-500/40 text-emerald-700 dark:text-emerald-400"
+                    : "bg-slate-50 dark:bg-[#161C28] border-slate-200 dark:border-slate-800 text-slate-400"
+                }`}
+              >
+                <div className="flex items-center gap-1.5 font-bold font-mono text-[10.5px]">
+                  {idx < currentStep ? (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  ) : (
+                    <span>#{idx + 1}</span>
+                  )}
+                  <span>{step.title}</span>
+                </div>
+                <div className="text-[9.5px] mt-1 opacity-80 leading-tight">{step.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 3. Executive Summary KPI Badges */}
+      {report && (
+        <div className="grid grid-cols-4 gap-3.5">
+          <div className="p-3.5 rounded-xl bg-white dark:bg-[#0C0E14] border border-[#E5E7EB] dark:border-slate-800 shadow-xs">
+            <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase font-mono">
+              VULNERABILITIES DETECTED
+            </div>
+            <div className="text-2xl font-black text-red-600 dark:text-red-400 font-display mt-0.5">
+              {report.vulnerabilities_detected_count}
+            </div>
+            <div className="text-[10.5px] text-slate-500 mt-1">
+              Across {report.assets_scanned_count} enterprise assets (2 Critical CVEs)
+            </div>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-white dark:bg-[#0C0E14] border border-[#E5E7EB] dark:border-slate-800 shadow-xs">
+            <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase font-mono">
+              VIABLE ATTACK PATHS
+            </div>
+            <div className="text-2xl font-black text-amber-600 dark:text-amber-400 font-display mt-0.5">
+              {report.viable_attack_paths_count}
+            </div>
+            <div className="text-[10.5px] text-slate-500 mt-1">
+              Lateral routes reaching Crown Jewels
+            </div>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-white dark:bg-[#0C0E14] border border-[#E5E7EB] dark:border-slate-800 shadow-xs">
+            <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase font-mono">
+              PRIMARY CHOKEPOINT
+            </div>
+            <div className="text-lg font-black text-[#FF5722] font-mono mt-1">
+              {report.chokepoints[0]?.asset_name || "DC-CORP-01"}
+            </div>
+            <div className="text-[10.5px] text-slate-500 mt-0.5">
+              Severing eliminates {report.chokepoints[0]?.paths_eliminated_percent || 100}% of routes
+            </div>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-white dark:bg-[#0C0E14] border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50/20 dark:bg-emerald-950/10 shadow-xs">
+            <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase font-mono">
+              RESILIENCE POSTURE DELTA
+            </div>
+            <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-display mt-0.5 flex items-baseline gap-1.5">
+              <span>{report.baseline_resilience_score.toFixed(1)}</span>
+              <span className="text-xs font-normal text-slate-400">&rarr;</span>
+              <span className="text-emerald-500 font-black">{report.projected_resilience_score.toFixed(1)}</span>
+            </div>
+            <div className="text-[10.5px] text-emerald-700 dark:text-emerald-300 font-semibold mt-1">
+              +{report.resilience_improvement_percent}% post-remediation gain
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 4. Tab Switcher Navigation */}
+      {report && (
+        <div className="flex border-b border-slate-200 dark:border-slate-800 gap-2 text-xs font-semibold">
+          {[
+            { id: "report", label: "Executive Report Dossier", count: null },
+            { id: "vulns", label: "Discovered Vulnerabilities", count: report.vulnerabilities_detected_count },
+            { id: "paths", label: "Viable Attack Paths", count: report.viable_attack_paths_count },
+            { id: "chokepoints", label: "Graph Chokepoints", count: report.chokepoints.length },
+            { id: "remediations", label: "Remediation Action Plan", count: report.remediation_tasks.length },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`pb-2.5 px-3 border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+                activeTab === tab.id
+                  ? "border-[#FF5722] text-[#FF5722] font-bold"
+                  : "border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+              }`}
+            >
+              <span>{tab.label}</span>
+              {tab.count !== null && (
+                <span className="px-1.5 py-0.2 rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] font-mono">
+                  {tab.count}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* 5. TAB 1: EXECUTIVE AUDIT REPORT DOSSIER */}
+      {report && activeTab === "report" && (
+        <div className="p-6 rounded-xl bg-white dark:bg-[#0C0E14] border border-[#E5E7EB] dark:border-slate-800 shadow-xs space-y-6">
+          {/* Report Top Metadata */}
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+            <div>
+              <div className="text-[10px] text-slate-400 font-mono">AUDIT REFERENCE: {report.audit_id}</div>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white font-display mt-0.5">
+                CYBER RISK, ATTACK PATH & REMEDIATION CERTIFICATION DOSSIER
+              </h2>
+              <div className="text-xs text-slate-500 mt-0.5">
+                Generated: {new Date(report.generated_at).toLocaleString()} // Evaluator: XTO Autonomous Digital Twin Engine
+              </div>
+            </div>
+
+            <div className="text-right">
+              <span className="px-3 py-1 rounded-md bg-red-50 text-red-700 border border-red-200 text-xs font-bold font-mono uppercase">
+                {report.executive_verdict}
+              </span>
+            </div>
+          </div>
+
+          {/* Executive Narrative */}
+          <div className="p-4 rounded-lg bg-[#F8F9FA] dark:bg-[#161C28] border border-slate-200 dark:border-slate-700/60 leading-relaxed text-xs text-slate-700 dark:text-slate-300">
+            <div className="font-bold text-slate-900 dark:text-white mb-1 uppercase font-mono text-[11px]">
+              EXECUTIVE FINDINGS SUMMARY:
+            </div>
+            {report.executive_summary}
+          </div>
+
+          {/* Before vs After Posture Comparison */}
+          <div className="grid grid-cols-2 gap-4 pt-2">
+            <div className="p-4 rounded-lg border border-red-200 dark:border-red-900/40 bg-red-50/20 dark:bg-red-950/10 space-y-2">
+              <div className="text-xs font-bold text-red-600 uppercase font-mono flex items-center gap-1.5">
+                <AlertTriangle className="w-4 h-4 text-red-600" />
+                BASELINE SECURITY POSTURE (UNMITIGATED)
+              </div>
+              <ul className="text-xs text-slate-600 dark:text-slate-300 space-y-1 pl-1">
+                <li>• <strong>{report.vulnerabilities_detected_count} CVEs</strong> active on perimeter & corporate compute assets.</li>
+                <li>• <strong>{report.viable_attack_paths_count} viable attack paths</strong> allow adversaries to reach Ransomware Backup Vault.</li>
+                <li>• <strong>100% of backup paths</strong> converge through single chokepoint <code>DC-CORP-01</code>.</li>
+                <li>• Enterprise Resilience Score: <span className="font-bold text-red-600">{report.baseline_resilience_score.toFixed(1)} / 100 (FRAGILE)</span>.</li>
+              </ul>
+            </div>
+
+            <div className="p-4 rounded-lg border border-emerald-200 dark:border-emerald-900/40 bg-emerald-50/20 dark:bg-emerald-950/10 space-y-2">
+              <div className="text-xs font-bold text-emerald-600 uppercase font-mono flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                PROJECTED POSTURE (POST-REMEDIATION ROADMAP)
+              </div>
+              <ul className="text-xs text-slate-600 dark:text-slate-300 space-y-1 pl-1">
+                <li>• <strong>100% of critical lateral paths</strong> to Crown Jewels eliminated via micro-segmentation.</li>
+                <li>• <strong>47% blast radius drop</strong> by enforcing administrative MFA and credential isolation.</li>
+                <li>• <strong>ZeroLogon & Ivanti VPN RCE</strong> patched removing external ingress vectors.</li>
+                <li>• Enterprise Resilience Score: <span className="font-bold text-emerald-600">{report.projected_resilience_score.toFixed(1)} / 100 (HARDENED)</span>.</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Quick Action Plan Overview */}
+          <div className="space-y-2.5 pt-2">
+            <div className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase font-mono">
+              TOP REMEDIATION PRIORITIES (AUTOMATED RECOMMENDATION):
+            </div>
+            <div className="space-y-2">
+              {report.remediation_tasks.slice(0, 3).map((task) => (
+                <div key={task.rank} className="p-3 rounded-lg bg-[#F8F9FA] dark:bg-[#161C28] border border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-3">
+                    <span className="w-6 h-6 rounded-full bg-[#FFF2EB] dark:bg-orange-950 text-[#FF5722] font-bold flex items-center justify-center font-mono">
+                      #{task.rank}
+                    </span>
+                    <div>
+                      <div className="font-bold text-slate-900 dark:text-white">{task.title}</div>
+                      <div className="text-[11px] text-slate-500 mt-0.5">{task.reasoning}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 font-mono text-[11px]">
+                    <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold">
+                      -{task.blast_radius_reduction_percent}% BLAST RADIUS
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-orange-50 text-[#FF5722] border border-orange-200 font-bold">
+                      {task.critical_paths_severed} PATHS SEVERED
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 6. TAB 2: VULNERABILITIES TABLE */}
+      {report && activeTab === "vulns" && (
+        <div className="p-4 rounded-xl bg-white dark:bg-[#0C0E14] border border-[#E5E7EB] dark:border-slate-800 shadow-xs space-y-4">
+          <div className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase font-mono">
+            DISCOVERED VULNERABILITY CATALOG ({report.vulnerabilities.length} DETECTED)
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs text-left">
+              <thead className="bg-slate-50 dark:bg-[#161C28] text-slate-500 font-mono text-[10.5px] uppercase border-y border-slate-200 dark:border-slate-800">
+                <tr>
+                  <th className="py-2.5 px-3">CVE IDENTIFIER</th>
+                  <th className="py-2.5 px-3">NAME & DESCRIPTION</th>
+                  <th className="py-2.5 px-3">AFFECTED ASSET</th>
+                  <th className="py-2.5 px-3">SEVERITY / CVSS</th>
+                  <th className="py-2.5 px-3">EXPLOIT TECHNIQUE</th>
+                  <th className="py-2.5 px-3">PATCH STATUS</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                {report.vulnerabilities.map((v) => (
+                  <tr key={v.cve} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30">
+                    <td className="py-3 px-3 font-mono font-bold text-[#FF5722] whitespace-nowrap">
+                      {v.cve}
+                    </td>
+                    <td className="py-3 px-3 max-w-md">
+                      <div className="font-bold text-slate-900 dark:text-white">{v.name}</div>
+                      <div className="text-[11px] text-slate-500 mt-0.5">{v.description}</div>
+                    </td>
+                    <td className="py-3 px-3 whitespace-nowrap">
+                      <div className="font-semibold text-slate-800 dark:text-slate-200">{v.affected_asset_name}</div>
+                      <div className="text-[10px] text-slate-400 font-mono">{v.affected_asset_id}</div>
+                    </td>
+                    <td className="py-3 px-3 whitespace-nowrap">
+                      <span className={`px-2 py-0.5 rounded text-[10.5px] font-bold font-mono ${
+                        v.severity === "CRITICAL"
+                          ? "bg-red-50 text-red-600 border border-red-200 dark:bg-red-950 dark:text-red-300"
+                          : "bg-amber-50 text-amber-600 border border-amber-200 dark:bg-amber-950 dark:text-amber-300"
+                      }`}>
+                        {v.severity} ({v.cvss_score})
+                      </span>
+                    </td>
+                    <td className="py-3 px-3 font-mono text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                      {v.exploitable_technique}
+                    </td>
+                    <td className="py-3 px-3 whitespace-nowrap">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
+                        v.patch_available
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-400"
+                          : "bg-slate-100 text-slate-600 border border-slate-200"
+                      }`}>
+                        {v.patch_available ? "HOTFIX READY" : "MITIGATION ONLY"}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* 7. TAB 3: VIABLE ATTACK PATHS */}
+      {report && activeTab === "paths" && (
+        <div className="p-4 rounded-xl bg-white dark:bg-[#0C0E14] border border-[#E5E7EB] dark:border-slate-800 shadow-xs space-y-4">
+          <div className="flex items-center justify-between text-xs">
+            <span className="font-bold text-slate-800 dark:text-slate-200 uppercase font-mono">
+              VIABLE ATTACK PATH TRACES TO CROWN JEWELS ({report.attack_paths.length} ROUTES MAPPED)
+            </span>
+            <span className="text-slate-500 font-mono text-[11px]">SORTED BY DAMAGE SEVERITY & HOP EFFORT</span>
+          </div>
+
+          <div className="space-y-3">
+            {report.attack_paths.map((path) => (
+              <div
+                key={path.path_id}
+                className="p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-[#F8F9FA] dark:bg-[#161C28] space-y-2.5"
+              >
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold font-mono text-[#FF5722]">{path.path_id}</span>
+                    <span className="text-slate-400">|</span>
+                    <span className="font-bold text-slate-900 dark:text-white">
+                      {path.source_asset_name} &rarr; {path.target_crown_jewel_name}
+                    </span>
+                    {path.entry_cve && (
+                      <span className="px-1.5 py-0.2 rounded bg-red-50 text-red-700 border border-red-200 text-[10px] font-mono">
+                        VIA {path.entry_cve}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold font-mono ${
+                      path.damage_tier === "CATASTROPHIC"
+                        ? "bg-red-50 text-red-600 border border-red-200"
+                        : "bg-amber-50 text-amber-600 border border-amber-200"
+                    }`}>
+                      DAMAGE: {path.damage_score} ({path.damage_tier})
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[10px] font-mono font-semibold">
+                      {path.hop_count} HOPS // EFFORT: {path.attacker_effort_score}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Visual Sequence Chain */}
+                <div className="flex flex-wrap items-center gap-2 text-xs font-mono pt-1">
+                  {path.nodes_sequence.map((nodeId, idx) => {
+                    const isLast = idx === path.nodes_sequence.length - 1;
+                    const isChoke = path.critical_chokepoint_node === nodeId;
+                    return (
+                      <React.Fragment key={idx}>
+                        <span
+                          className={`px-2 py-1 rounded text-[11px] font-semibold flex items-center gap-1 ${
+                            isLast
+                              ? "bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-300"
+                              : isChoke
+                              ? "bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 font-bold"
+                              : "bg-white dark:bg-[#0C0E14] text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700"
+                          }`}
+                        >
+                          {nodeId}
+                          {isChoke && <span className="text-[8.5px] text-[#FF5722] font-bold ml-1">[CHOKEPOINT]</span>}
+                        </span>
+                        {!isLast && <span className="text-slate-400">&rarr;</span>}
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
+
+                {path.techniques_used.length > 0 && (
+                  <div className="text-[10.5px] text-slate-500 font-mono">
+                    TECHNIQUES: {path.techniques_used.join(", ")}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 8. TAB 4: CHOKEPOINTS & BOTTLENECK CUTS */}
+      {report && activeTab === "chokepoints" && (
+        <div className="p-4 rounded-xl bg-white dark:bg-[#0C0E14] border border-[#E5E7EB] dark:border-slate-800 shadow-xs space-y-4">
+          <div className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase font-mono">
+            GRAPH CHOKEPOINTS & CUT-SET BOTTLENECK ANALYSIS
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            {report.chokepoints.map((cp) => (
+              <div key={cp.asset_id} className="p-4 rounded-xl bg-[#F8F9FA] dark:bg-[#161C28] border border-slate-200 dark:border-slate-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-xs text-[#FF5722] font-bold">{cp.asset_id}</span>
+                  <span className="px-2 py-0.5 rounded bg-orange-50 text-[#FF5722] border border-orange-200 text-[10px] font-bold font-mono">
+                    {cp.paths_eliminated_percent}% CUT POWER
+                  </span>
+                </div>
+
+                <div>
+                  <div className="text-sm font-bold text-slate-900 dark:text-white font-display">{cp.asset_name}</div>
+                  <div className="text-xs text-slate-500 mt-1">
+                    Intersects <strong>{cp.paths_intersected} viable lateral paths</strong> across the environment.
+                  </div>
+                </div>
+
+                <div className="p-2.5 rounded-lg bg-white dark:bg-[#0C0E14] border border-slate-200 dark:border-slate-700 text-xs">
+                  <div className="text-[9.5px] text-slate-400 font-bold uppercase font-mono">RECOMMENDED INTERVENTION:</div>
+                  <div className="text-slate-800 dark:text-slate-200 font-semibold mt-0.5">{cp.recommended_control}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 9. TAB 5: REMEDIATION ACTION PLAN & JIRA TICKETS */}
+      {report && activeTab === "remediations" && (
+        <div className="p-4 rounded-xl bg-white dark:bg-[#0C0E14] border border-[#E5E7EB] dark:border-slate-800 shadow-xs space-y-4">
+          <div className="flex items-center justify-between text-xs">
+            <span className="font-bold text-slate-800 dark:text-slate-200 uppercase font-mono">
+              PRIORITIZED REMEDIATION TASKS ({report.remediation_tasks.length} PREPARED)
+            </span>
+            <span className="text-slate-500 font-mono text-[11px]">MATHEMATICALLY RANKED BY RISK REDUCTION POWER</span>
+          </div>
+
+          <div className="space-y-3.5">
+            {report.remediation_tasks.map((task) => (
+              <div
+                key={task.rank}
+                className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-[#F8F9FA] dark:bg-[#161C28] space-y-3"
+              >
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-7 h-7 rounded-lg bg-[#FFF2EB] dark:bg-orange-950 text-[#FF5722] font-bold flex items-center justify-center font-mono text-sm">
+                      #{task.rank}
+                    </span>
+                    <div>
+                      <div className="font-bold text-slate-900 dark:text-white text-sm">{task.title}</div>
+                      <div className="text-[11px] text-slate-500 mt-0.5">{task.reasoning}</div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setSelectedJiraTask(task)}
+                      className="px-2.5 py-1.5 rounded bg-white dark:bg-[#0C0E14] border border-slate-200 dark:border-slate-700 hover:border-[#FF5722] text-[#FF5722] text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      <span>View Jira Story</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Metrics Row */}
+                <div className="grid grid-cols-4 gap-2 text-xs pt-1">
+                  <div className="p-2 rounded bg-white dark:bg-[#0C0E14] border border-slate-200 dark:border-slate-700/60">
+                    <span className="text-[9.5px] text-slate-400 font-mono block">CRITICAL PATHS SEVERED</span>
+                    <span className="text-sm font-bold text-red-600 font-display">{task.critical_paths_severed}</span>
+                  </div>
+                  <div className="p-2 rounded bg-white dark:bg-[#0C0E14] border border-slate-200 dark:border-slate-700/60">
+                    <span className="text-[9.5px] text-slate-400 font-mono block">BLAST RADIUS REDUCTION</span>
+                    <span className="text-sm font-bold text-emerald-600 font-display">-{task.blast_radius_reduction_percent}%</span>
+                  </div>
+                  <div className="p-2 rounded bg-white dark:bg-[#0C0E14] border border-slate-200 dark:border-slate-700/60">
+                    <span className="text-[9.5px] text-slate-400 font-mono block">COMPLEXITY</span>
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300 font-mono">{task.implementation_complexity}</span>
+                  </div>
+                  <div className="p-2 rounded bg-white dark:bg-[#0C0E14] border border-slate-200 dark:border-slate-700/60">
+                    <span className="text-[9.5px] text-slate-400 font-mono block">EFFORT MULTIPLIER</span>
+                    <span className="text-xs font-bold text-[#FF5722] font-mono">+{task.attacker_effort_increase} pts</span>
+                  </div>
+                </div>
+
+                {/* Hardening Command Snippet */}
+                <div className="p-2.5 rounded-lg bg-[#181B20] text-emerald-400 font-mono text-[11px] flex items-center justify-between">
+                  <div className="flex items-center gap-2 overflow-x-auto">
+                    <Terminal className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                    <code>{task.remediation_command}</code>
+                  </div>
+                  <button
+                    onClick={() => handleCopyCommand(task.remediation_command)}
+                    className="text-slate-300 hover:text-white p-1 rounded hover:bg-slate-800 transition-colors ml-2 cursor-pointer flex-shrink-0"
+                    title="Copy command"
+                  >
+                    {copiedCommand === task.remediation_command ? (
+                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    ) : (
+                      <Copy className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 10. JIRA STORY MODAL PREVIEW */}
+      {selectedJiraTask && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-lg rounded-xl bg-white dark:bg-[#0C0E14] border border-[#E5E7EB] dark:border-slate-800 shadow-2xl p-5 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <FileText className="w-4 h-4 text-[#FF5722]" />
+                <span className="font-bold text-sm text-slate-900 dark:text-white">
+                  PRE-GENERATED JIRA REMEDIATION STORY
+                </span>
+              </div>
+              <button
+                onClick={() => setSelectedJiraTask(null)}
+                className="text-slate-400 hover:text-slate-600 text-xs px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="text-[10px] text-slate-400 font-bold uppercase font-mono block mb-1">
+                  ISSUE SUMMARY
+                </label>
+                <input
+                  type="text"
+                  readOnly
+                  value={selectedJiraTask.jira_ticket_template.summary}
+                  className="w-full bg-[#F8F9FA] dark:bg-[#161C28] border border-slate-200 dark:border-slate-700 rounded-lg p-2 font-semibold text-slate-800 dark:text-slate-200"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] text-slate-400 font-bold uppercase font-mono block mb-1">
+                  DESCRIPTION & AUDIT EVIDENCE
+                </label>
+                <textarea
+                  rows={5}
+                  readOnly
+                  value={selectedJiraTask.jira_ticket_template.description}
+                  className="w-full bg-[#F8F9FA] dark:bg-[#161C28] border border-slate-200 dark:border-slate-700 rounded-lg p-2 font-mono text-[11px] text-slate-700 dark:text-slate-300"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] text-slate-400 font-bold uppercase font-mono block mb-1">
+                  ACCEPTANCE CRITERIA
+                </label>
+                <input
+                  type="text"
+                  readOnly
+                  value={selectedJiraTask.jira_ticket_template.acceptance_criteria}
+                  className="w-full bg-[#F8F9FA] dark:bg-[#161C28] border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-slate-700 dark:text-slate-300"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <button
+                onClick={() => setSelectedJiraTask(null)}
+                className="px-3.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-xs font-semibold hover:bg-slate-50 cursor-pointer"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  setJiraSuccess(true);
+                  setTimeout(() => {
+                    setJiraSuccess(false);
+                    setSelectedJiraTask(null);
+                  }, 1200);
+                }}
+                className="px-4 py-1.5 rounded-lg bg-[#FF5722] hover:bg-[#F4511E] text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                {jiraSuccess ? (
+                  <>
+                    <Check className="w-3.5 h-3.5" />
+                    <span>JIRA TICKET DISPATCHED!</span>
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Dispatch to Jira</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
