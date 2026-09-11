@@ -7,66 +7,76 @@
     --font-display: "Outfit", "Space Grotesk", sans-serif;
   }
 
+  /* Dark SOC Mode (Default) */
+  html.dark, :root {
+    --bg-main: #07090D;
+    --bg-card: #0C0E14;
+    --bg-card-hover: #11141D;
+    --bg-input: #080A0F;
+    --border-main: #171B26;
+    --border-hover: #232A3B;
+    --text-primary: #F8FAFC;
+    --text-secondary: #8E98A8;
+    --text-muted: #64748B;
+    --canvas-dot: rgba(255, 255, 255, 0.08);
+  }
+
+  /* Clean Enterprise Light Mode (from Exposure Management photos) */
+  html.light {
+    --bg-main: #F4F6FB;
+    --bg-card: #FFFFFF;
+    --bg-card-hover: #F8FAFC;
+    --bg-input: #F1F5F9;
+    --border-main: #E2E8F0;
+    --border-hover: #CBD5E1;
+    --text-primary: #0F172A;
+    --text-secondary: #475569;
+    --text-muted: #94A3B8;
+    --canvas-dot: rgba(15, 23, 42, 0.08);
+  }
+
   body {
-    background-color: #07090D;
-    color: #E2E8F0;
+    background-color: var(--bg-main);
+    color: var(--text-primary);
     font-family: var(--font-sans);
-    background-image: 
-      radial-gradient(circle at 50% 0%, rgba(249, 115, 22, 0.03) 0%, transparent 60%),
-      radial-gradient(#1E2638 0.75px, transparent 0.75px);
-    background-size: 100% 100%, 24px 24px;
+    transition: background-color 0.3s ease, color 0.3s ease;
     -webkit-font-smoothing: antialiased;
     letter-spacing: -0.01em;
   }
 }
 
-/* Enterprise SOC Panels - Restrained & Clean */
+/* Enterprise SOC Panels */
 .soc-card {
-  background: #0C0E14;
-  border: 1px solid #171B26;
+  background: var(--bg-card);
+  border: 1px solid var(--border-main);
   border-radius: 0.75rem;
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
 }
 
 .soc-card:hover {
-  border-color: #232A3B;
+  border-color: var(--border-hover);
 }
 
-.soc-panel-orange {
-  background: #0F121A;
-  border: 1px solid rgba(249, 115, 22, 0.3);
-  box-shadow: 0 0 20px rgba(249, 115, 22, 0.06);
-}
-
-.soc-panel-red {
-  background: #0F121A;
-  border: 1px solid rgba(239, 68, 68, 0.3);
-}
-
-.soc-panel-green {
-  background: #0F121A;
-  border: 1px solid rgba(16, 185, 129, 0.3);
-}
-
-/* Clean Canvas Dotted Grid (from XM Cyber Exposure Management style) */
+/* Canvas Dotted Grid */
 .canvas-grid {
-  background-color: #080A0F;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-color: var(--bg-input);
+  background-image: radial-gradient(var(--canvas-dot) 1px, transparent 1px);
   background-size: 20px 20px;
 }
 
-/* Custom Scrollbar - Sleek and Minimal */
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 5px;
   height: 5px;
 }
 ::-webkit-scrollbar-track {
-  background: #07090D;
+  background: var(--bg-main);
 }
 ::-webkit-scrollbar-thumb {
-  background: #1B2130;
+  background: var(--border-hover);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #F97316;
+  background: #FF5722;
 }

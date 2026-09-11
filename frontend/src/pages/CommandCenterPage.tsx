@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import {
   Layers,
   ArrowRight,
@@ -9,15 +9,22 @@ import {
   Activity,
   Play,
   Eye,
-  ShieldAlert,
-  Radio,
+  Shield,
 } from "lucide-react";
+import gsap from "gsap";
 import { Tactical3DScene } from "@/components/Tactical3DScene";
+import { CyberGlobe3D } from "@/components/CyberGlobe3D";
+import { SimulationGauge } from "@/components/SimulationGauge";
+import { BlastRadiusGraph } from "@/components/BlastRadiusGraph";
+import { ControlSimulator } from "@/components/ControlSimulator";
+import { useTheme } from "@/context/ThemeContext";
 
 export const CommandCenterPage: React.FC = () => {
-  const navigate = useNavigate();
+  const { theme } = useTheme();
+  const pageRef = useRef<HTMLDivElement>(null);
   const [selectedAsset, setSelectedAsset] = useState("db-01");
   const [selectedControl, setSelectedControl] = useState("Network Segmentation");
+  const [riskReduction, setRiskReduction] = useState(75);
 
   // Dynamic blast stats based on asset
   const blastStats: Record<string, { reachable: number; critical: number; external: number }> = {
@@ -28,8 +35,27 @@ export const CommandCenterPage: React.FC = () => {
 
   const currentBlast = blastStats[selectedAsset] || blastStats["db-01"];
 
+  // GSAP Entrance animation
+  useEffect(() => {
+    if (pageRef.current) {
+      const cards = pageRef.current.querySelectorAll(".soc-card-anim");
+      gsap.fromTo(
+        cards,
+        { opacity: 0, y: 15 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.5,
+          stagger: 0.05,
+          ease: "power2.out",
+          clearProps: "all",
+        }
+      );
+    }
+  }, []);
+
   return (
-    <div className="space-y-4 font-sans text-slate-200">
+    <div ref={pageRef} className="space-y-4 font-sans text-[var(--text-primary)]">
       {/* 1. HERO / OVERVIEW SECTION */}
       <div className="relative overflow-hidden py-1 px-1">
         <div className="flex flex-col lg:flex-row items-center justify-between gap-6 relative z-10">
@@ -40,13 +66,13 @@ export const CommandCenterPage: React.FC = () => {
               LIVE ENVIRONMENT • DIGITAL TWIN ACTIVE
             </div>
 
-            <h1 className="text-3xl lg:text-[38px] font-black tracking-wide text-white font-display leading-[1.1] uppercase">
+            <h1 className="text-3xl lg:text-[38px] font-black tracking-wide font-display leading-[1.1] uppercase">
               SEE TOMORROW'S
               <br />
               <span className="text-[#FF3D00]">ATTACKS TODAY.</span>
             </h1>
 
-            <p className="text-xs text-slate-400 font-medium tracking-wide">
+            <p className="text-xs text-[var(--text-secondary)] font-medium tracking-wide">
               Model. Simulate. Analyze. Prevent.
             </p>
 
@@ -61,31 +87,27 @@ export const CommandCenterPage: React.FC = () => {
               </Link>
               <Link
                 to="/twin"
-                className="px-3.5 py-1.5 rounded-lg bg-[#0C0E14] hover:bg-[#151924] border border-[#171B26] text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-all"
+                className="px-3.5 py-1.5 rounded-lg bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-main)] text-[var(--text-primary)] text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm"
               >
-                <Eye className="w-3.5 h-3.5 text-slate-400" />
+                <Eye className="w-3.5 h-3.5 text-[var(--text-muted)]" />
                 <span>Explore Digital Twin</span>
               </Link>
             </div>
           </div>
 
-          {/* Center: Globe & Environment Metrics from reference photo */}
+          {/* Center: Live 3D Cyber Globe (replaces static png) */}
           <div className="flex items-center justify-center">
-            <img
-              src="/hero_globe.png"
-              alt="Live Environment Digital Twin Active"
-              className="h-[145px] object-contain block"
-            />
+            <CyberGlobe3D className="h-[145px] w-[270px]" />
           </div>
 
           {/* Right Quote Callout */}
-          <div className="hidden xl:block max-w-[260px] pl-6 border-l border-[#171B26] text-left space-y-2">
-            <div className="text-xs text-slate-200 font-serif italic leading-snug">
+          <div className="hidden xl:block max-w-[260px] pl-6 border-l border-[var(--border-main)] text-left space-y-2">
+            <div className="text-xs text-[var(--text-primary)] font-serif italic leading-snug">
               “A digital twin
               <br />
               for a safer tomorrow.”
             </div>
-            <div className="text-[10px] text-slate-400 leading-relaxed font-sans">
+            <div className="text-[10px] text-[var(--text-secondary)] leading-relaxed font-sans">
               Model your world.
               <br />
               Stop attacks before they happen.
@@ -97,7 +119,7 @@ export const CommandCenterPage: React.FC = () => {
       {/* 2. MAIN DIGITAL TWIN & RIGHT-SIDE SECURITY PANEL */}
       <div className="grid grid-cols-12 gap-4">
         {/* Left 8 Cols: Main Digital Twin (Centerpiece) */}
-        <div className="col-span-12 lg:col-span-8 rounded-xl bg-[#0C0E14] border border-[#171B26] p-3 flex flex-col shadow-xl">
+        <div className="soc-card-anim col-span-12 lg:col-span-8 rounded-xl bg-[var(--bg-card)] border border-[var(--border-main)] p-3.5 flex flex-col shadow-xl">
           {/* Header */}
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
@@ -105,26 +127,26 @@ export const CommandCenterPage: React.FC = () => {
                 <Layers className="w-3.5 h-3.5" />
               </div>
               <div>
-                <h2 className="text-xs font-bold text-white tracking-wide font-display">
+                <h2 className="text-xs font-bold text-[var(--text-primary)] tracking-wide font-display">
                   Environment Digital Twin
                 </h2>
-                <p className="text-[10px] text-slate-400">
+                <p className="text-[10px] text-[var(--text-secondary)]">
                   Live model of your infrastructure, identities and trust relationships.
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Interactive Topology Viewport (3D & 2D Flow Modes) */}
-          <div className="flex-1 min-h-[380px]">
-            <Tactical3DScene height="h-[380px]" />
+          {/* Interactive Topology Viewport (Real Three.js WebGL & 2D Graph Flow Modes) */}
+          <div className="flex-1 min-h-[390px]">
+            <Tactical3DScene height="h-[390px]" />
           </div>
         </div>
 
         {/* Right 4 Cols: Active Simulation & Top Threat Vectors */}
         <div className="col-span-12 lg:col-span-4 space-y-4">
           {/* Active Simulation Card */}
-          <div className="rounded-xl bg-[#0C0E14] border border-[#171B26] p-3.5 shadow-xl space-y-3">
+          <div className="soc-card-anim rounded-xl bg-[var(--bg-card)] border border-[var(--border-main)] p-3.5 shadow-xl space-y-3">
             {/* Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -132,10 +154,10 @@ export const CommandCenterPage: React.FC = () => {
                   <Activity className="w-3 h-3" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-bold text-white tracking-wide">
+                  <h3 className="text-xs font-bold text-[var(--text-primary)] tracking-wide">
                     Active Simulation
                   </h3>
-                  <p className="text-[9.5px] text-slate-400">Adversary agent in action...</p>
+                  <p className="text-[9.5px] text-[var(--text-secondary)]">Adversary agent in action...</p>
                 </div>
               </div>
 
@@ -148,33 +170,29 @@ export const CommandCenterPage: React.FC = () => {
               </Link>
             </div>
 
-            {/* Gauge & Stepper Grid */}
+            {/* Gauge & Stepper Grid (replaces static png) */}
             <div className="grid grid-cols-12 gap-2 pt-1 items-center">
-              {/* Left: Circular Progress Gauge */}
+              {/* Left: Dynamic SVG Radial Gauge */}
               <div className="col-span-5 flex flex-col items-center justify-center">
-                <img
-                  src="/simulation_gauge.png"
-                  alt="72% Simulation Progress"
-                  className="w-[100px] object-contain block"
-                />
+                <SimulationGauge progress={72} phase="Privilege Escalation" size={105} />
               </div>
 
               {/* Right: Kill Chain Stepper Checklist */}
-              <div className="col-span-7 space-y-1.5 pl-2 border-l border-slate-800/80">
-                <div className="text-[9px] text-slate-400 uppercase font-mono tracking-wider">
+              <div className="col-span-7 space-y-1.5 pl-2 border-l border-[var(--border-main)]">
+                <div className="text-[9px] text-[var(--text-muted)] uppercase font-mono tracking-wider">
                   Current Phase
                 </div>
                 <div className="space-y-1 text-[10px]">
-                  <div className="flex items-center gap-1.5 text-emerald-400">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-400 flex-shrink-0" />
+                  <div className="flex items-center gap-1.5 text-emerald-500">
+                    <CheckCircle2 className="w-3 h-3 flex-shrink-0" />
                     <span>Reconnaissance</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-emerald-400">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-400 flex-shrink-0" />
+                  <div className="flex items-center gap-1.5 text-emerald-500">
+                    <CheckCircle2 className="w-3 h-3 flex-shrink-0" />
                     <span>Initial Access</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-emerald-400">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-400 flex-shrink-0" />
+                  <div className="flex items-center gap-1.5 text-emerald-500">
+                    <CheckCircle2 className="w-3 h-3 flex-shrink-0" />
                     <span>Credential Access</span>
                   </div>
                   <div className="flex items-center gap-1.5 text-[#FF5722] font-semibold">
@@ -183,12 +201,12 @@ export const CommandCenterPage: React.FC = () => {
                     </div>
                     <span>Privilege Escalation</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-slate-600">
-                    <div className="w-3 h-3 rounded-full border border-slate-700 flex-shrink-0" />
+                  <div className="flex items-center gap-1.5 text-[var(--text-muted)]">
+                    <div className="w-3 h-3 rounded-full border border-slate-600/40 flex-shrink-0" />
                     <span>Lateral Movement</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-slate-600">
-                    <div className="w-3 h-3 rounded-full border border-slate-700 flex-shrink-0" />
+                  <div className="flex items-center gap-1.5 text-[var(--text-muted)]">
+                    <div className="w-3 h-3 rounded-full border border-slate-600/40 flex-shrink-0" />
                     <span>Objective Reached</span>
                   </div>
                 </div>
@@ -197,9 +215,9 @@ export const CommandCenterPage: React.FC = () => {
           </div>
 
           {/* Top Threat Vectors Card */}
-          <div className="rounded-xl bg-[#0C0E14] border border-[#171B26] p-3.5 shadow-xl space-y-2.5">
+          <div className="soc-card-anim rounded-xl bg-[var(--bg-card)] border border-[var(--border-main)] p-3.5 shadow-xl space-y-2.5">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold text-white tracking-wide font-display">
+              <h3 className="text-xs font-bold text-[var(--text-primary)] tracking-wide font-display">
                 Top Threat Vectors
               </h3>
               <Link
@@ -221,13 +239,13 @@ export const CommandCenterPage: React.FC = () => {
               ].map((t) => (
                 <div
                   key={t.code}
-                  className="flex items-center justify-between py-1 px-2 rounded-md bg-[#080B10]/80 border border-slate-800/60 text-xs"
+                  className="flex items-center justify-between py-1 px-2 rounded-md bg-[var(--bg-input)] border border-[var(--border-main)] text-xs"
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-mono text-[#FF5722] font-semibold">
                       | {t.code}
                     </span>
-                    <span className="text-slate-200 text-[10.5px] truncate max-w-[140px]">
+                    <span className="text-[var(--text-secondary)] text-[10.5px] truncate max-w-[140px]">
                       {t.name}
                     </span>
                   </div>
@@ -244,7 +262,7 @@ export const CommandCenterPage: React.FC = () => {
       {/* 3. LOWER ANALYTICS: BLAST RADIUS, CONTROL EFFECTIVENESS, REMEDIATION PRIORITIZATION */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
         {/* Module 1: Blast Radius (4 cols) */}
-        <div className="md:col-span-4 rounded-xl bg-[#0C0E14] border border-[#171B26] p-3.5 shadow-xl space-y-2 flex flex-col justify-between">
+        <div className="soc-card-anim md:col-span-4 rounded-xl bg-[var(--bg-card)] border border-[var(--border-main)] p-3.5 shadow-xl space-y-2 flex flex-col justify-between">
           <div>
             {/* Header */}
             <div className="flex items-center justify-between mb-1.5">
@@ -253,8 +271,8 @@ export const CommandCenterPage: React.FC = () => {
                   <Flame className="w-3 h-3" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-bold text-white tracking-wide">Blast Radius</h3>
-                  <p className="text-[9px] text-slate-400">If this asset falls, what's next?</p>
+                  <h3 className="text-xs font-bold text-[var(--text-primary)] tracking-wide">Blast Radius</h3>
+                  <p className="text-[9px] text-[var(--text-secondary)]">If this asset falls, what's next?</p>
                 </div>
               </div>
 
@@ -262,46 +280,42 @@ export const CommandCenterPage: React.FC = () => {
                 <select
                   value={selectedAsset}
                   onChange={(e) => setSelectedAsset(e.target.value)}
-                  className="bg-[#080B10] border border-slate-700 text-slate-200 rounded px-1.5 py-0.5 text-[10px] focus:outline-none focus:border-[#FF5722] font-mono"
+                  className="bg-[var(--bg-input)] border border-[var(--border-main)] text-[var(--text-primary)] rounded px-1.5 py-0.5 text-[10px] focus:outline-none focus:border-[#FF5722] font-mono"
                 >
                   <option value="db-01">db-01</option>
                   <option value="ws-eng-04">ws-eng-04</option>
                   <option value="dc-corp-01">dc-corp-01</option>
                 </select>
-                <Link to="/blast-radius" className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300">
+                <Link to="/blast-radius" className="p-1 rounded bg-[var(--bg-input)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-main)] text-[var(--text-secondary)]">
                   <ArrowRight className="w-2.5 h-2.5" />
                 </Link>
               </div>
             </div>
 
-            {/* Spider Graph & Metrics Split */}
+            {/* Spider Graph & Metrics Split (replaces static png) */}
             <div className="grid grid-cols-12 gap-2 items-center pt-1">
               <div className="col-span-7 h-36 flex items-center justify-center overflow-hidden">
-                <img
-                  src="/blast_radius_spider.png"
-                  alt="db-01 Blast Radius Network"
-                  className="h-full w-full object-contain rounded-lg"
-                />
+                <BlastRadiusGraph assetId={selectedAsset} />
               </div>
 
               <div className="col-span-5 space-y-2.5 font-mono pl-1">
                 <div>
-                  <div className="text-xl font-black text-white leading-none font-display">
+                  <div className="text-xl font-black text-[var(--text-primary)] leading-none font-display">
                     {currentBlast.reachable}
                   </div>
-                  <div className="text-[8.5px] text-slate-400 mt-0.5">Assets Reachable</div>
+                  <div className="text-[8.5px] text-[var(--text-muted)] mt-0.5">Assets Reachable</div>
                 </div>
                 <div>
                   <div className="text-xl font-black text-[#FF3D00] leading-none font-display">
                     {currentBlast.critical}
                   </div>
-                  <div className="text-[8.5px] text-slate-400 mt-0.5">Critical Systems</div>
+                  <div className="text-[8.5px] text-[var(--text-muted)] mt-0.5">Critical Systems</div>
                 </div>
                 <div>
                   <div className="text-xl font-black text-[#FF9800] leading-none font-display">
                     {currentBlast.external}
                   </div>
-                  <div className="text-[8.5px] text-slate-400 mt-0.5">External Connections</div>
+                  <div className="text-[8.5px] text-[var(--text-muted)] mt-0.5">External Conns</div>
                 </div>
               </div>
             </div>
@@ -309,7 +323,7 @@ export const CommandCenterPage: React.FC = () => {
         </div>
 
         {/* Module 2: Control Effectiveness (4 cols) */}
-        <div className="md:col-span-4 rounded-xl bg-[#0C0E14] border border-[#171B26] p-3.5 shadow-xl space-y-2 flex flex-col justify-between">
+        <div className="soc-card-anim md:col-span-4 rounded-xl bg-[var(--bg-card)] border border-[var(--border-main)] p-3.5 shadow-xl space-y-2 flex flex-col justify-between">
           <div>
             {/* Header */}
             <div className="flex items-center justify-between mb-1.5">
@@ -318,10 +332,10 @@ export const CommandCenterPage: React.FC = () => {
                   <Sliders className="w-3 h-3" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-bold text-white tracking-wide">
+                  <h3 className="text-xs font-bold text-[var(--text-primary)] tracking-wide">
                     Control Effectiveness
                   </h3>
-                  <p className="text-[9px] text-slate-400">Test how a control reduces risk.</p>
+                  <p className="text-[9px] text-[var(--text-secondary)]">Test how a control reduces risk.</p>
                 </div>
               </div>
 
@@ -329,7 +343,7 @@ export const CommandCenterPage: React.FC = () => {
                 <select
                   value={selectedControl}
                   onChange={(e) => setSelectedControl(e.target.value)}
-                  className="bg-[#080B10] border border-slate-700 text-slate-200 rounded px-1.5 py-0.5 text-[9.5px] focus:outline-none focus:border-[#FF5722] truncate max-w-[125px]"
+                  className="bg-[var(--bg-input)] border border-[var(--border-main)] text-[var(--text-primary)] rounded px-1.5 py-0.5 text-[9.5px] focus:outline-none focus:border-[#FF5722] truncate max-w-[125px]"
                 >
                   <option value="Network Segmentation">Network Segmentation</option>
                   <option value="Enforce MFA">Enforce MFA (Admin)</option>
@@ -337,26 +351,25 @@ export const CommandCenterPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Split Before / After + 75% Risk Reduction */}
+            {/* Split Before / After + Dynamic Risk Reduction (replaces static png) */}
             <div className="grid grid-cols-12 gap-1 items-center h-36 pt-1">
               <div className="col-span-8 h-full flex items-center justify-center overflow-hidden">
-                <img
-                  src="/control_effectiveness.png"
-                  alt="Before and After Risk Reduction"
-                  className="h-full w-full object-contain rounded-lg"
+                <ControlSimulator
+                  controlType={selectedControl}
+                  onReductionChange={(val) => setRiskReduction(val)}
                 />
               </div>
 
               <div className="col-span-4 flex flex-col items-center justify-center space-y-1 text-center pl-1">
                 <div className="text-2xl font-black text-emerald-400 font-display leading-none">
-                  75%
+                  {riskReduction}%
                 </div>
-                <div className="text-[8px] text-slate-400 uppercase font-mono">Risk Reduction</div>
+                <div className="text-[8px] text-[var(--text-muted)] uppercase font-mono">Risk Reduction</div>
                 <Link
                   to="/defense"
                   className="mt-1 px-2 py-0.5 rounded border border-emerald-500/40 text-emerald-400 hover:bg-emerald-950/40 text-[9px] font-medium flex items-center gap-0.5 transition-all"
                 >
-                  <span>View Comparison</span>
+                  <span>Sandbox</span>
                   <ArrowRight className="w-2.5 h-2.5" />
                 </Link>
               </div>
@@ -365,7 +378,7 @@ export const CommandCenterPage: React.FC = () => {
         </div>
 
         {/* Module 3: Remediation Prioritization (4 cols) */}
-        <div className="md:col-span-4 rounded-xl bg-[#0C0E14] border border-[#171B26] p-3.5 shadow-xl space-y-2.5 flex flex-col justify-between">
+        <div className="soc-card-anim md:col-span-4 rounded-xl bg-[var(--bg-card)] border border-[var(--border-main)] p-3.5 shadow-xl space-y-2.5 flex flex-col justify-between">
           <div>
             {/* Header */}
             <div className="flex items-center justify-between mb-2">
@@ -374,10 +387,10 @@ export const CommandCenterPage: React.FC = () => {
                   <Layers className="w-3.5 h-3.5" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-bold text-white tracking-wide">
+                  <h3 className="text-xs font-bold text-[var(--text-primary)] tracking-wide">
                     Remediation Prioritization
                   </h3>
-                  <p className="text-[9px] text-slate-400">Ranked by critical paths eliminated.</p>
+                  <p className="text-[9px] text-[var(--text-secondary)]">Ranked by critical paths eliminated.</p>
                 </div>
               </div>
             </div>
@@ -393,17 +406,17 @@ export const CommandCenterPage: React.FC = () => {
               ].map((item) => (
                 <div
                   key={item.rank}
-                  className="flex items-center justify-between py-1 px-1.5 rounded hover:bg-slate-900/40 transition-colors"
+                  className="flex items-center justify-between py-1 px-1.5 rounded hover:bg-[var(--bg-card-hover)] transition-colors"
                 >
                   <div className="flex items-center gap-2.5">
-                    <span className="w-3 text-center font-mono text-slate-500 font-bold text-[10px]">
+                    <span className="w-3 text-center font-mono text-[var(--text-muted)] font-bold text-[10px]">
                       {item.rank}
                     </span>
-                    <span className="text-slate-200 text-[10.5px] font-medium truncate max-w-[150px]">
+                    <span className="text-[var(--text-primary)] text-[10.5px] font-medium truncate max-w-[150px]">
                       {item.name}
                     </span>
                   </div>
-                  <span className="text-[9px] font-mono text-emerald-400 font-semibold flex items-center gap-0.5">
+                  <span className="text-[9px] font-mono text-emerald-500 font-semibold flex items-center gap-0.5">
                     <span>↓</span>
                     <span>{item.paths}</span>
                   </span>
