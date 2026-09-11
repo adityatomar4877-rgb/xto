@@ -136,7 +136,7 @@ export const DefenseSandboxPage: React.FC = () => {
 
   if (loading || !twin) {
     return (
-      <div className="flex items-center justify-center h-full font-mono text-cyan-400">
+      <div className="flex items-center justify-center h-full font-mono text-[#FF5722]">
         <Activity className="w-5 h-5 animate-spin mr-2" />
         CLONING IMMUTABLE DIGITAL TWIN SANDBOX...
       </div>
@@ -144,20 +144,20 @@ export const DefenseSandboxPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 font-sans">
+    <div className="space-y-6 font-sans select-none pb-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-xl font-bold tracking-tight text-white font-display flex items-center gap-2">
+            <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white font-display flex items-center gap-2">
               <Sliders className="w-5 h-5 text-[#FF5722]" />
               DEFENSE SANDBOX // VIRTUAL CONTROL VALIDATOR
             </span>
-            <span className="px-2 py-0.5 rounded-full bg-orange-950/70 text-orange-400 border border-orange-500/40 text-[10px] font-bold font-mono">
+            <span className="px-2 py-0.5 rounded-full bg-[#FFF2EB] dark:bg-orange-950/60 text-[#FF5722] border border-[#FF5722]/30 text-[10px] font-bold font-mono">
               CORE USP
             </span>
           </div>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Modify virtual controls in an immutable fork of the digital twin, re-simulate the adversary, and prove what stopped it.
           </p>
         </div>
@@ -166,7 +166,7 @@ export const DefenseSandboxPage: React.FC = () => {
           <button
             onClick={() => runSandbox(activeDefenses)}
             disabled={isSimulating}
-            className="px-4 py-2 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white text-xs font-semibold flex items-center gap-2 transition-all shadow-[0_0_15px_rgba(255,87,34,0.3)] cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-[#FF5722] hover:bg-[#F4511E] text-white text-xs font-semibold flex items-center gap-2 transition-all shadow-xs cursor-pointer disabled:opacity-50"
           >
             <Play className="w-4 h-4" />
             {isSimulating ? "RE-SIMULATING..." : "RE-SIMULATE ATTACK"}
@@ -175,24 +175,24 @@ export const DefenseSandboxPage: React.FC = () => {
       </div>
 
       {/* Scenario Parameters Bar */}
-      <div className="p-4 rounded-xl bg-[#0D111A] border border-[#1E2638] flex items-center justify-between text-xs text-slate-300 shadow-lg">
-        <div className="flex items-center gap-6">
+      <div className="p-4 rounded-xl bg-white dark:bg-[#0C0E14] border border-[#E5E7EB] dark:border-[#171B26] flex items-center justify-between text-xs text-slate-800 dark:text-slate-200 shadow-xs">
+        <div className="flex items-center gap-6 font-mono text-xs">
           <div>
-            THREAT: <span className="text-[#00E5FF] font-bold">{threatId}</span>
+            THREAT: <span className="text-[#FF5722] font-bold">{threatId}</span>
           </div>
           <div>
-            ADVERSARY: <span className="text-red-400 font-bold">{persona}</span>
+            ADVERSARY: <span className="text-red-600 dark:text-red-400 font-bold">{persona}</span>
           </div>
           <div>
-            FOOTHOLD: <span className="text-amber-400 font-bold">{footholdId}</span>
+            FOOTHOLD: <span className="text-slate-900 dark:text-white font-bold">{footholdId}</span>
           </div>
           <div>
-            TARGET: <span className="text-white font-bold">{targetId}</span>
+            TARGET: <span className="text-slate-900 dark:text-white font-bold">{targetId}</span>
           </div>
         </div>
 
-        <span className="text-[11px] text-emerald-400 font-semibold flex items-center gap-1.5">
-          <ShieldCheck className="w-3.5 h-3.5" />
+        <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1.5">
+          <ShieldCheck className="w-4 h-4" />
           BASELINE ENVIRONMENT IMMUTABLE & UNTOUCHED
         </span>
       </div>
@@ -201,9 +201,9 @@ export const DefenseSandboxPage: React.FC = () => {
       <div className="grid grid-cols-12 gap-6">
         {/* Left Column: Virtual Control Toggles */}
         <div className="col-span-5 space-y-3">
-          <div className="text-xs text-slate-400 font-bold uppercase tracking-wider flex items-center justify-between">
+          <div className="text-xs text-slate-500 uppercase tracking-wider flex items-center justify-between font-semibold">
             <span>TOGGLE VIRTUAL DEFENSIVE CONTROLS</span>
-            <span className="text-amber-400 text-[10px]">
+            <span className="text-[#FF5722] text-[10px] font-mono font-bold">
               {Object.values(activeDefenses).filter(Boolean).length} ACTIVE
             </span>
           </div>
@@ -216,33 +216,33 @@ export const DefenseSandboxPage: React.FC = () => {
                 <div
                   key={def.id}
                   onClick={() => toggleDefense(def.id)}
-                  className={`p-3.5 rounded-lg border cursor-pointer transition-all ${
+                  className={`p-3.5 rounded-xl border cursor-pointer transition-all shadow-xs ${
                     isEnabled
-                      ? "bg-amber-950/20 border-amber-500/50 shadow-[0_0_15px_rgba(255,179,0,0.1)] text-white"
-                      : "bg-[#0B0E14]/80 border-slate-800 text-slate-400 hover:border-slate-700"
+                      ? "bg-[#FFF5EE] dark:bg-orange-950/20 border-[#FFCCBA] dark:border-[#FF5722]/40 text-slate-900 dark:text-white"
+                      : "bg-white dark:bg-[#0C0E14] border-[#E5E7EB] dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700"
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1.5">
                     <div className="flex items-center gap-2">
-                      <Icon className={`w-4 h-4 ${isEnabled ? "text-[#FFB300]" : "text-slate-500"}`} />
-                      <span className={`text-xs font-bold ${isEnabled ? "text-white" : "text-slate-400"}`}>
+                      <Icon className={`w-4 h-4 ${isEnabled ? "text-[#FF5722]" : "text-slate-400"}`} />
+                      <span className={`text-xs font-bold ${isEnabled ? "text-slate-900 dark:text-white" : "text-slate-600 dark:text-slate-400"}`}>
                         {def.name}
                       </span>
                     </div>
 
                     <span
-                      className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
+                      className={`text-[9.5px] px-2 py-0.5 rounded-full font-bold uppercase font-mono ${
                         isEnabled
-                          ? "bg-amber-500 text-black shadow-[0_0_10px_rgba(255,179,0,0.5)]"
-                          : "bg-slate-900 text-slate-500 border border-slate-800"
+                          ? "bg-[#FF5722] text-white shadow-xs"
+                          : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700"
                       }`}
                     >
                       {isEnabled ? "ENABLED" : "DISABLED"}
                     </span>
                   </div>
 
-                  <p className="text-[11px] text-slate-400 leading-relaxed">{def.description}</p>
-                  <div className="mt-2 text-[10px] text-cyan-400">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">{def.description}</p>
+                  <div className="mt-2 text-[10px] text-[#FF5722] font-mono font-semibold">
                     SCOPE: {def.target_scope.join(", ")}
                   </div>
                 </div>
@@ -253,10 +253,10 @@ export const DefenseSandboxPage: React.FC = () => {
 
         {/* Right Column: Live Decision Proof & Before vs After Diff */}
         <div className="col-span-7 space-y-4">
-          <div className="text-xs text-slate-400 font-bold uppercase tracking-wider flex items-center justify-between">
+          <div className="text-xs text-slate-500 uppercase tracking-wider flex items-center justify-between font-semibold">
             <span>DECISION PROOF OUTPUT (CORE USP)</span>
             {isSimulating && (
-              <span className="text-amber-400 text-[11px] flex items-center gap-1 animate-pulse">
+              <span className="text-[#FF5722] text-[11px] flex items-center gap-1 font-mono animate-pulse">
                 <Activity className="w-3.5 h-3.5 animate-spin" />
                 CALCULATING PATH ELIMINATIONS...
               </span>
@@ -266,7 +266,7 @@ export const DefenseSandboxPage: React.FC = () => {
           {comparison ? (
             <DecisionProofCard proof={comparison.decision_proof} />
           ) : (
-            <div className="p-12 rounded-lg bg-[#0B0E14]/90 border border-slate-800 text-center text-xs text-slate-400">
+            <div className="p-12 rounded-xl bg-white dark:bg-[#0C0E14] border border-[#E5E7EB] dark:border-slate-800 text-center text-xs text-slate-400 shadow-xs">
               Toggle virtual controls on the left to generate the Decision Proof.
             </div>
           )}
@@ -275,3 +275,4 @@ export const DefenseSandboxPage: React.FC = () => {
     </div>
   );
 };
+

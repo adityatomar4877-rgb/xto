@@ -37,7 +37,7 @@ export const EnvironmentSyncPage: React.FC = () => {
 
   if (loading || !twin) {
     return (
-      <div className="flex items-center justify-center h-full font-mono text-cyan-400">
+      <div className="flex items-center justify-center h-full font-mono text-[#FF5722]">
         <Activity className="w-5 h-5 animate-spin mr-2" />
         CONNECTING TO SYNCHRONIZATION ENGINE...
       </div>
@@ -45,15 +45,15 @@ export const EnvironmentSyncPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 font-mono">
+    <div className="space-y-6 font-sans select-none pb-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-            <RefreshCw className="w-5 h-5 text-[#00E5FF]" />
+          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2 font-display">
+            <RefreshCw className="w-5 h-5 text-[#FF5722]" />
             CONTINUOUS ENVIRONMENT SYNCHRONIZATION
           </h1>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-normal">
             Detect environment drift, invalidate stale attack paths, and recompute risk state across digital twin versions.
           </p>
         </div>
@@ -61,7 +61,7 @@ export const EnvironmentSyncPage: React.FC = () => {
         <button
           onClick={handleTriggerSync}
           disabled={syncing}
-          className="px-4 py-2 rounded bg-[#00E5FF]/20 border border-[#00E5FF]/50 text-[#00E5FF] hover:bg-[#00E5FF]/30 text-xs font-bold flex items-center gap-2 transition-all shadow-[0_0_15px_rgba(0,229,255,0.2)]"
+          className="px-4 py-2 rounded-xl bg-[#FF5722] hover:bg-[#F4511E] text-white text-xs font-semibold flex items-center gap-2 transition-all shadow-xs cursor-pointer disabled:opacity-50"
         >
           <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
           {syncing ? "SYNCHRONIZING..." : "TRIGGER LIVE SYNC"}
@@ -69,59 +69,59 @@ export const EnvironmentSyncPage: React.FC = () => {
       </div>
 
       {/* Sync Status Banner */}
-      <div className="p-4 rounded-lg bg-[#0B0E14]/90 border border-cyan-500/30 grid grid-cols-4 gap-4 text-xs">
+      <div className="p-4 rounded-xl bg-white dark:bg-[#0C0E14] border border-[#E5E7EB] dark:border-[#171B26] grid grid-cols-4 gap-4 text-xs font-mono shadow-xs">
         <div>
-          <div className="text-[10px] text-slate-400 uppercase">ACTIVE SNAPSHOT</div>
-          <div className="text-lg font-bold text-white mt-0.5">{twin.snapshot_id}</div>
-          <div className="text-[10px] text-cyan-400">Version {twin.version}</div>
+          <div className="text-[10px] text-slate-500 uppercase font-semibold">ACTIVE SNAPSHOT</div>
+          <div className="text-lg font-bold text-slate-900 dark:text-white mt-0.5">{twin.snapshot_id}</div>
+          <div className="text-[10px] text-[#FF5722] font-semibold">Version {twin.version}</div>
         </div>
 
         <div>
-          <div className="text-[10px] text-slate-400 uppercase">SYNC STATUS</div>
-          <div className="text-lg font-bold text-emerald-400 mt-0.5">SYNCHRONIZED</div>
+          <div className="text-[10px] text-slate-500 uppercase font-semibold">SYNC STATUS</div>
+          <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">SYNCHRONIZED</div>
           <div className="text-[10px] text-slate-400">0 ms drift detected</div>
         </div>
 
         <div>
-          <div className="text-[10px] text-slate-400 uppercase">MONITORED ASSETS</div>
-          <div className="text-lg font-bold text-white mt-0.5">{twin.assets.length} NODES</div>
+          <div className="text-[10px] text-slate-500 uppercase font-semibold">MONITORED ASSETS</div>
+          <div className="text-lg font-bold text-slate-900 dark:text-white mt-0.5">{twin.assets.length} NODES</div>
           <div className="text-[10px] text-slate-400">{twin.relationships.length} active edges</div>
         </div>
 
         <div>
-          <div className="text-[10px] text-slate-400 uppercase">PATH VALIDATION</div>
-          <div className="text-lg font-bold text-[#00E5FF] mt-0.5">VERIFIED</div>
-          <div className="text-[10px] text-slate-400">Zero stale paths cached</div>
+          <div className="text-[10px] text-slate-500 uppercase font-semibold">PATH VALIDATION</div>
+          <div className="text-lg font-bold text-slate-900 dark:text-white mt-0.5">VERIFIED</div>
+          <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">Zero stale paths cached</div>
         </div>
       </div>
 
       {/* Sync Trigger Output */}
       {syncResult && (
-        <div className="p-4 rounded-lg bg-emerald-950/20 border border-emerald-500/40 text-xs space-y-2">
-          <div className="flex items-center gap-2 text-emerald-400 font-bold">
+        <div className="p-4 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-500/40 text-xs space-y-2 font-mono">
+          <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-bold">
             <CheckCircle2 className="w-4 h-4" />
             SYNCHRONIZATION COMPLETED: {syncResult.status}
           </div>
-          <p className="text-slate-200">{syncResult.message || `Discovered changes; invalidated stale attack paths and updated snapshot to '${syncResult.snapshot_id}'.`}</p>
+          <p className="text-slate-700 dark:text-slate-200 leading-relaxed">{syncResult.message || `Discovered changes; invalidated stale attack paths and updated snapshot to '${syncResult.snapshot_id}'.`}</p>
         </div>
       )}
 
       {/* Environment Change Log */}
-      <div className="p-5 rounded-lg bg-[#0B0E14]/90 border border-slate-800 space-y-4">
-        <div className="text-xs text-slate-300 font-bold uppercase tracking-wider border-b border-slate-800 pb-2 flex items-center justify-between">
+      <div className="p-5 rounded-xl bg-white dark:bg-[#0C0E14] border border-[#E5E7EB] dark:border-slate-800 shadow-xs space-y-4">
+        <div className="text-xs text-slate-500 font-bold uppercase tracking-wider border-b border-[#F1F3F5] dark:border-slate-800 pb-2 flex items-center justify-between font-mono">
           <span>ENVIRONMENT CHANGE AUDIT LOG</span>
-          <span className="text-slate-400 text-[10px]">{changes.length} RECORDED DRIFTS</span>
+          <span className="text-[#FF5722] text-[10px]">{changes.length} RECORDED DRIFTS</span>
         </div>
 
         <div className="space-y-2.5">
           {changes.length > 0 ? (
             changes.map((ch: any) => (
-              <div key={ch.change_id} className="p-3 rounded bg-slate-950 border border-slate-800/80 text-xs flex items-center justify-between">
+              <div key={ch.change_id} className="p-3 rounded-lg bg-[#F8F9FA] dark:bg-[#07090D] border border-[#E5E7EB] dark:border-slate-800 text-xs flex items-center justify-between font-mono">
                 <div className="flex items-center gap-3">
-                  <span className="text-[#00E5FF] font-bold">{ch.change_id}</span>
+                  <span className="text-[#FF5722] font-bold">{ch.change_id}</span>
                   <div>
-                    <span className="text-white font-semibold">{ch.change_type}: </span>
-                    <span className="text-slate-300">Target {ch.target_id}</span>
+                    <span className="text-slate-900 dark:text-white font-semibold">{ch.change_type}: </span>
+                    <span className="text-slate-600 dark:text-slate-300">Target {ch.target_id}</span>
                   </div>
                 </div>
                 <div className="text-[10px] text-slate-400">
@@ -139,3 +139,4 @@ export const EnvironmentSyncPage: React.FC = () => {
     </div>
   );
 };
+
