@@ -1,5 +1,7 @@
+import json
+from pathlib import Path
 from typing import Any, Dict, List, Optional
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel
 
 from app.schemas.twin import (
@@ -55,6 +57,8 @@ from app.schemas.lab import (
     NaturalLanguageQueryResult,
     SimulationSummaryItem,
     AutomatedAuditReport,
+    SupportedFormatInfo,
+    IngestionResponse,
 )
 from app.core.dependencies import (
     get_twin,
@@ -75,6 +79,7 @@ from app.core.dependencies import (
     get_nl_query_engine,
     get_defense_sandbox,
     get_audit_engine,
+    get_ingestion_engine,
 )
 from xto_core.graph.security_graph import SecurityGraph
 from xto_core.graph.path_engine import AttackPathEngine
@@ -89,7 +94,7 @@ _simulation_history: Dict[str, Any] = {}
 
 # ── Health ───────────────────────────────────────────────────────────────────
 
-@router.get("/health")
+@router.api_route("/health", methods=["GET", "HEAD"])
 def health_check():
     twin = get_twin()
     topo = twin.get_topology()
@@ -641,3 +646,91 @@ def run_autonomous_audit():
         return audit_engine.run_full_audit()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Automated audit execution failure: {str(e)}")
+
+
+# ── Feature #13: Real Scan & Telemetry Ingestion ──────────────────────────────
+
+@router.get("/ingest/formats", response_model=List[SupportedFormatInfo])
+def get_supported_ingestion_formats():
+    """Returns list of supported scanner and telemetry formats (Nmap XML/JSON, Nessus CSV/JSON, BloodHound)."""
+    engine = get_ingestion_engine()
+    return engine.get_supported_formats()
+
+
+@router.post("/ingest/upload", response_model=IngestionResponse)
+async def upload_scan_file(
+    request: Request,
+    mode: str = "MERGE",
+    filename: Optional[str] = None,
+):
+    """Upload and parse real-world scan files (Nmap, Nessus, BloodHound, or Digital Twin JSON).
+    Accepts JSON payload { content, filename, mode } or raw text/file body.
+    """
+    engine = get_ingestion_engine()
+    try:
+        content_type = request.headers.get("content-type", "")
+        if "application/json" in content_type:
+            data = await request.json()
+            content_str = data.get("content", "")
+            fname = data.get("filename") or filename or "uploaded_scan.json"
+            ingest_mode = data.get("mode") or mode
+        else:
+            body = await request.body()
+            content_str = body.decode("utf-8", errors="replace")
+            fname = filename or request.headers.get("x-filename", "uploaded_scan")
+            ingest_mode = mode
+        return engine.ingest(content=content_str, filename=fname, mode=ingest_mode)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to ingest scan file: {str(e)}")
+
+
+@router.post("/ingest/raw", response_model=IngestionResponse)
+def ingest_raw_scan(
+    payload: Dict[str, Any],
+    mode: str = "MERGE",
+):
+    """Ingest raw scan text/JSON content without multipart upload."""
+    engine = get_ingestion_engine()
+    content = payload.get("content") or json.dumps(payload)
+    filename = payload.get("filename", "raw_payload.json")
+    try:
+        return engine.ingest(content=content, filename=filename, mode=mode)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to ingest raw content: {str(e)}")
+
+
+@router.post("/ingest/sample", response_model=IngestionResponse)
+def load_sample_scan(
+    sample_id: str = "nmap",
+    mode: str = "MERGE",
+):
+    """Load pre-packaged real-world scan file sample (nmap, nessus, bloodhound)."""
+    engine = get_ingestion_engine()
+    samples_dir = Path(__file__).parent.parent.parent / "samples"
+    
+    file_map = {
+        "nmap": ("enterprise_nmap_scan.xml", samples_dir / "enterprise_nmap_scan.xml"),
+        "nessus": ("nessus_vulnerability_report.json", samples_dir / "nessus_vulnerability_report.json"),
+        "bloodhound": ("bloodhound_ad_graph.json", samples_dir / "bloodhound_ad_graph.json"),
+    }
+    
+    target = file_map.get(sample_id.lower())
+    if not target or not target[1].exists():
+        raise HTTPException(status_code=404, detail=f"Sample scan '{sample_id}' not found")
+        
+    filename, path = target
+    try:
+        content = path.read_text(encoding="utf-8")
+        return engine.ingest(content=content, filename=filename, mode=mode)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to load sample {sample_id}: {str(e)}")
+
+
+@router.post("/twin/reset")
+def reset_digital_twin_to_default():
+    """Reset Digital Twin topology back to default corporate reference environment."""
+    engine = get_ingestion_engine()
+    try:
+        return engine.reset_to_default()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to reset twin: {str(e)}")

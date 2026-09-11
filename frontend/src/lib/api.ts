@@ -115,6 +115,44 @@ export interface Asset {
   identities: string[];
   is_compromised: boolean;
   criticality_score: number;
+  login_history?: LoginEvent[];
+  traffic_flows?: TrafficFlow[];
+  process_activity?: ProcessEvent[];
+  behavioural_baseline?: BehaviouralBaseline | null;
+  anomaly_score?: number;
+}
+
+export interface LoginEvent {
+  timestamp: string;
+  user: string;
+  source_ip: string;
+  success: boolean;
+  auth_method: string;
+}
+
+export interface TrafficFlow {
+  timestamp: string;
+  dest_ip: string;
+  dest_port: number;
+  protocol: string;
+  bytes_transferred: number;
+  direction: string;
+}
+
+export interface ProcessEvent {
+  timestamp: string;
+  process_name: string;
+  user: string;
+  command_line: string;
+  is_anomalous: boolean;
+}
+
+export interface BehaviouralBaseline {
+  normal_login_hours: string;
+  normal_source_ips: string[];
+  normal_destinations: string[];
+  baseline_avg_outbound_bytes: number;
+  whitelisted_processes: string[];
 }
 
 export interface DigitalTwinTopology {
@@ -432,16 +470,136 @@ export interface AttackPathAnalysisResponse {
   chokepoints: any[];
 }
 
+export interface BlastRadiusAsset {
+  id: string;
+  name: string;
+  zone: string;
+  criticality: string;
+  ip?: string;
+  hop_distance?: number;
+  criticality_score?: number;
+}
+
+export interface BlastRadiusIdentity {
+  id: string;
+  name: string;
+  role: string;
+  privilege: string;
+  privilege_level?: string;
+  credential_state?: string;
+  located_on_asset?: string;
+}
+
 export interface BlastRadiusResponse {
-  asset_id: string;
+  compromised_asset_id: string;
   asset_name: string;
+  asset_zone: string;
+  asset_criticality: string;
+  max_depth_evaluated: number;
+  attack_depth: number;
+  direct_impact_count: number;
+  direct_impact_assets: BlastRadiusAsset[];
+  directly_reachable_assets: BlastRadiusAsset[];
+  indirect_impact_count: number;
+  indirect_impact_assets: BlastRadiusAsset[];
+  indirectly_reachable_assets: BlastRadiusAsset[];
+  critical_crown_jewels_threatened: BlastRadiusAsset[];
+  affected_identities: BlastRadiusIdentity[];
+  reachable_identities: BlastRadiusIdentity[];
+  privilege_escalation_opportunities: any[];
+  total_path_count: number;
+  maximum_impact_score: number;
   total_reachable_assets: number;
   total_blast_radius_percent: number;
-  direct_impact_count: number;
-  indirect_impact_count: number;
-  critical_crown_jewels_threatened: any[];
-  direct_reachability: any[];
-  indirect_reachability: any[];
+  relationship_evidence: any[];
+  summary: string;
+}
+
+export interface ResilienceScoreResult {
+  resilience_score: number;
+  posture_rating: string;
+  total_attack_paths_count: number;
+  independent_path_clusters: number;
+  single_points_of_failure: any[];
+  chokepoint_assets: any[];
+  factor_breakdown: {
+    path_redundancy_score: number;
+    control_density_score: number;
+    chokepoint_mitigation_score: number;
+    depth_defense_score: number;
+    privilege_tiering_score: number;
+  };
+  calculation_methodology: string;
+  improvement_recommendations: string[];
+}
+
+export interface NaturalLanguageQueryResult {
+  query: string;
+  detected_intent: string;
+  target_entities: string[];
+  deterministic_answer: string;
+  supporting_metrics: Record<string, any>;
+  relevant_paths: Record<string, any>[] | null;
+  recommended_action: string | null;
+}
+
+export interface SimulationSummaryItem {
+  simulation_id: string;
+  simulation_type: string;
+  timestamp: string;
+  initial_foothold_id: string;
+  target_objective_id: string;
+  outcome: string;
+  blast_radius_percent?: number;
+  events_count?: number;
+  risk_reduction_percent?: number;
+  total_rounds?: number;
+}
+
+export interface RedBlueSimulationResult {
+  simulation_id: string;
+  started_at: string;
+  completed_at: string;
+  initial_foothold_id: string;
+  target_objective_id: string;
+  outcome: string;
+  total_rounds: number;
+  total_risk_reduction_percent: number;
+  rounds: any[];
+  summary: string;
+}
+
+export interface SnapshotSummary {
+  snapshot_id: string;
+  name: string;
+  version: number;
+  timestamp: string;
+  asset_count: number;
+  control_count: number;
+}
+
+export interface SupportedFormatInfo {
+  format_id: string;
+  name: string;
+  extension: string;
+  description: string;
+  sample_available: boolean;
+}
+
+export interface IngestionResponse {
+  status: string;
+  source_format: string;
+  filename: string;
+  mode: string;
+  snapshot_id: string;
+  assets_imported: number;
+  relationships_created: number;
+  vulnerabilities_ingested: number;
+  identities_mapped: number;
+  critical_crown_jewels_identified: string[];
+  viable_attack_paths_count: number;
+  message: string;
+  timestamp: string;
 }
 
 export interface VulnerabilityFinding {
@@ -504,12 +662,27 @@ export interface RemediationTask {
   reasoning: string;
 }
 
+export interface BehaviouralAnomalyFinding {
+  anomaly_id: string;
+  asset_id: string;
+  asset_name: string;
+  anomaly_type: string;
+  severity: string;
+  description: string;
+  detected_at: string;
+  evidence: Record<string, any>;
+  mitre_technique: string;
+  recommended_action: string;
+}
+
 export interface AutomatedAuditReport {
   audit_id: string;
   generated_at: string;
   assets_scanned_count: number;
   vulnerabilities_detected_count: number;
   vulnerabilities: VulnerabilityFinding[];
+  behavioural_anomalies_count?: number;
+  behavioural_anomalies?: BehaviouralAnomalyFinding[];
   viable_attack_paths_count: number;
   attack_paths: AuditedAttackPath[];
   chokepoints: ChokepointAnalysis[];
@@ -523,7 +696,7 @@ export interface AutomatedAuditReport {
 
 // ── API Client Helper ─────────────────────────────────────────────────────────
 
-const API_BASE = "";
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
 
 async function request<T>(endpoint: string, init?: RequestInit): Promise<T> {
   const url = endpoint.startsWith("http") ? endpoint : `${API_BASE}${endpoint}`;
@@ -666,4 +839,68 @@ export const api = {
     }),
   getAutomatedAudit: () =>
     request<AutomatedAuditReport>("/api/automation/audit"),
+
+  // Resilience Score (Feature #9)
+  getResilience: () =>
+    request<ResilienceScoreResult>("/api/resilience"),
+
+  // Natural Language Query (Feature #10)
+  processNaturalLanguageQuery: (query: string) =>
+    request<NaturalLanguageQueryResult>("/api/queries/natural-language", {
+      method: "POST",
+      body: JSON.stringify({ query }),
+    }),
+
+  // Simulation History (Feature #11)
+  listSimulations: () =>
+    request<SimulationSummaryItem[]>("/api/simulations"),
+
+  // Red / Blue Simulation (Feature #2)
+  runRedBlueSimulation: (req: { initial_foothold_id: string; target_objective_id: string }) =>
+    request<RedBlueSimulationResult>("/api/simulations/red-blue", {
+      method: "POST",
+      body: JSON.stringify(req),
+    }),
+
+  // Snapshot Time Machine (Feature #8)
+  createSnapshot: (name: string) =>
+    request<any>("/api/snapshots", {
+      method: "POST",
+      body: JSON.stringify({ name }),
+    }),
+  listSnapshots: () =>
+    request<SnapshotSummary[]>("/api/snapshots"),
+  getSnapshot: (snapshotId: string) =>
+    request<any>(`/api/snapshots/${encodeURIComponent(snapshotId)}`),
+  compareSnapshots: (snapshotAId: string, snapshotBId: string) =>
+    request<any>("/api/snapshots/compare", {
+      method: "POST",
+      body: JSON.stringify({ snapshot_a_id: snapshotAId, snapshot_b_id: snapshotBId }),
+    }),
+
+  // Real Scan Ingestion (Feature #13)
+  getIngestionFormats: () =>
+    request<SupportedFormatInfo[]>("/api/ingest/formats"),
+  uploadScanFile: async (file: File, mode: string = "MERGE") => {
+    const text = await file.text();
+    return request<IngestionResponse>(`/api/ingest/upload?mode=${mode}`, {
+      method: "POST",
+      body: JSON.stringify({
+        content: text,
+        filename: file.name,
+        mode: mode,
+      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  },
+  loadSampleScan: (sampleId: string, mode: string = "MERGE") =>
+    request<IngestionResponse>(`/api/ingest/sample?sample_id=${encodeURIComponent(sampleId)}&mode=${mode}`, {
+      method: "POST",
+    }),
+  resetTwin: () =>
+    request<any>("/api/twin/reset", {
+      method: "POST",
+    }),
 };

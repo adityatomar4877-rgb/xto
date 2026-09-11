@@ -40,6 +40,8 @@ class SecurityTwin:
         self._controls_map: Dict[str, SecurityControl] = {c.id: c for c in self._topology.controls}
         self._relationships_map: Dict[str, Relationship] = {r.id: r for r in self._topology.relationships}
 
+    _refresh_indices = _rebuild_indices
+
     # ── Inspection & Querying ───────────────────────────────────────────────
 
     def get_topology(self) -> DigitalTwinTopology:

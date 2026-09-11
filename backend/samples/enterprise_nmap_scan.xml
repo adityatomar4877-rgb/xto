@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<nmaprun scanner="nmap" args="nmap -sS -sV -O -p- 10.100.0.0/24" start="1710182400" version="7.94">
+  <!-- Host 1: DMZ Web Server -->
+  <host starttime="1710182405" endtime="1710182430">
+    <status state="up" reason="arp-response"/>
+    <address addr="192.168.10.15" addrtype="ipv4"/>
+    <hostnames>
+      <hostname name="web-portal-prod-01.corp.internal" type="PTR"/>
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="80">
+        <state state="open" reason="syn-ack"/>
+        <service name="http" product="nginx" version="1.24.0"/>
+      </port>
+      <port protocol="tcp" portid="443">
+        <state state="open" reason="syn-ack"/>
+        <service name="https" product="nginx" version="1.24.0"/>
+        <script id="vulners" output="CVE-2023-38606 8.6 SQL Injection in Customer Portal API"/>
+      </port>
+    </ports>
+    <os>
+      <osmatch name="Ubuntu Linux 22.04 LTS" accuracy="98"/>
+    </os>
+  </host>
+
+  <!-- Host 2: Core Domain Controller -->
+  <host starttime="1710182435" endtime="1710182470">
+    <status state="up" reason="arp-response"/>
+    <address addr="10.100.1.10" addrtype="ipv4"/>
+    <hostnames>
+      <hostname name="dc-primary-ad-01.corp.internal" type="PTR"/>
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="53">
+        <state state="open" reason="syn-ack"/>
+        <service name="domain" product="Microsoft DNS" version="2022"/>
+      </port>
+      <port protocol="tcp" portid="88">
+        <state state="open" reason="syn-ack"/>
+        <service name="kerberos-sec" product="Microsoft Windows Kerberos" version="2022"/>
+      </port>
+      <port protocol="tcp" portid="389">
+        <state state="open" reason="syn-ack"/>
+        <service name="ldap" product="Microsoft Windows Active Directory LDAP" version="2022"/>
+      </port>
+      <port protocol="tcp" portid="445">
+        <state state="open" reason="syn-ack"/>
+        <service name="microsoft-ds" product="Microsoft Windows Server 2022 SMB" version="10.0"/>
+        <script id="smb-vuln-cve-2020-1472" output="CVE-2020-1472 10.0 ZeroLogon Netlogon Elevation of Privilege"/>
+      </port>
+    </ports>
+    <os>
+      <osmatch name="Microsoft Windows Server 2022 Datacenter" accuracy="100"/>
+    </os>
+  </host>
+
+  <!-- Host 3: Database Server -->
+  <host starttime="1710182475" endtime="1710182510">
+    <status state="up" reason="arp-response"/>
+    <address addr="10.250.1.20" addrtype="ipv4"/>
+    <hostnames>
+      <hostname name="postgres-fin-cluster.corp.internal" type="PTR"/>
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="22">
+        <state state="open" reason="syn-ack"/>
+        <service name="ssh" product="OpenSSH" version="8.9p1"/>
+      </port>
+      <port protocol="tcp" portid="5432">
+        <state state="open" reason="syn-ack"/>
+        <service name="postgresql" product="PostgreSQL Database Server" version="15.4"/>
+      </port>
+    </ports>
+    <os>
+      <osmatch name="Red Hat Enterprise Linux 9.2" accuracy="95"/>
+    </os>
+  </host>
+
+  <!-- Host 4: Production Application Microservice -->
+  <host starttime="1710182515" endtime="1710182540">
+    <status state="up" reason="arp-response"/>
+    <address addr="10.100.2.14" addrtype="ipv4"/>
+    <hostnames>
+      <hostname name="api-core-banking-01.corp.internal" type="PTR"/>
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="8080">
+        <state state="open" reason="syn-ack"/>
+        <service name="http-proxy" product="Spring Boot JVM" version="2.7.0"/>
+        <script id="vulners" output="CVE-2021-44228 10.0 Apache Log4j2 JNDI Remote Code Execution"/>
+      </port>
+    </ports>
+    <os>
+      <osmatch name="Debian GNU/Linux 11 (bullseye)" accuracy="94"/>
+    </os>
+  </host>
+
+  <!-- Host 5: Immutable Ransomware Backup Repository -->
+  <host starttime="1710182545" endtime="1710182570">
+    <status state="up" reason="arp-response"/>
+    <address addr="10.250.99.10" addrtype="ipv4"/>
+    <hostnames>
+      <hostname name="backup-vault-immutable-01.corp.internal" type="PTR"/>
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="445">
+        <state state="open" reason="syn-ack"/>
+        <service name="microsoft-ds" product="Veeam Hardened Linux / SMB Service" version="12.1"/>
+      </port>
+      <port protocol="tcp" portid="6160">
+        <state state="open" reason="syn-ack"/>
+        <service name="veeam-agent" product="Veeam Transport Service" version="12.1"/>
+      </port>
+    </ports>
+    <os>
+      <osmatch name="Ubuntu Linux 22.04 LTS Hardened" accuracy="96"/>
+    </os>
+  </host>
+</nmaprun>

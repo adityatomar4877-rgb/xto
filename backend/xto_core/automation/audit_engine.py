@@ -9,6 +9,7 @@ from app.schemas.lab import (
     AuditedAttackPath,
     ChokepointAnalysis,
     RemediationTask,
+    BehaviouralAnomalyFinding,
 )
 from xto_core.twin.security_twin import SecurityTwin
 from xto_core.graph.security_graph import SecurityGraph
@@ -63,8 +64,11 @@ class AutonomousAuditEngine:
                             f"Deploy security vendor hotfix for {vuln.cve} or isolate {asset.id} port "
                             f"{vuln.affected_service or 'service'}."
                         ),
-                    )
                 )
+            )
+
+        # ── Step 1b: Behavioural Anomaly Detection ────────────────────────────
+        behavioural_findings: List[BehaviouralAnomalyFinding] = self._scan_behavioural(assets)
 
         # ── Step 2: Attack Path Tracing from Vulnerable Assets ────────────────
         crown_jewels = ["VAULT-BACKUP-01", "DB-PROD-01", "DC-CORP-01"]
@@ -222,9 +226,14 @@ class AutonomousAuditEngine:
 
         # ── Step 6: Executive Verdict & Summary ───────────────────────────────
         verdict = "CRITICAL_ACTION_REQUIRED" if len(vulnerabilities) > 0 and len(audited_paths) > 5 else "STABLE"
+        anomaly_count = len(behavioural_findings)
+        critical_anoms = sum(1 for f in behavioural_findings if f.severity == "CRITICAL")
         summary = (
             f"Autonomous security audit scanned {len(assets)} enterprise assets and detected {len(vulnerabilities)} "
             f"active CVE vulnerabilities (including {sum(1 for v in vulnerabilities if v.severity == 'CRITICAL')} Critical). "
+            f"Behavioural anomaly analysis surfaced {anomaly_count} suspicious activity indicators "
+            f"({critical_anoms} Critical), including off-hours logins, brute-force authentication patterns, "
+            f"data-exfiltration traffic, and privilege-escalation behaviour. "
             f"Adversary pathfinding mapped {len(audited_paths)} viable lateral paths reaching Crown Jewels. "
             f"Domain Controller DC-CORP-01 and DevOps endpoint WS-ENG-04 were identified as primary chokepoints. "
             f"Executing the 5 synthesized remediations will eliminate 100% of critical ransomware paths and boost "
@@ -238,6 +247,8 @@ class AutonomousAuditEngine:
             assets_scanned_count=len(assets),
             vulnerabilities_detected_count=len(vulnerabilities),
             vulnerabilities=vulnerabilities,
+            behavioural_anomalies_count=anomaly_count,
+            behavioural_anomalies=behavioural_findings,
             viable_attack_paths_count=len(audited_paths),
             attack_paths=audited_paths,
             chokepoints=chokepoints,
@@ -248,3 +259,188 @@ class AutonomousAuditEngine:
             executive_verdict=verdict,
             executive_summary=summary,
         )
+
+    # ── Behavioural anomaly detection ────────────────────────────────────────
+    _ANOM_COUNTER = 0
+
+    def _next_anom_id(self) -> str:
+        type(self)._ANOM_COUNTER += 1
+        return f"ANOM-{type(self)._ANOM_COUNTER:03d}"
+
+    def _scan_behavioural(self, assets: list) -> List[BehaviouralAnomalyFinding]:
+        findings: List[BehaviouralAnomalyFinding] = []
+
+        for asset in assets:
+            baseline = getattr(asset, "behavioural_baseline", None)
+            login_hist = getattr(asset, "login_history", [])
+            flows = getattr(asset, "traffic_flows", [])
+            procs = getattr(asset, "process_activity", [])
+
+            # OFF_HOURS_LOGIN — logins outside the baseline hours window
+            if baseline:
+                try:
+                    lo, hi = baseline.normal_login_hours.split("-")
+                    lo_h = int(lo.split(":")[0])
+                    hi_h = int(hi.split(":")[0])
+                except Exception:
+                    lo_h, hi_h = 6, 19
+
+                for ev in login_hist:
+                    try:
+                        hour = int(ev.timestamp[11:13])
+                    except Exception:
+                        continue
+                    is_off_hours = hour < lo_h or hour >= hi_h
+                    # Also flag unknown / external source IPs
+                    external_src = not any(ev.source_ip.startswith(seg.split("/")[0][:7]) for seg in (baseline.normal_source_ips or []))
+                    # Only flag successful off-hours logins (failed attempts are captured by FAILED_AUTH_SPIKE)
+                    if ev.success and (is_off_hours or external_src):
+                        sev = "CRITICAL" if external_src and is_off_hours else "HIGH"
+                        findings.append(BehaviouralAnomalyFinding(
+                            anomaly_id=self._next_anom_id(),
+                            asset_id=asset.id,
+                            asset_name=asset.name,
+                            anomaly_type="OFF_HOURS_LOGIN",
+                            severity=sev,
+                            description=(
+                                f"Login by '{ev.user}' from {ev.source_ip} at {ev.timestamp} "
+                                f"outside baseline hours ({baseline.normal_login_hours})."
+                            ),
+                            detected_at=ev.timestamp,
+                            evidence={"user": ev.user, "source_ip": ev.source_ip, "hour": hour, "success": ev.success},
+                            mitre_technique="T1078",
+                            recommended_action="Investigate session, rotate credentials, enforce MFA on off-hours access.",
+                        ))
+
+            # FAILED_AUTH_SPIKE — >=5 consecutive failures followed by success
+            consec_fail = 0
+            for ev in login_hist:
+                if not ev.success:
+                    consec_fail += 1
+                else:
+                    if consec_fail >= 5:
+                        findings.append(BehaviouralAnomalyFinding(
+                            anomaly_id=self._next_anom_id(),
+                            asset_id=asset.id,
+                            asset_name=asset.name,
+                            anomaly_type="FAILED_AUTH_SPIKE",
+                            severity="HIGH",
+                            description=(
+                                f"{consec_fail} consecutive failed authentications followed by a successful "
+                                f"login from {ev.source_ip} — consistent with brute-force / credential stuffing."
+                            ),
+                            detected_at=ev.timestamp,
+                            evidence={"consecutive_failures": consec_fail, "source_ip": ev.source_ip, "user": ev.user},
+                            mitre_technique="T1110",
+                            recommended_action="Enable account lockout thresholds, enforce MFA, block the source IP.",
+                        ))
+                    consec_fail = 0
+
+            # DATA_EXFILTRATION / UNUSUAL_LATERAL_MOVEMENT — traffic flows
+            if baseline:
+                for flow in flows:
+                    dest_known = _ip_in_subnet(flow.dest_ip, baseline.normal_destinations)
+                    if not dest_known and flow.direction == "OUTBOUND":
+                        threshold = max(baseline.baseline_avg_outbound_bytes * 3, 1_000_000)
+                        if flow.bytes_transferred >= threshold:
+                            sev = "CRITICAL" if flow.bytes_transferred >= 50_000_000 else "HIGH"
+                            findings.append(BehaviouralAnomalyFinding(
+                                anomaly_id=self._next_anom_id(),
+                                asset_id=asset.id,
+                                asset_name=asset.name,
+                                anomaly_type="DATA_EXFILTRATION",
+                                severity=sev,
+                                description=(
+                                    f"{_fmt_bytes(flow.bytes_transferred)} outbound to {flow.dest_ip}:{flow.dest_port} "
+                                    f"({flow.protocol}) at {flow.timestamp} — exceeds 3x baseline "
+                                    f"({_fmt_bytes(baseline.baseline_avg_outbound_bytes)})."
+                                ),
+                                detected_at=flow.timestamp,
+                                evidence={"dest_ip": flow.dest_ip, "dest_port": flow.dest_port,
+                                          "bytes": flow.bytes_transferred, "threshold": threshold},
+                                mitre_technique="T1048",
+                                recommended_action="Block destination, isolate host, initiate incident response & DLP review.",
+                            ))
+                        else:
+                            findings.append(BehaviouralAnomalyFinding(
+                                anomaly_id=self._next_anom_id(),
+                                asset_id=asset.id,
+                                asset_name=asset.name,
+                                anomaly_type="UNUSUAL_LATERAL_MOVEMENT",
+                                severity="MEDIUM",
+                                description=(
+                                    f"New outbound connection to {flow.dest_ip}:{flow.dest_port} from {asset.id} "
+                                    f"— destination not in baseline allow-list."
+                                ),
+                                detected_at=flow.timestamp,
+                                evidence={"dest_ip": flow.dest_ip, "dest_port": flow.dest_port, "protocol": flow.protocol},
+                                mitre_technique="T1021",
+                                recommended_action="Confirm the connection is authorised; add to allow-list or block at the firewall.",
+                            ))
+
+            # ANOMALOUS_PROCESS / PRIVILEGE_ESCALATION — process telemetry
+            if baseline:
+                for pe in procs:
+                    if pe.is_anomalous or (pe.process_name not in (baseline.whitelisted_processes or [])):
+                        # DCSync / DRSUAPI pattern → privilege escalation
+                        is_priv_esc = any(sig in (pe.command_line + pe.process_name).upper()
+                                          for sig in ("DRSUAPI", "DSGETNC", "MIMIKATZ", "DCSYNC"))
+                        if is_priv_esc:
+                            findings.append(BehaviouralAnomalyFinding(
+                                anomaly_id=self._next_anom_id(),
+                                asset_id=asset.id,
+                                asset_name=asset.name,
+                                anomaly_type="PRIVILEGE_ESCALATION",
+                                severity="CRITICAL",
+                                description=(
+                                    f"Privilege-escalation behaviour detected: process '{pe.process_name}' run by "
+                                    f"'{pe.user}' invoking DCSync/DRSUAPI primitives on {asset.id}."
+                                ),
+                                detected_at=pe.timestamp,
+                                evidence={"process": pe.process_name, "user": pe.user, "command_line": pe.command_line},
+                                mitre_technique="T1003",
+                                recommended_action="Revoke DCSync rights for the account, isolate the host, reset the krbtgt password.",
+                            ))
+                        else:
+                            findings.append(BehaviouralAnomalyFinding(
+                                anomaly_id=self._next_anom_id(),
+                                asset_id=asset.id,
+                                asset_name=asset.name,
+                                anomaly_type="ANOMALOUS_PROCESS",
+                                severity="HIGH" if pe.is_anomalous else "MEDIUM",
+                                description=(
+                                    f"Process '{pe.process_name}' executed by '{pe.user}' on {asset.id} "
+                                    f"is not in the baseline whitelist."
+                                ),
+                                detected_at=pe.timestamp,
+                                evidence={"process": pe.process_name, "user": pe.user, "command_line": pe.command_line},
+                                mitre_technique="T1059",
+                                recommended_action="Quarantine the process image, capture forensic snapshot, review EDR alerts.",
+                            ))
+
+            # Update the asset's computed anomaly score (0-100)
+            score = min(100.0, sum({"CRITICAL": 40, "HIGH": 25, "MEDIUM": 12, "LOW": 5}.get(f.severity, 5) for f in findings if f.asset_id == asset.id))
+            asset.anomaly_score = round(score, 1)
+
+        return findings
+
+
+def _ip_in_subnet(ip: str, subnets: list) -> bool:
+    if not subnets:
+        return False
+    for seg in subnets:
+        if "/" in seg:
+            base = seg.split("/")[0]
+            if ip.startswith(base.rsplit(".", 1)[0] + "."):
+                return True
+        elif ip == seg or ip.startswith(seg.rsplit(".", 1)[0] + "."):
+            return True
+    return False
+
+
+def _fmt_bytes(n: int) -> str:
+    for unit in ["B", "KB", "MB", "GB", "TB"]:
+        if n < 1024:
+            return f"{n:.1f} {unit}"
+        n /= 1024
+    return f"{n:.1f} PB"

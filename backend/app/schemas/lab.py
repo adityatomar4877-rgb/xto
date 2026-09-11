@@ -374,12 +374,27 @@ class RemediationTask(BaseModel):
     reasoning: str
 
 
+class BehaviouralAnomalyFinding(BaseModel):
+    anomaly_id: str
+    asset_id: str
+    asset_name: str
+    anomaly_type: str  # OFF_HOURS_LOGIN, FAILED_AUTH_SPIKE, UNUSUAL_LATERAL_MOVEMENT, PRIVILEGE_ESCALATION, DATA_EXFILTRATION, ANOMALOUS_PROCESS
+    severity: str  # LOW / MEDIUM / HIGH / CRITICAL
+    description: str
+    detected_at: str
+    evidence: Dict[str, Any]
+    mitre_technique: str = ""
+    recommended_action: str
+
+
 class AutomatedAuditReport(BaseModel):
     audit_id: str
     generated_at: str
     assets_scanned_count: int
     vulnerabilities_detected_count: int
     vulnerabilities: List[VulnerabilityFinding]
+    behavioural_anomalies_count: int = 0
+    behavioural_anomalies: List[BehaviouralAnomalyFinding] = Field(default_factory=list)
     viable_attack_paths_count: int
     attack_paths: List[AuditedAttackPath]
     chokepoints: List[ChokepointAnalysis]
@@ -389,3 +404,30 @@ class AutomatedAuditReport(BaseModel):
     remediation_tasks: List[RemediationTask]
     executive_verdict: str
     executive_summary: str
+
+
+# ── Feature #13: Real Scan & Telemetry Ingestion Models ───────────────────────
+
+class SupportedFormatInfo(BaseModel):
+    format_id: str
+    name: str
+    extension: str
+    description: str
+    sample_available: bool = True
+
+
+class IngestionResponse(BaseModel):
+    status: str = "SUCCESS"
+    source_format: str
+    filename: str
+    mode: str  # "MERGE" or "REPLACE"
+    snapshot_id: str
+    assets_imported: int
+    relationships_created: int
+    vulnerabilities_ingested: int
+    identities_mapped: int
+    critical_crown_jewels_identified: List[str] = Field(default_factory=list)
+    viable_attack_paths_count: int = 0
+    message: str
+    timestamp: str
+

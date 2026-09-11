@@ -211,6 +211,9 @@ class ThreatVectorEngine:
     def get_all_vectors(self) -> List[ThreatVector]:
         return list(self._catalog.values())
 
+    def get_all_vectors_dict(self) -> Dict[str, ThreatVector]:
+        return self._catalog
+
     def get_vector(self, vector_id: str) -> Optional[ThreatVector]:
         return self._catalog.get(vector_id)
 

@@ -28,13 +28,13 @@ export const TimelinePlayer: React.FC<TimelinePlayerProps> = ({
   const currentEvent = timeline[activeStepIndex];
 
   return (
-    <div className="p-4 rounded-xl bg-white border border-[#E5E7EB] shadow-xs font-sans">
+    <div className="p-6 rounded-2xl bg-white dark:bg-[#131316] border border-[#ECECEF] dark:border-[#25252A] font-sans">
       {/* Player Controls Bar */}
-      <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-3.5">
+      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 mb-3.5">
         <div className="flex items-center gap-2.5">
           <button
             onClick={() => setIsPlaying(!isPlaying)}
-            className="w-8 h-8 rounded-lg bg-[#FF5722] hover:bg-[#F4511E] text-white flex items-center justify-center transition-all shadow-xs cursor-pointer"
+            className="w-8 h-8 rounded-lg bg-[#FF5722] hover:bg-[#F4511E] text-white flex items-center justify-center transition-all cursor-pointer"
           >
             {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
           </button>
@@ -44,7 +44,7 @@ export const TimelinePlayer: React.FC<TimelinePlayerProps> = ({
               onStepChange(Math.max(0, activeStepIndex - 1));
             }}
             disabled={activeStepIndex === 0}
-            className="w-8 h-8 rounded-lg bg-[#F8F9FA] border border-[#E5E7EB] text-slate-700 hover:bg-slate-100 disabled:opacity-40 flex items-center justify-center cursor-pointer transition-colors"
+            className="w-8 h-8 rounded-lg bg-[#F5F5F5] border border-[#ECECEF] text-slate-700 hover:bg-slate-100 disabled:opacity-40 flex items-center justify-center cursor-pointer transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -54,7 +54,7 @@ export const TimelinePlayer: React.FC<TimelinePlayerProps> = ({
               onStepChange(Math.min(timeline.length - 1, activeStepIndex + 1));
             }}
             disabled={activeStepIndex === timeline.length - 1}
-            className="w-8 h-8 rounded-lg bg-[#F8F9FA] border border-[#E5E7EB] text-slate-700 hover:bg-slate-100 disabled:opacity-40 flex items-center justify-center cursor-pointer transition-colors"
+            className="w-8 h-8 rounded-lg bg-[#F5F5F5] border border-[#ECECEF] text-slate-700 hover:bg-slate-100 disabled:opacity-40 flex items-center justify-center cursor-pointer transition-colors"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -63,18 +63,18 @@ export const TimelinePlayer: React.FC<TimelinePlayerProps> = ({
               setIsPlaying(false);
               onStepChange(0);
             }}
-            className="w-8 h-8 rounded-lg bg-[#F8F9FA] border border-[#E5E7EB] text-slate-500 hover:text-slate-800 flex items-center justify-center cursor-pointer transition-colors"
+            className="w-8 h-8 rounded-lg bg-[#F5F5F5] border border-[#ECECEF] text-[#71717A] hover:text-slate-800 flex items-center justify-center cursor-pointer transition-colors"
             title="Reset to Foothold"
           >
             <RotateCcw className="w-3.5 h-3.5" />
           </button>
 
-          <span className="text-xs text-slate-500 ml-2 font-mono font-medium">
-            STEP <span className="text-[#FF5722] font-bold">{activeStepIndex + 1}</span> / {timeline.length}
+          <span className="text-xs text-[#71717A] ml-2 font-mono font-medium">
+            STEP <span className="text-[#F25C1F] dark:text-[#FF6B3D] font-bold">{activeStepIndex + 1}</span> / {timeline.length}
           </span>
         </div>
 
-        <div className="text-xs text-slate-500 font-mono">
+        <div className="text-xs text-[#71717A] font-mono">
           OFFSET: +{currentEvent?.timestamp_offset_seconds || 0}s
         </div>
       </div>
@@ -103,19 +103,19 @@ export const TimelinePlayer: React.FC<TimelinePlayerProps> = ({
 
       {/* Current Step Event Inspector */}
       {currentEvent && (
-        <div className="p-3.5 rounded-lg bg-[#F8F9FA] border border-[#E5E7EB] space-y-2">
+        <div className="p-3.5 rounded-lg bg-[#F5F5F5] border border-[#ECECEF] space-y-2">
           <div className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-2">
               <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
                 currentEvent.phase === "IMPACT" || currentEvent.phase === "OBJECTIVE_COMPLETED"
                   ? "bg-red-50 text-red-600 border border-red-200"
                   : currentEvent.phase === "FOOTHOLD"
-                  ? "bg-orange-50 text-[#FF5722] border border-orange-200"
+                  ? "bg-orange-50 text-[#F25C1F] dark:text-[#FF6B3D] border border-orange-200"
                   : "bg-amber-50 text-amber-600 border border-amber-200"
               }`}>
                 {currentEvent.phase}
               </span>
-              <span className="font-bold text-slate-900">{currentEvent.action_name}</span>
+              <span className="font-bold text-[#18181B]">{currentEvent.action_name}</span>
             </div>
 
             <span className={`flex items-center gap-1 text-[11px] font-semibold ${
@@ -132,14 +132,13 @@ export const TimelinePlayer: React.FC<TimelinePlayerProps> = ({
 
           {currentEvent.reason && currentEvent.reason.length > 0 && (
             <div className="p-2.5 rounded-md bg-white border border-slate-200/90 space-y-1">
-              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5 font-mono">
-                <ShieldAlert className="w-3 h-3 text-[#FF5722]" />
+              <div className="text-[14px] font-bold text-[#71717A] uppercase tracking-wider font-mono">
                 CAUSAL EVIDENCE REASONS:
               </div>
               <ul className="space-y-0.5 text-[11px] text-slate-700 pl-1">
                 {currentEvent.reason.map((r, i) => (
                   <li key={i} className="flex items-start gap-1.5">
-                    <span className="text-[#FF5722] font-bold mt-0.5">•</span>
+                    <span className="text-[#F25C1F] dark:text-[#FF6B3D] font-bold mt-0.5">•</span>
                     <span>{r}</span>
                   </li>
                 ))}
@@ -147,7 +146,7 @@ export const TimelinePlayer: React.FC<TimelinePlayerProps> = ({
             </div>
           )}
 
-          <div className="pt-2 border-t border-slate-200/80 flex flex-wrap items-center gap-3 text-[11px] text-slate-500 font-mono">
+          <div className="pt-2 border-t border-slate-200/80 flex flex-wrap items-center gap-3 text-[11px] text-[#71717A] font-mono">
             <div>
               FROM: <span className="text-slate-800 font-semibold">{currentEvent.source_asset_name}</span>
             </div>
@@ -157,7 +156,7 @@ export const TimelinePlayer: React.FC<TimelinePlayerProps> = ({
             </div>
             <div>|</div>
             <div>
-              TECHNIQUE: <span className="text-[#FF5722] font-semibold">{currentEvent.technique_id} ({currentEvent.technique_name})</span>
+              TECHNIQUE: <span className="text-[#F25C1F] dark:text-[#FF6B3D] font-semibold">{currentEvent.technique_id} ({currentEvent.technique_name})</span>
             </div>
             {currentEvent.identity_used && (
               <>
@@ -176,7 +175,7 @@ export const TimelinePlayer: React.FC<TimelinePlayerProps> = ({
                     <button
                       key={eid}
                       onClick={() => onSelectEvidence && onSelectEvidence(eid)}
-                      className="px-1.5 py-0.2 rounded bg-orange-50 text-[#FF5722] hover:underline cursor-pointer border border-orange-200 font-semibold"
+                      className="px-1.5 py-0.2 rounded bg-orange-50 text-[#F25C1F] dark:text-[#FF6B3D] hover:underline cursor-pointer border border-orange-200 font-semibold"
                     >
                       {eid}
                     </button>
