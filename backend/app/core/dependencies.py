@@ -15,6 +15,7 @@ from xto_core.synchronization.snapshot_comparator import SnapshotTimeMachine
 from xto_core.resilience.resilience_engine import ResilienceScoringEngine
 from xto_core.reasoning.nl_query_engine import NaturalLanguageQueryEngine
 from xto_core.automation.audit_engine import AutonomousAuditEngine
+from xto_core.ingestion.ingestion_engine import IngestionEngine
 
 # Singleton instances for XTO backend
 _twin_instance = SecurityTwin()
@@ -34,6 +35,7 @@ _snapshot_time_machine = SnapshotTimeMachine(_twin_instance)
 _resilience_engine = ResilienceScoringEngine(_twin_instance)
 _nl_query_engine = NaturalLanguageQueryEngine(_twin_instance)
 _audit_engine = AutonomousAuditEngine(_twin_instance)
+_ingestion_engine = IngestionEngine(_twin_instance)
 
 
 def get_twin() -> SecurityTwin:
@@ -106,6 +108,10 @@ def get_defense_sandbox():
 
 def get_audit_engine() -> AutonomousAuditEngine:
     return _audit_engine
+
+
+def get_ingestion_engine() -> IngestionEngine:
+    return _ingestion_engine
 
 
 

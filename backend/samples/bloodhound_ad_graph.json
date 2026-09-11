@@ -1,0 +1,68 @@
+{
+  "meta": {
+    "collector": "SharpHound v2.3.1",
+    "domain": "CORP.INTERNAL",
+    "count": 4
+  },
+  "computers": [
+    {
+      "Properties": {
+        "name": "DC-PRIMARY-01.CORP.INTERNAL",
+        "samaccountname": "DC-PRIMARY-01$",
+        "operatingsystem": "Windows Server 2022 Datacenter",
+        "primarygroupid": 516,
+        "ip_address": "10.100.1.10"
+      }
+    },
+    {
+      "Properties": {
+        "name": "WS-DEV-ENG-04.CORP.INTERNAL",
+        "samaccountname": "WS-DEV-ENG-04$",
+        "operatingsystem": "Windows 11 Enterprise",
+        "primarygroupid": 513,
+        "ip_address": "10.100.2.45"
+      }
+    },
+    {
+      "Properties": {
+        "name": "FS-CORP-DATA-01.CORP.INTERNAL",
+        "samaccountname": "FS-CORP-DATA-01$",
+        "operatingsystem": "Windows Server 2019 Standard",
+        "primarygroupid": 515,
+        "ip_address": "10.100.1.80"
+      }
+    }
+  ],
+  "users": [
+    {
+      "Properties": {
+        "name": "SVC-BACKUP-ADMIN@CORP.INTERNAL",
+        "samaccountname": "svc-backup-admin",
+        "admincount": 1,
+        "enabled": true
+      }
+    },
+    {
+      "Properties": {
+        "name": "DEV-ENGINEER-JSMITH@CORP.INTERNAL",
+        "samaccountname": "jsmith",
+        "admincount": 0,
+        "enabled": true
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "source": "HOST-WS-DEV-ENG-04-CORP-INTERNAL",
+      "target": "HOST-DC-PRIMARY-01-CORP-INTERNAL",
+      "type": "KERBEROASTABLE",
+      "edge_name": "CanKerberoast"
+    },
+    {
+      "source": "HOST-DC-PRIMARY-01-CORP-INTERNAL",
+      "target": "HOST-FS-CORP-DATA-01-CORP-INTERNAL",
+      "type": "ADMIN_TO",
+      "edge_name": "AdminTo"
+    }
+  ]
+}

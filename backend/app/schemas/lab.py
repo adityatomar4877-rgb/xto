@@ -389,3 +389,30 @@ class AutomatedAuditReport(BaseModel):
     remediation_tasks: List[RemediationTask]
     executive_verdict: str
     executive_summary: str
+
+
+# ── Feature #13: Real Scan & Telemetry Ingestion Models ───────────────────────
+
+class SupportedFormatInfo(BaseModel):
+    format_id: str
+    name: str
+    extension: str
+    description: str
+    sample_available: bool = True
+
+
+class IngestionResponse(BaseModel):
+    status: str = "SUCCESS"
+    source_format: str
+    filename: str
+    mode: str  # "MERGE" or "REPLACE"
+    snapshot_id: str
+    assets_imported: int
+    relationships_created: int
+    vulnerabilities_ingested: int
+    identities_mapped: int
+    critical_crown_jewels_identified: List[str] = Field(default_factory=list)
+    viable_attack_paths_count: int = 0
+    message: str
+    timestamp: str
+
