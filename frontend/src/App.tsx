@@ -14,6 +14,7 @@ import { DecisionProofPage } from "@/pages/DecisionProofPage";
 import { RemediationPage } from "@/pages/RemediationPage";
 import { EnvironmentSyncPage } from "@/pages/EnvironmentSyncPage";
 import { EvidenceExplorerPage } from "@/pages/EvidenceExplorerPage";
+import { MitreFrameworkPage } from "@/pages/MitreFrameworkPage";
 
 export const App: React.FC = () => {
   // Initialize Lenis Smooth Scrolling
@@ -57,6 +58,7 @@ export const App: React.FC = () => {
             <Route path="/blast-radius" element={<BlastRadiusPage />} />
             <Route path="/defense" element={<DefenseSandboxPage />} />
             <Route path="/decision-proof" element={<DecisionProofPage />} />
+            <Route path="/mitre" element={<MitreFrameworkPage />} />
             <Route path="/remediation" element={<RemediationPage />} />
             <Route path="/sync" element={<EnvironmentSyncPage />} />
             <Route path="/evidence" element={<EvidenceExplorerPage />} />

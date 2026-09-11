@@ -94,3 +94,27 @@ def test_api_mitre():
     res = client.get("/api/mitre/techniques")
     assert res.status_code == 200
     assert len(res.json()) >= 8
+
+
+def test_api_mitre_coverage():
+    res = client.get("/api/mitre/coverage")
+    assert res.status_code == 200
+    data = res.json()
+    assert "posture_score" in data
+    assert len(data["tactics_breakdown"]) >= 10
+
+
+def test_api_mitre_matrix():
+    res = client.get("/api/mitre/matrix")
+    assert res.status_code == 200
+    data = res.json()
+    assert len(data) >= 10
+
+
+def test_api_mitre_asset_profile():
+    res = client.get("/api/mitre/asset/WS-ENG-04")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["asset_id"] == "WS-ENG-04"
+    assert "applicable_techniques" in data
+
