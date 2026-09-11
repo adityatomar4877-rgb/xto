@@ -69,6 +69,7 @@ class SimulationEvent(BaseModel):
     evidence_ids: List[str] = Field(default_factory=list)
     explanation: str
     blocked_by_control: Optional[str] = None
+    reason: List[str] = Field(default_factory=list)
 
 
 class SimulationRequest(BaseModel):
@@ -79,6 +80,7 @@ class SimulationRequest(BaseModel):
     max_steps: int = 15
     stealth_mode: bool = False
     custom_capabilities: Optional[List[str]] = None
+    knowledge_level: Optional[str] = "BLACK_BOX"
 
 
 class SimulationTrace(BaseModel):

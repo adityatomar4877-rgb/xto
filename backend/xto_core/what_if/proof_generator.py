@@ -121,7 +121,7 @@ class DecisionProofGenerator:
         if trace_before.objective_achieved and not trace_after.objective_achieved:
             verdict = "PROVEN_DEFENSE_SUCCESS"
             exec_statement = (
-                f"DECISION PROOF CONFIRMED: Defensive interventions ({', '.join(applied_names)}) "
+                f"PROVEN DECISION PROOF CONFIRMED: Defensive interventions ({', '.join(applied_names)}) "
                 f"successfully halted the {req.attacker_persona.value} adversary before reaching {req.target_objective_id}. "
                 f"Eliminated {paths_eliminated} critical attack paths, severed {crit_reachable_before - crit_reachable_after} crown jewels from reachability, "
                 f"and collapsed attack blast radius from {blast_before}% down to {blast_after}% (a {blast_reduction}% absolute reduction)."

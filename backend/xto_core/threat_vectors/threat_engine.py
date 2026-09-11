@@ -1,5 +1,6 @@
 import logging
 from typing import Any, Dict, List, Optional
+import networkx as nx
 from app.schemas.threat import (
     ThreatVector,
     ThreatVectorType,

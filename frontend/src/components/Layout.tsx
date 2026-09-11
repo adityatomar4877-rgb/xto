@@ -14,6 +14,7 @@ import {
   FileCheck2,
   Activity,
   Terminal,
+  ShieldCheck,
 } from "lucide-react";
 import { api } from "@/lib/api";
 
@@ -30,6 +31,7 @@ const NAV_ITEMS = [
   { path: "/blast-radius", label: "Blast Radius", icon: Radio },
   { path: "/defense", label: "Defense Sandbox", icon: Sliders, badge: "CORE USP", highlight: true },
   { path: "/decision-proof", label: "Decision Proof", icon: Award, badge: "USP", highlight: true },
+  { path: "/mitre", label: "MITRE ATT&CK", icon: ShieldCheck, badge: "MATRIX", highlight: true },
   { path: "/remediation", label: "Remediation", icon: ListOrdered },
   { path: "/sync", label: "Environment Sync", icon: RefreshCw },
   { path: "/evidence", label: "Evidence Explorer", icon: FileCheck2 },
