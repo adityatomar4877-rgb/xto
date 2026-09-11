@@ -37,6 +37,7 @@ interface TopologyCanvasProps {
   revealProgress?: number;
   scanningNode?: string | null;
   scannedNodes?: string[];
+  anomalyNodes?: string[];
 }
 
 export const TopologyCanvas: React.FC<TopologyCanvasProps> = ({
@@ -55,6 +56,7 @@ export const TopologyCanvas: React.FC<TopologyCanvasProps> = ({
   revealProgress = 1,
   scanningNode = null,
   scannedNodes = [],
+  anomalyNodes = [],
 }) => {
   const nodes = useMemo(() => {
     if (assets && assets.length > 0) {
@@ -130,6 +132,7 @@ export const TopologyCanvas: React.FC<TopologyCanvasProps> = ({
     if (blastReachable.includes(nodeId)) return "#F59E0B";
     if (hoveredNode && !connectedToHovered.has(nodeId)) return "#3F3F46";
     if (hoveredNode && connectedToHovered.has(nodeId) && nodeId !== hoveredNode) return "#F25C1F";
+    if (anomalyNodes.includes(nodeId)) return "#F97316";
     if (CROWN_JEWELS.has(nodeId)) return "#8B5CF6";
     return "#52525B";
   };

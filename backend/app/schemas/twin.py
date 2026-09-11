@@ -108,6 +108,41 @@ class Relationship(BaseModel):
     properties: Dict[str, Any] = Field(default_factory=dict)
 
 
+# ── Behavioural Telemetry Models (anomaly-detection inputs) ────────────────
+
+class LoginEvent(BaseModel):
+    timestamp: str  # ISO 8601
+    user: str
+    source_ip: str
+    success: bool = True
+    auth_method: str = "PASSWORD"
+
+
+class TrafficFlow(BaseModel):
+    timestamp: str  # ISO 8601
+    dest_ip: str
+    dest_port: int
+    protocol: str = "TCP"
+    bytes_transferred: int = 0
+    direction: str = "OUTBOUND"  # OUTBOUND / INBOUND
+
+
+class ProcessEvent(BaseModel):
+    timestamp: str  # ISO 8601
+    process_name: str
+    user: str
+    command_line: str = ""
+    is_anomalous: bool = False
+
+
+class BehaviouralBaseline(BaseModel):
+    normal_login_hours: str = "06:00-19:00"  # 24h local-time window
+    normal_source_ips: List[str] = Field(default_factory=list)
+    normal_destinations: List[str] = Field(default_factory=list)
+    baseline_avg_outbound_bytes: int = 500_000
+    whitelisted_processes: List[str] = Field(default_factory=list)
+
+
 class Asset(BaseModel):
     id: str
     name: str
@@ -123,6 +158,12 @@ class Asset(BaseModel):
     identities: List[str] = Field(default_factory=list)  # Identity IDs associated
     is_compromised: bool = False
     criticality_score: float = 5.0  # 1.0 - 10.0 numeric weight
+    # Behavioural telemetry
+    login_history: List[LoginEvent] = Field(default_factory=list)
+    traffic_flows: List[TrafficFlow] = Field(default_factory=list)
+    process_activity: List[ProcessEvent] = Field(default_factory=list)
+    behavioural_baseline: Optional[BehaviouralBaseline] = None
+    anomaly_score: float = 0.0  # 0.0 - 100.0 computed by behavioural scanner
 
 
 class DigitalTwinTopology(BaseModel):

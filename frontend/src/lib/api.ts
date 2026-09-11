@@ -115,6 +115,44 @@ export interface Asset {
   identities: string[];
   is_compromised: boolean;
   criticality_score: number;
+  login_history?: LoginEvent[];
+  traffic_flows?: TrafficFlow[];
+  process_activity?: ProcessEvent[];
+  behavioural_baseline?: BehaviouralBaseline | null;
+  anomaly_score?: number;
+}
+
+export interface LoginEvent {
+  timestamp: string;
+  user: string;
+  source_ip: string;
+  success: boolean;
+  auth_method: string;
+}
+
+export interface TrafficFlow {
+  timestamp: string;
+  dest_ip: string;
+  dest_port: number;
+  protocol: string;
+  bytes_transferred: number;
+  direction: string;
+}
+
+export interface ProcessEvent {
+  timestamp: string;
+  process_name: string;
+  user: string;
+  command_line: string;
+  is_anomalous: boolean;
+}
+
+export interface BehaviouralBaseline {
+  normal_login_hours: string;
+  normal_source_ips: string[];
+  normal_destinations: string[];
+  baseline_avg_outbound_bytes: number;
+  whitelisted_processes: string[];
 }
 
 export interface DigitalTwinTopology {
@@ -624,12 +662,27 @@ export interface RemediationTask {
   reasoning: string;
 }
 
+export interface BehaviouralAnomalyFinding {
+  anomaly_id: string;
+  asset_id: string;
+  asset_name: string;
+  anomaly_type: string;
+  severity: string;
+  description: string;
+  detected_at: string;
+  evidence: Record<string, any>;
+  mitre_technique: string;
+  recommended_action: string;
+}
+
 export interface AutomatedAuditReport {
   audit_id: string;
   generated_at: string;
   assets_scanned_count: number;
   vulnerabilities_detected_count: number;
   vulnerabilities: VulnerabilityFinding[];
+  behavioural_anomalies_count?: number;
+  behavioural_anomalies?: BehaviouralAnomalyFinding[];
   viable_attack_paths_count: number;
   attack_paths: AuditedAttackPath[];
   chokepoints: ChokepointAnalysis[];
@@ -643,7 +696,7 @@ export interface AutomatedAuditReport {
 
 // ── API Client Helper ─────────────────────────────────────────────────────────
 
-const API_BASE = "";
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
 
 async function request<T>(endpoint: string, init?: RequestInit): Promise<T> {
   const url = endpoint.startsWith("http") ? endpoint : `${API_BASE}${endpoint}`;

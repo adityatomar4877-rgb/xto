@@ -27,7 +27,8 @@ EXPOSE 9229
 
 # Healthcheck testing the digital twin health endpoint
 HEALTHCHECK --interval=15s --timeout=5s --start-period=5s --retries=3 \
-    CMD curl -f http://127.0.0.1:9229/api/health || exit 1
+    CMD curl -f http://127.0.0.1:${PORT:-9229}/healthz || exit 1
 
-# Start uvicorn server binding to 0.0.0.0
-CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "9229"]
+# Start uvicorn server binding to dynamic PORT (for Render / cloud) or default 9229
+CMD ["sh", "-c", "python -m uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-9229}"]
+

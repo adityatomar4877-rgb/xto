@@ -13,6 +13,10 @@ from app.schemas.twin import (
     SecurityControl,
     Vulnerability,
     DigitalTwinTopology,
+    LoginEvent,
+    TrafficFlow,
+    ProcessEvent,
+    BehaviouralBaseline,
 )
 
 
@@ -265,6 +269,9 @@ def create_demo_topology() -> DigitalTwinTopology:
         ),
     ]
 
+    # 3b. Behavioural telemetry — baseline + planted anomalies
+    _apply_behavioural_telemetry(assets)
+
     # 4. Identities
     identities = [
         Identity(
@@ -509,3 +516,94 @@ def create_demo_topology() -> DigitalTwinTopology:
 # Backward-compatible alias
 create_seed_topology = create_demo_topology
 
+
+# ── Behavioural telemetry seeding ───────────────────────────────────────────
+# Plants realistic login, traffic-flow and process telemetry across the 12
+# assets. Most assets receive clean baseline behaviour. Five assets carry
+# deliberately planted anomalies for the behavioural scanner to surface.
+
+def _apply_behavioural_telemetry(assets: list) -> None:
+    by_id = {a.id: a for a in assets}
+
+    # ── Normal baselines (applied to every asset, refined per-asset below) ──
+    _seed_clean(by_id["EXT-INTERNET"], normal_dests=["203.0.113.1"])
+    _seed_clean(by_id["FW-EDGE-01"], normal_dests=["192.168.10.15", "192.168.10.5"])
+    _seed_clean(by_id["WEB-SRV-01"], normal_dests=["10.200.1.10"], procs=["nginx", "node", "rsyslog"])
+    _seed_clean(by_id["VPN-GW-01"], normal_dests=["10.100.0.0/16"])
+    _seed_clean(by_id["WS-ENG-04"], normal_dests=["10.200.1.10", "172.16.0.4"], procs=["code", "docker", "ssh", "git"])
+    _seed_clean(by_id["WS-FIN-02"], normal_dests=["10.200.1.20"], procs=["excel", "outlook", "erp-client"])
+    _seed_clean(by_id["APP-SRV-01"], normal_dests=["10.200.2.50"], procs=["java", "sshd", "systemd"])
+    _seed_clean(by_id["DC-CORP-01"], normal_dests=["10.200.0.0/24"], procs=["lsass", "dns", "kdc", "ntds"])
+    _seed_clean(by_id["DB-PROD-01"], normal_dests=[], procs=["postgres", "oracle", "sshd"])
+    _seed_clean(by_id["VAULT-BACKUP-01"], normal_dests=[], procs=["veeam", "sshd"])
+    _seed_clean(by_id["CLOUD-K8S-01"], normal_dests=["10.200.1.10"], procs=["kubelet", "envoy", "containerd"])
+    _seed_clean(by_id["SIEM-SOC-01"], normal_dests=["10.200.0.0/24"], procs=["elasticsearch", "logstash", "filebeat"])
+
+    # ── Planted anomalies ───────────────────────────────────────────────
+    # 1. WS-ENG-04 — off-hours login + suspicious encoded PowerShell
+    by_id["WS-ENG-04"].login_history = [
+        LoginEvent(timestamp="2026-09-08T09:12:00Z", user="ID-ENG-DEV", source_ip="10.100.4.45", success=True, auth_method="PASSWORD"),
+        LoginEvent(timestamp="2026-09-09T10:30:00Z", user="ID-ENG-DEV", source_ip="10.100.4.45", success=True, auth_method="SSH_KEY"),
+        LoginEvent(timestamp="2026-09-12T02:13:00Z", user="unknown\\svc_diag", source_ip="185.220.101.7", success=True, auth_method="PASSWORD"),
+    ]
+    by_id["WS-ENG-04"].process_activity = [
+        ProcessEvent(timestamp="2026-09-12T02:14:00Z", process_name="powershell.exe", user="svc_diag",
+                     command_line="powershell -enc JABjAD0ATgBlAHcALQBPAGIAagBlAGMAdAA...,", is_anomalous=True),
+        ProcessEvent(timestamp="2026-09-12T02:15:00Z", process_name="rundll32.exe", user="svc_diag",
+                     command_line="rundll32.exe C:\\Windows\\Temp\\stg.dll,Start", is_anomalous=True),
+    ]
+
+    # 2. VPN-GW-01 — brute-force pattern (7 failures then a success from Tor exit)
+    by_id["VPN-GW-01"].login_history = [
+        LoginEvent(timestamp="2026-09-12T04:50:00Z", user="admin", source_ip="185.220.101.7", success=False),
+        LoginEvent(timestamp="2026-09-12T04:50:30Z", user="admin", source_ip="185.220.101.7", success=False),
+        LoginEvent(timestamp="2026-09-12T04:51:00Z", user="admin", source_ip="185.220.101.7", success=False),
+        LoginEvent(timestamp="2026-09-12T04:51:30Z", user="admin", source_ip="185.220.101.7", success=False),
+        LoginEvent(timestamp="2026-09-12T04:52:00Z", user="admin", source_ip="185.220.101.7", success=False),
+        LoginEvent(timestamp="2026-09-12T04:52:30Z", user="admin", source_ip="185.220.101.7", success=False),
+        LoginEvent(timestamp="2026-09-12T04:53:00Z", user="admin", source_ip="185.220.101.7", success=False),
+        LoginEvent(timestamp="2026-09-12T04:53:22Z", user="admin", source_ip="185.220.101.7", success=True),
+    ]
+
+    # 3. APP-SRV-01 — mass data exfiltration (8.2 GB outbound to external IP at 03:15)
+    by_id["APP-SRV-01"].traffic_flows = [
+        TrafficFlow(timestamp="2026-09-12T03:15:00Z", dest_ip="45.137.21.9", dest_port=443, protocol="TCP", bytes_transferred=8_200_000_000, direction="OUTBOUND"),
+        TrafficFlow(timestamp="2026-09-12T03:22:00Z", dest_ip="45.137.21.9", dest_port=443, protocol="TCP", bytes_transferred=1_400_000_000, direction="OUTBOUND"),
+    ]
+
+    # 4. DC-CORP-01 — privilege-escalation behaviour (standard user invoking DRSUAPI / DCSync)
+    by_id["DC-CORP-01"].login_history = [
+        LoginEvent(timestamp="2026-09-12T01:40:00Z", user="ID-DOMAIN-ADMIN", source_ip="10.200.0.1", success=True, auth_method="KERBEROS"),
+        LoginEvent(timestamp="2026-09-12T01:55:00Z", user="ID-ENG-DEV", source_ip="10.100.4.45", success=True, auth_method="KERBEROS"),
+    ]
+    by_id["DC-CORP-01"].process_activity = [
+        ProcessEvent(timestamp="2026-09-12T01:56:00Z", process_name="lsass.exe", user="ID-ENG-DEV",
+                     command_line="DRSUAPI.DsBind DRSUAPI_DsGetNCChanges (DCSync)", is_anomalous=True),
+    ]
+
+    # 5. WS-FIN-02 — unusual lateral movement to DB-PROD-01 (finance user never accessed DB before)
+    by_id["WS-FIN-02"].traffic_flows = [
+        TrafficFlow(timestamp="2026-09-12T05:04:00Z", dest_ip="10.200.2.50", dest_port=5432, protocol="TCP", bytes_transferred=12_000_000, direction="OUTBOUND"),
+        TrafficFlow(timestamp="2026-09-12T05:05:00Z", dest_ip="10.200.2.50", dest_port=5432, protocol="TCP", bytes_transferred=8_500_000, direction="OUTBOUND"),
+    ]
+    # WS-FIN-02 baseline does NOT include the DB subnet — the flow above is anomalous
+
+
+def _seed_clean(asset: Asset, normal_dests: list, procs: list | None = None) -> None:
+    """Attach a clean behavioural baseline + benign telemetry to an asset."""
+    asset.behavioural_baseline = BehaviouralBaseline(
+        normal_login_hours="06:00-19:00",
+        normal_source_ips=[asset.ip_address, "10.100.0.0/16"],
+        normal_destinations=normal_dests,
+        baseline_avg_outbound_bytes=500_000,
+        whitelisted_processes=procs or ["systemd", "sshd", "cron"],
+    )
+    # A couple of benign login events inside normal hours
+    asset.login_history = [
+        LoginEvent(timestamp="2026-09-10T09:00:00Z", user="system", source_ip=asset.ip_address, success=True, auth_method="PASSWORD"),
+        LoginEvent(timestamp="2026-09-11T10:15:00Z", user="system", source_ip=asset.ip_address, success=True, auth_method="PASSWORD"),
+    ]
+    asset.traffic_flows = []
+    asset.process_activity = [
+        ProcessEvent(timestamp="2026-09-11T12:00:00Z", process_name=(procs[0] if procs else "systemd"), user="system", command_line="", is_anomalous=False),
+    ]

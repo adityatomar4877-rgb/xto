@@ -94,7 +94,7 @@ _simulation_history: Dict[str, Any] = {}
 
 # ── Health ───────────────────────────────────────────────────────────────────
 
-@router.get("/health")
+@router.api_route("/health", methods=["GET", "HEAD"])
 def health_check():
     twin = get_twin()
     topo = twin.get_topology()

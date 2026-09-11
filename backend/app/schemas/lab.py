@@ -374,12 +374,27 @@ class RemediationTask(BaseModel):
     reasoning: str
 
 
+class BehaviouralAnomalyFinding(BaseModel):
+    anomaly_id: str
+    asset_id: str
+    asset_name: str
+    anomaly_type: str  # OFF_HOURS_LOGIN, FAILED_AUTH_SPIKE, UNUSUAL_LATERAL_MOVEMENT, PRIVILEGE_ESCALATION, DATA_EXFILTRATION, ANOMALOUS_PROCESS
+    severity: str  # LOW / MEDIUM / HIGH / CRITICAL
+    description: str
+    detected_at: str
+    evidence: Dict[str, Any]
+    mitre_technique: str = ""
+    recommended_action: str
+
+
 class AutomatedAuditReport(BaseModel):
     audit_id: str
     generated_at: str
     assets_scanned_count: int
     vulnerabilities_detected_count: int
     vulnerabilities: List[VulnerabilityFinding]
+    behavioural_anomalies_count: int = 0
+    behavioural_anomalies: List[BehaviouralAnomalyFinding] = Field(default_factory=list)
     viable_attack_paths_count: int
     attack_paths: List[AuditedAttackPath]
     chokepoints: List[ChokepointAnalysis]
