@@ -57,6 +57,24 @@ npm run dev
 
 ---
 
+### Alternative: Run with Docker (Full Stack)
+```bash
+# Start both backend (FastAPI) and frontend (Nginx) in Docker:
+docker compose up -d
+
+# View running container status & logs:
+docker compose ps
+docker compose logs -f
+
+# Stop containers:
+docker compose down
+```
+- **XTO Cyber War Room**: `http://localhost:5174`
+- **Backend API & Swagger Docs**: `http://localhost:9229/docs`
+- **MITRE ATT&CK Framework API**: `http://localhost:9229/api/mitre/techniques`
+
+---
+
 ## 3. Core Capabilities & Architecture
 
 | Engine | Core Function |

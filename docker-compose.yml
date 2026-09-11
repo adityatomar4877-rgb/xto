@@ -1,0 +1,40 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: xto-backend
+    restart: unless-stopped
+    ports:
+      - "9229:9229"
+    environment:
+      - XTO_HOST=0.0.0.0
+      - XTO_PORT=9229
+      - XTO_ENV=production
+      - XTO_LOG_LEVEL=INFO
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:9229/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    networks:
+      - xto-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: xto-frontend
+    restart: unless-stopped
+    ports:
+      - "5174:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - xto-network
+
+networks:
+  xto-network:
+    driver: bridge

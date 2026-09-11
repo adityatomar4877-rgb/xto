@@ -18,6 +18,8 @@ import {
   X,
   Radio,
   Wifi,
+  ShieldCheck,
+  Terminal,
 } from "lucide-react";
 
 interface LayoutProps {
@@ -87,6 +89,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     { path: "/simulation", label: "Attack Simulation", icon: Target },
     { path: "/blast-radius", label: "Blast Radius", icon: Compass },
     { path: "/defense", label: "Controls & What-If", icon: Sliders },
+    { path: "/mitre", label: "MITRE ATT&CK", icon: ShieldCheck },
     { path: "/remediation", label: "Remediation", icon: FileCheck2 },
     { path: "/threat-vectors", label: "Threat Intelligence", icon: ShieldAlert },
     { path: "/decision-proof", label: "Reports", icon: FileText },

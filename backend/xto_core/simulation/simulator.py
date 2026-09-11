@@ -74,6 +74,11 @@ class AttackSimulator:
                 success=True,
                 evidence_ids=[ev0.id],
                 explanation=f"Adversary gained unprivileged interactive user execution on {foothold_name}.",
+                reason=[
+                    f"Initial entry vector '{req.threat_vector_id}' delivered to '{foothold_name}'",
+                    f"Local execution context established on {foothold_asset.ip_address if foothold_asset else 'target'}",
+                    "No perimeter control prevented initial execution",
+                ],
             )
         )
 
@@ -159,6 +164,11 @@ class AttackSimulator:
                         evidence_ids=[ev_block.id],
                         explanation=f"Move blocked by defense control: '{blocking_control.name}' ({blocking_control.type}). Attacker could not traverse boundary.",
                         blocked_by_control=blocking_control.name,
+                        reason=[
+                            f"Target '{n_name}' protected by active control '{blocking_control.name}'",
+                            f"Control type '{blocking_control.type}' enforced boundary containment",
+                            "Lateral transition blocked; adversary must recalculate route",
+                        ],
                     )
                 )
                 contained = True
@@ -215,6 +225,12 @@ class AttackSimulator:
                     success=True,
                     evidence_ids=[ev_step.id],
                     explanation=f"Successfully exploited {edge_type.lower()} channel. Gained interactive control of {n_name}.",
+                    reason=[
+                        f"Network connectivity open between {c_name} and {n_name} ({edge_type})",
+                        f"Technique {technique_id} ({technique_name}) successfully executed",
+                        f"Identity '{id_used}' held with required privilege" if id_used else "Standard session token sufficient",
+                        "No active security control blocked communication",
+                    ],
                 )
             )
 
@@ -239,6 +255,11 @@ class AttackSimulator:
                         success=True,
                         evidence_ids=[ev_step.id],
                         explanation=f"Adversary completed primary objective: fully compromised {n_name}.",
+                        reason=[
+                            f"Target crown jewel '{n_name}' reached",
+                            "Data encryption and backup inhibition payload deployed",
+                            "Full compromise impact verified",
+                        ],
                     )
                 )
                 break

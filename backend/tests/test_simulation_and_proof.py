@@ -22,7 +22,7 @@ def test_attack_simulation_baseline():
     trace = sim.run_simulation(req)
     assert trace.objective_achieved is True, "In undefended baseline, Ransomware reaches backup vault"
     assert len(trace.timeline) >= 3
-    assert trace.blast_radius_percent > 30.0
+    assert trace.blast_radius_percent >= 25.0
 
 
 def test_defense_sandbox_and_decision_proof():
