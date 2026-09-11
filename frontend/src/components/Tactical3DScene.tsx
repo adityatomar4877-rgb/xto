@@ -1,5 +1,25 @@
-import React, { useRef, useEffect, useState } from "react";
-import { Plus, Minus, Search, Filter, Maximize2, RefreshCw } from "lucide-react";
+import React, { useState } from "react";
+import {
+  Plus,
+  Minus,
+  Search,
+  Filter,
+  Maximize2,
+  RefreshCw,
+  Globe,
+  Shield,
+  Server,
+  Cloud,
+  Layers,
+  Key,
+  Database,
+  Crosshair,
+  AlertTriangle,
+  Lock,
+  ArrowRight,
+  Info,
+  Laptop,
+} from "lucide-react";
 import { Asset, Relationship } from "@/lib/api";
 
 interface Tactical3DSceneProps {
@@ -12,433 +32,517 @@ interface Tactical3DSceneProps {
   height?: string;
 }
 
+interface EnterpriseNode {
+  id: string;
+  name: string;
+  type: string;
+  zone: string;
+  x: number;
+  y: number;
+  icon: any;
+  status: "normal" | "at_risk" | "compromised";
+  chokePointScore: number;
+  compromiseScore: number;
+  cves: string[];
+  ip: string;
+  os: string;
+}
+
 export const Tactical3DScene: React.FC<Tactical3DSceneProps> = ({
   selectedAssetId,
   onSelectAsset,
   height = "h-[420px]",
 }) => {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
   const [viewMode, setViewMode] = useState<"3D" | "2D">("3D");
-  const [zoom, setZoom] = useState(1.0);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const dragStart = useRef({ x: 0, y: 0 });
+  const [directionFilter, setDirectionFilter] = useState<"Inbound" | "Outbound">("Outbound");
+  const [activeNode, setActiveNode] = useState<EnterpriseNode | null>(null);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // Node positions matching the photo's exact layout
-  const nodes = [
+  // Enterprise Graph Flow Nodes (inspired by Photo 3)
+  const enterpriseNodes: EnterpriseNode[] = [
     {
-      id: "internet",
-      title: "External",
-      subtitle: "Internet",
-      type: "globe",
-      x: 170,
+      id: "EXT-INET-01",
+      name: "External Internet",
+      type: "Breach Point",
+      zone: "WAN",
+      x: 60,
+      y: 190,
+      icon: Globe,
+      status: "normal",
+      chokePointScore: 40,
+      compromiseScore: 10,
+      cves: ["CVE-2023-46604"],
+      ip: "198.51.100.24",
+      os: "Edge Gateway",
+    },
+    {
+      id: "FW-EDGE-01",
+      name: "Perimeter Firewall",
+      type: "Security Gateway",
+      zone: "DMZ",
+      x: 180,
+      y: 130,
+      icon: Shield,
+      status: "normal",
+      chokePointScore: 65,
+      compromiseScore: 25,
+      cves: [],
+      ip: "10.0.0.1",
+      os: "PAN-OS 10.2",
+    },
+    {
+      id: "OFFICE-LAN",
+      name: "Office Network",
+      type: "User Subnet",
+      zone: "CORP",
+      x: 230,
       y: 280,
-      assets: 1,
-      color: "#94A3B8",
-      glowColor: "rgba(255, 255, 255, 0.2)",
+      icon: Laptop,
+      status: "normal",
+      chokePointScore: 50,
+      compromiseScore: 35,
+      cves: ["CVE-2021-34527"],
+      ip: "10.10.0.0/24",
+      os: "Windows 11 / Mac",
     },
     {
-      id: "office",
-      title: "Office Network",
-      subtitle: "12 assets",
-      type: "tower_blue",
+      id: "CLOUD-AWS",
+      name: "Cloud (AWS VPC)",
+      type: "Cloud Infrastructure",
+      zone: "CLOUD",
       x: 370,
-      y: 135,
-      assets: 12,
-      color: "#38BDF8",
-      glowColor: "rgba(56, 189, 248, 0.25)",
+      y: 90,
+      icon: Cloud,
+      status: "normal",
+      chokePointScore: 70,
+      compromiseScore: 20,
+      cves: [],
+      ip: "172.31.0.0/16",
+      os: "Amazon Linux 2023",
     },
     {
-      id: "cloud",
-      title: "Cloud (AWS)",
-      subtitle: "26 assets",
-      type: "cloud",
-      x: 520,
-      y: 115,
-      assets: 26,
-      color: "#60A5FA",
-      glowColor: "rgba(96, 165, 250, 0.25)",
-    },
-    {
-      id: "web",
-      title: "Web Tier",
-      subtitle: "8 assets",
-      type: "tower_amber",
-      x: 430,
-      y: 215,
-      assets: 8,
-      color: "#FFA000",
-      glowColor: "rgba(255, 160, 0, 0.35)",
-    },
-    {
-      id: "identity",
-      title: "Identity (AD)",
-      subtitle: "6 assets",
-      type: "tower_blue",
-      x: 365,
-      y: 305,
-      assets: 6,
-      color: "#38BDF8",
-      glowColor: "rgba(56, 189, 248, 0.25)",
-    },
-    {
-      id: "app",
-      title: "App Tier",
-      subtitle: "15 assets",
-      type: "tower_cyan",
-      x: 535,
-      y: 235,
-      assets: 15,
-      color: "#00E5FF",
-      glowColor: "rgba(0, 229, 255, 0.3)",
-    },
-    {
-      id: "database",
-      title: "Database",
-      subtitle: "4 assets",
-      type: "cylinder_orange",
-      x: 690,
+      id: "WEB-TIER-01",
+      name: "Web Tier (Nginx)",
+      type: "Application Ingress",
+      zone: "DMZ",
+      x: 350,
       y: 200,
-      assets: 4,
-      color: "#FF5722",
-      glowColor: "rgba(255, 87, 34, 0.4)",
+      icon: Server,
+      status: "at_risk",
+      chokePointScore: 85,
+      compromiseScore: 78,
+      cves: ["CVE-2023-46604", "T1190"],
+      ip: "10.0.10.5",
+      os: "Ubuntu 22.04 LTS",
     },
     {
-      id: "critical",
-      title: "Critical Assets",
-      subtitle: "3 assets",
-      type: "beacon_red",
-      x: 565,
-      y: 325,
-      assets: 3,
-      color: "#FF1744",
-      glowColor: "rgba(255, 23, 68, 0.5)",
+      id: "ID-CORP-AD",
+      name: "Identity (AD / DC)",
+      type: "Directory Chokepoint",
+      zone: "INTERNAL",
+      x: 480,
+      y: 310,
+      icon: Key,
+      status: "at_risk",
+      chokePointScore: 98,
+      compromiseScore: 82,
+      cves: ["T1003", "Kerberoasting"],
+      ip: "10.10.1.10",
+      os: "Windows Server 2022",
+    },
+    {
+      id: "APP-TIER-01",
+      name: "App Tier (Cluster)",
+      type: "Microservices Core",
+      zone: "INTERNAL",
+      x: 550,
+      y: 190,
+      icon: Layers,
+      status: "at_risk",
+      chokePointScore: 80,
+      compromiseScore: 75,
+      cves: ["T1068", "Overprivileged Token"],
+      ip: "10.10.20.15",
+      os: "Kubernetes v1.28",
+    },
+    {
+      id: "DB-PRIMARY",
+      name: "Database (PostgreSQL)",
+      type: "Core Data Store",
+      zone: "SECURE_TIER",
+      x: 720,
+      y: 130,
+      icon: Database,
+      status: "compromised",
+      chokePointScore: 92,
+      compromiseScore: 95,
+      cves: ["T1021", "Weak Vault Segregation"],
+      ip: "10.10.30.4",
+      os: "RHEL 9.2",
+    },
+    {
+      id: "CRIT-VAULT-01",
+      name: "Critical Assets (Vault)",
+      type: "Tier-0 Crown Jewel",
+      zone: "SECURE_TIER",
+      x: 740,
+      y: 270,
+      icon: Crosshair,
+      status: "compromised",
+      chokePointScore: 100,
+      compromiseScore: 99,
+      cves: ["T1041", "Crown Jewel Reachable"],
+      ip: "10.10.99.1",
+      os: "Air-Gapped HSM Vault",
     },
   ];
 
-  // Conduits matching the photo
-  const conduits = [
-    // Attack Path (red/orange glowing line)
-    { from: "internet", to: "web", isAttack: true },
-    { from: "web", to: "app", isAttack: true },
-    { from: "app", to: "critical", isAttack: true },
-    { from: "critical", to: "database", isAttack: true },
-
-    // Trust Relationships (blue dashed lines)
-    { from: "office", to: "identity", isAttack: false },
-    { from: "identity", to: "web", isAttack: false },
-    { from: "cloud", to: "app", isAttack: false },
-    { from: "office", to: "cloud", isAttack: false },
-    { from: "identity", to: "critical", isAttack: false },
+  // Attack Path Connections (smooth flow curves)
+  const attackPathEdges = [
+    { from: "EXT-INET-01", to: "WEB-TIER-01", status: "compromised" },
+    { from: "WEB-TIER-01", to: "APP-TIER-01", status: "compromised" },
+    { from: "APP-TIER-01", to: "CRIT-VAULT-01", status: "compromised" },
+    { from: "CRIT-VAULT-01", to: "DB-PRIMARY", status: "compromised" },
   ];
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    let animId: number;
-    let pulseProgress = 0;
-
-    const render = () => {
-      if (containerRef.current) {
-        const { clientWidth, clientHeight } = containerRef.current;
-        if (canvas.width !== clientWidth || canvas.height !== clientHeight) {
-          canvas.width = clientWidth;
-          canvas.height = clientHeight;
-        }
-      }
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.save();
-
-      // Pan & Zoom
-      const cx = canvas.width / 2 + pan.x;
-      const cy = canvas.height / 2 + pan.y;
-      ctx.translate(cx, cy);
-      ctx.scale(zoom, zoom);
-      ctx.translate(-460, -220);
-
-      pulseProgress = (pulseProgress + 0.012) % 1;
-
-      // 1. ISOMETRIC FLOOR GRID
-      ctx.lineWidth = 1;
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.035)";
-
-      const gridSpacing = 42;
-      const xStart = 40;
-      const yStart = 60;
-      const gridCount = 20;
-
-      for (let i = 0; i <= gridCount; i++) {
-        // Diagonal 1
-        ctx.beginPath();
-        ctx.moveTo(xStart + i * gridSpacing, yStart);
-        ctx.lineTo(xStart + (i - 7) * gridSpacing, yStart + gridCount * (gridSpacing * 0.52));
-        ctx.stroke();
-
-        // Diagonal 2
-        ctx.beginPath();
-        ctx.moveTo(xStart - 7 * gridSpacing + i * gridSpacing, yStart + gridCount * (gridSpacing * 0.52));
-        ctx.lineTo(xStart + i * gridSpacing + 7 * gridSpacing, yStart);
-        ctx.stroke();
-      }
-
-      // 2. CONDUITS (Attack Paths & Trust Relationships)
-      conduits.forEach((c) => {
-        const src = nodes.find((n) => n.id === c.from);
-        const tgt = nodes.find((n) => n.id === c.to);
-        if (!src || !tgt) return;
-
-        if (c.isAttack) {
-          // Curved smooth attack path with red/orange glow
-          const midX = (src.x + tgt.x) / 2;
-          const midY = (src.y + tgt.y) / 2 + 5;
-
-          ctx.beginPath();
-          ctx.moveTo(src.x, src.y);
-          ctx.quadraticCurveTo(midX, midY, tgt.x, tgt.y);
-
-          // Outer Glow
-          ctx.strokeStyle = "rgba(255, 87, 34, 0.25)";
-          ctx.lineWidth = 8;
-          ctx.stroke();
-
-          // Core Beam
-          ctx.strokeStyle = "rgba(255, 59, 48, 0.85)";
-          ctx.lineWidth = 3;
-          ctx.shadowColor = "#FF3B30";
-          ctx.shadowBlur = 12;
-          ctx.stroke();
-          ctx.shadowBlur = 0;
-
-          // Inner White/Orange Core
-          ctx.strokeStyle = "#FFA000";
-          ctx.lineWidth = 1.2;
-          ctx.stroke();
-
-          // Traveling Spark Particles
-          const t = pulseProgress;
-          const px = (1 - t) * (1 - t) * src.x + 2 * (1 - t) * t * midX + t * t * tgt.x;
-          const py = (1 - t) * (1 - t) * src.y + 2 * (1 - t) * t * midY + t * t * tgt.y;
-
-          ctx.beginPath();
-          ctx.arc(px, py, 3.5, 0, Math.PI * 2);
-          ctx.fillStyle = "#FFFFFF";
-          ctx.shadowColor = "#FFA000";
-          ctx.shadowBlur = 10;
-          ctx.fill();
-          ctx.shadowBlur = 0;
-        } else {
-          // Blue dashed trust relationships
-          ctx.beginPath();
-          ctx.moveTo(src.x, src.y);
-          ctx.lineTo(tgt.x, tgt.y);
-          ctx.strokeStyle = "rgba(56, 189, 248, 0.28)";
-          ctx.lineWidth = 1.2;
-          ctx.setLineDash([4, 4]);
-          ctx.stroke();
-          ctx.setLineDash([]);
-        }
-      });
-
-      // 3. NODES (3D Isometric representations matching photo)
-      nodes.forEach((n) => {
-        // Pedestal Glow
-        ctx.beginPath();
-        ctx.ellipse(n.x, n.y + 12, 28, 14, 0, 0, Math.PI * 2);
-        ctx.fillStyle = n.glowColor;
-        ctx.shadowColor = n.color;
-        ctx.shadowBlur = 16;
-        ctx.fill();
-        ctx.shadowBlur = 0;
-
-        // Draw isometric pedestal base
-        ctx.beginPath();
-        ctx.ellipse(n.x, n.y + 10, 24, 11, 0, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(15, 20, 30, 0.9)";
-        ctx.strokeStyle = n.color;
-        ctx.lineWidth = 1.2;
-        ctx.fill();
-        ctx.stroke();
-
-        if (n.type === "globe") {
-          // Wireframe 3D Globe for External Internet
-          ctx.save();
-          ctx.translate(n.x, n.y);
-          ctx.strokeStyle = "#FFFFFF";
-          ctx.lineWidth = 1.5;
-          ctx.beginPath();
-          ctx.arc(0, 0, 16, 0, Math.PI * 2);
-          ctx.stroke();
-
-          // Ellipses
-          ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
-          ctx.beginPath();
-          ctx.ellipse(0, 0, 16, 7, 0, 0, Math.PI * 2);
-          ctx.ellipse(0, 0, 7, 16, 0, 0, Math.PI * 2);
-          ctx.stroke();
-          ctx.restore();
-        } else if (n.type === "cloud") {
-          // 3D Puffy Cloud Icon
-          ctx.save();
-          ctx.translate(n.x, n.y);
-          ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
-          ctx.strokeStyle = "#60A5FA";
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.arc(-8, 0, 9, 0, Math.PI * 2);
-          ctx.arc(4, -6, 11, 0, Math.PI * 2);
-          ctx.arc(12, 2, 8, 0, Math.PI * 2);
-          ctx.closePath();
-          ctx.fill();
-          ctx.stroke();
-          ctx.restore();
-        } else if (n.type === "cylinder_orange") {
-          // Layered Database Cylinders
-          ctx.save();
-          ctx.translate(n.x, n.y);
-          ctx.fillStyle = "rgba(255, 87, 34, 0.35)";
-          ctx.strokeStyle = "#FF5722";
-          ctx.lineWidth = 1.8;
-          ctx.shadowColor = "#FF5722";
-          ctx.shadowBlur = 12;
-
-          for (let l = 0; l < 3; l++) {
-            ctx.beginPath();
-            ctx.ellipse(0, 8 - l * 7, 17, 8, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.stroke();
-          }
-          ctx.shadowBlur = 0;
-          ctx.restore();
-        } else if (n.type === "beacon_red") {
-          // Critical Assets Beacon Cylinder with Forcefield Rays
-          ctx.save();
-          ctx.translate(n.x, n.y);
-
-          // Forcefield Ring Pulse
-          ctx.beginPath();
-          ctx.arc(0, 0, 24, 0, Math.PI * 2);
-          ctx.strokeStyle = "rgba(255, 23, 68, 0.4)";
-          ctx.lineWidth = 1;
-          ctx.setLineDash([2, 3]);
-          ctx.stroke();
-          ctx.setLineDash([]);
-
-          // Cylinder stack
-          ctx.fillStyle = "rgba(255, 23, 68, 0.45)";
-          ctx.strokeStyle = "#FF1744";
-          ctx.lineWidth = 2;
-          ctx.shadowColor = "#FF1744";
-          ctx.shadowBlur = 18;
-
-          for (let l = 0; l < 3; l++) {
-            ctx.beginPath();
-            ctx.ellipse(0, 8 - l * 7, 18, 9, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.stroke();
-          }
-          ctx.shadowBlur = 0;
-
-          // Crosshair icon in front
-          ctx.beginPath();
-          ctx.arc(-22, -2, 7, 0, Math.PI * 2);
-          ctx.strokeStyle = "#FF1744";
-          ctx.lineWidth = 1.5;
-          ctx.stroke();
-          ctx.beginPath();
-          ctx.moveTo(-22, -9);
-          ctx.lineTo(-22, 5);
-          ctx.moveTo(-29, -2);
-          ctx.lineTo(-15, -2);
-          ctx.stroke();
-
-          ctx.restore();
-        } else {
-          // Server Tier 3D Towers
-          ctx.save();
-          ctx.translate(n.x, n.y);
-
-          const w = 18;
-          const h = 26;
-
-          // Main tower face
-          ctx.fillStyle = "rgba(13, 17, 26, 0.9)";
-          ctx.strokeStyle = n.color;
-          ctx.lineWidth = 1.5;
-          ctx.beginPath();
-          ctx.rect(-w / 2, -h / 2, w, h);
-          ctx.fill();
-          ctx.stroke();
-
-          // LEDs
-          ctx.fillStyle = n.color;
-          ctx.beginPath();
-          ctx.arc(-w / 4, -h / 4, 1.5, 0, Math.PI * 2);
-          ctx.arc(w / 4, -h / 4, 1.5, 0, Math.PI * 2);
-          ctx.arc(-w / 4, 2, 1.5, 0, Math.PI * 2);
-          ctx.fill();
-
-          ctx.restore();
-        }
-
-        // Labels matching photo
-        ctx.font = "bold 11px 'Inter', sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillStyle = n.type === "beacon_red" ? "#FF5252" : "#FFFFFF";
-        ctx.fillText(n.title, n.x, n.y + 26);
-
-        ctx.font = "9px 'Inter', sans-serif";
-        ctx.fillStyle = "#8E98A8";
-        ctx.fillText(n.subtitle, n.x, n.y + 37);
-      });
-
-      ctx.restore();
-      animId = requestAnimationFrame(render);
-    };
-
-    render();
-    return () => cancelAnimationFrame(animId);
-  }, [zoom, pan]);
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    dragStart.current = { x: e.clientX - pan.x, y: e.clientY - pan.y };
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return;
-    setPan({
-      x: e.clientX - dragStart.current.x,
-      y: e.clientY - dragStart.current.y,
-    });
-  };
-
-  const handleMouseUp = () => setIsDragging(false);
+  const trustEdges = [
+    { from: "EXT-INET-01", to: "FW-EDGE-01" },
+    { from: "FW-EDGE-01", to: "WEB-TIER-01" },
+    { from: "OFFICE-LAN", to: "ID-CORP-AD" },
+    { from: "ID-CORP-AD", to: "APP-TIER-01" },
+    { from: "CLOUD-AWS", to: "APP-TIER-01" },
+  ];
 
   return (
-    <div
-      ref={containerRef}
-      className={`relative w-full ${height} bg-[#0A0D14] rounded-xl border border-[#191F2D] overflow-hidden select-none`}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
-    >
-      <canvas ref={canvasRef} className="w-full h-full cursor-grab active:cursor-grabbing block" />
+    <div className={`relative w-full ${height} bg-[#0A0D14] rounded-xl border border-[#171B26] overflow-hidden select-none group`}>
+      {/* 1. VIEW MODE: 3D PHOTO-REAL ISOMETRIC SCENE */}
+      {viewMode === "3D" && (
+        <div className="relative w-full h-full">
+          <img
+            src="/digital_twin_3d.png"
+            alt="Environment Digital Twin 3D View"
+            className="w-full h-full object-cover block"
+          />
 
-      {/* Top Right Controls Overlay matching photo */}
-      <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
-        {/* 3D View / 2D View Switch */}
-        <div className="flex rounded-lg bg-[#0D1017] border border-[#1E2536] p-0.5 text-xs font-medium backdrop-blur-md">
+          {/* Interactive Clickable Hotspots mapped directly over 3D towers */}
+          {[
+            { id: "EXT-INET-01", name: "External Internet", x: "12%", y: "55%", w: "8%", h: "15%" },
+            { id: "OFFICE-LAN", name: "Office Network (12 assets)", x: "32%", y: "18%", w: "10%", h: "18%" },
+            { id: "CLOUD-AWS", name: "Cloud AWS (28 assets)", x: "50%", y: "14%", w: "10%", h: "18%" },
+            { id: "WEB-TIER-01", name: "Web Tier (8 assets)", x: "42%", y: "40%", w: "8%", h: "18%" },
+            { id: "ID-CORP-AD", name: "Identity AD (6 assets)", x: "32%", y: "63%", w: "8%", h: "18%" },
+            { id: "APP-TIER-01", name: "App Tier (15 assets)", x: "57%", y: "43%", w: "8%", h: "18%" },
+            { id: "DB-PRIMARY", name: "Database (4 assets)", x: "78%", y: "33%", w: "8%", h: "18%" },
+            { id: "CRIT-VAULT-01", name: "Critical Assets (3 assets)", x: "60%", y: "68%", w: "10%", h: "20%" },
+          ].map((spot) => (
+            <div
+              key={spot.id}
+              style={{ left: spot.x, top: spot.y, width: spot.w, height: spot.h }}
+              onClick={() => {
+                const node = enterpriseNodes.find((n) => n.id === spot.id);
+                setActiveNode(node || null);
+                if (onSelectAsset && node) onSelectAsset(node as any);
+              }}
+              className="absolute cursor-pointer rounded-lg hover:border hover:border-[#FF5722]/50 hover:bg-[#FF5722]/10 transition-all z-10"
+              title={spot.name}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* 2. VIEW MODE: 2D CLEAN ENTERPRISE GRAPH FLOW (XM Cyber Style from Photo 3) */}
+      {viewMode === "2D" && (
+        <div className="relative w-full h-full canvas-grid flex flex-col justify-between p-4">
+          {/* Top Remediable Exposures Bar (from Photo 3) */}
+          <div className="flex items-center justify-between text-[11px] font-mono text-slate-300 bg-[#0C0E14]/90 px-3 py-1.5 rounded-lg border border-[#171B26] z-10">
+            <div className="flex items-center gap-4">
+              <span className="text-[#FF5722] font-bold flex items-center gap-1">
+                <span>&gt;&gt;&gt;</span>
+                <span>Active Attack Chain:</span>
+              </span>
+              <span className="text-slate-200">
+                Internet &rarr; Web Tier (CVE-2023-46604) &rarr; App Tier &rarr; Critical Vault
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 text-[10px]">
+              <span className="px-2 py-0.5 rounded bg-red-950/70 text-red-400 border border-red-500/40 font-bold">
+                12 Critical Paths
+              </span>
+            </div>
+          </div>
+
+          {/* SVG Graph Flow Canvas with Smooth Cubic Bezier Curves */}
+          <div className="relative flex-1 w-full my-2">
+            <svg className="w-full h-full" viewBox="0 0 850 360">
+              {/* Trust Relationship Curves (subtle blue) */}
+              {trustEdges.map((e, idx) => {
+                const src = enterpriseNodes.find((n) => n.id === e.from);
+                const tgt = enterpriseNodes.find((n) => n.id === e.to);
+                if (!src || !tgt) return null;
+                const dx = tgt.x - src.x;
+                const pathD = `M ${src.x} ${src.y} C ${src.x + dx * 0.5} ${src.y}, ${tgt.x - dx * 0.5} ${tgt.y}, ${tgt.x} ${tgt.y}`;
+                return (
+                  <path
+                    key={`trust-${idx}`}
+                    d={pathD}
+                    fill="none"
+                    stroke="rgba(56, 189, 248, 0.3)"
+                    strokeWidth="1.5"
+                    strokeDasharray="4,4"
+                  />
+                );
+              })}
+
+              {/* Active Attack Path (smooth glowing red conduit) */}
+              {attackPathEdges.map((e, idx) => {
+                const src = enterpriseNodes.find((n) => n.id === e.from);
+                const tgt = enterpriseNodes.find((n) => n.id === e.to);
+                if (!src || !tgt) return null;
+                const dx = tgt.x - src.x;
+                const pathD = `M ${src.x} ${src.y} C ${src.x + dx * 0.5} ${src.y}, ${tgt.x - dx * 0.5} ${tgt.y}, ${tgt.x} ${tgt.y}`;
+                return (
+                  <g key={`attack-${idx}`}>
+                    {/* Outer Glow */}
+                    <path
+                      d={pathD}
+                      fill="none"
+                      stroke="rgba(239, 68, 68, 0.2)"
+                      strokeWidth="8"
+                    />
+                    {/* Core Line */}
+                    <path
+                      d={pathD}
+                      fill="none"
+                      stroke="#EF4444"
+                      strokeWidth="2.5"
+                    />
+                  </g>
+                );
+              })}
+
+              {/* Render Enterprise Nodes matching Photo 3 styling */}
+              {enterpriseNodes.map((node) => {
+                const isSelected = activeNode?.id === node.id;
+                const isCrit = node.status === "compromised";
+                const isRisk = node.status === "at_risk";
+
+                return (
+                  <g
+                    key={node.id}
+                    transform={`translate(${node.x}, ${node.y})`}
+                    onClick={() => {
+                      setActiveNode(node);
+                      if (onSelectAsset) onSelectAsset(node as any);
+                    }}
+                    className="cursor-pointer"
+                  >
+                    {/* Selection Ring */}
+                    {isSelected && (
+                      <circle
+                        r="24"
+                        fill="none"
+                        stroke="#FF5722"
+                        strokeWidth="2"
+                        strokeDasharray="3,3"
+                      />
+                    )}
+
+                    {/* Node Base Shape */}
+                    {node.id === "CRIT-VAULT-01" ? (
+                      // Hexagon badge for critical vault (like Photo 3)
+                      <polygon
+                        points="0,-18 16,-9 16,9 0,18 -16,9 -16,-9"
+                        fill="#7F1D1D"
+                        stroke="#EF4444"
+                        strokeWidth="2"
+                      />
+                    ) : (
+                      <circle
+                        r="18"
+                        fill={isCrit ? "#450A0A" : isRisk ? "#261505" : "#0C1322"}
+                        stroke={isCrit ? "#EF4444" : isRisk ? "#F59E0B" : "#0284C7"}
+                        strokeWidth="2"
+                      />
+                    )}
+
+                    {/* Choke Point Severity Badge Indicator */}
+                    <circle
+                      cx="14"
+                      cy="-12"
+                      r="6"
+                      fill={node.chokePointScore >= 80 ? "#DC2626" : "#0284C7"}
+                    />
+                    <text
+                      x="14"
+                      y="-10"
+                      textAnchor="middle"
+                      fill="#FFFFFF"
+                      fontSize="6"
+                      fontWeight="bold"
+                    >
+                      {node.chokePointScore}
+                    </text>
+
+                    {/* Node Label */}
+                    <text
+                      y="32"
+                      textAnchor="middle"
+                      fill="#FFFFFF"
+                      fontSize="10"
+                      fontWeight="600"
+                      fontFamily="Inter, sans-serif"
+                    >
+                      {node.name}
+                    </text>
+                    <text
+                      y="44"
+                      textAnchor="middle"
+                      fill="#8E98A8"
+                      fontSize="8"
+                      fontFamily="Inter, sans-serif"
+                    >
+                      {node.zone} // {node.ip}
+                    </text>
+                  </g>
+                );
+              })}
+            </svg>
+
+            {/* Inbound / Outbound Direction Pill (from Photo 3) */}
+            <div className="absolute left-3 bottom-3 flex items-center bg-[#0C0E14] border border-[#171B26] rounded-lg p-0.5 text-[10px] font-mono">
+              <button
+                onClick={() => setDirectionFilter("Inbound")}
+                className={`px-2.5 py-1 rounded-md transition-all ${
+                  directionFilter === "Inbound"
+                    ? "bg-[#1E2536] text-white font-bold"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                Inbound
+              </button>
+              <button
+                onClick={() => setDirectionFilter("Outbound")}
+                className={`px-2.5 py-1 rounded-md transition-all ${
+                  directionFilter === "Outbound"
+                    ? "bg-[#1E2536] text-white font-bold"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                Outbound
+              </button>
+            </div>
+
+            {/* Clean Floating Graph Legend (from Photo 3) */}
+            <div className="absolute right-3 top-3 bg-[#0C0E14]/95 border border-[#171B26] rounded-xl p-2.5 text-[10px] font-sans shadow-xl w-44 z-10">
+              <div className="font-bold text-white mb-2 flex items-center justify-between border-b border-slate-800 pb-1">
+                <span>Graph Legend</span>
+                <span className="text-[9px] text-slate-500 font-mono">PS #13</span>
+              </div>
+              <div className="space-y-1.5 text-slate-300">
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-[#EF4444]" />
+                    <span>Critical Asset</span>
+                  </span>
+                  <span className="font-mono text-slate-400">3</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-[#10B981]" />
+                    <span>Breach Point</span>
+                  </span>
+                  <span className="font-mono text-slate-400">1</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-[#F59E0B]" />
+                    <span>Risks & Vulnerabilities</span>
+                  </span>
+                  <span className="font-mono text-slate-400">46</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-[#0284C7]" />
+                    <span>Trust Relationship</span>
+                  </span>
+                  <span className="font-mono text-slate-400">5</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Entity Properties Modal/Drawer on click (from Photo 3 left sidebar) */}
+      {activeNode && (
+        <div className="absolute left-3 top-3 w-72 rounded-xl bg-[#0C0E14]/95 border border-[#171B26] shadow-2xl p-3 z-30 font-sans backdrop-blur-md">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+            <div>
+              <div className="font-bold text-white text-xs">{activeNode.name}</div>
+              <div className="text-[10px] text-slate-400">{activeNode.type}</div>
+            </div>
+            <button
+              onClick={() => setActiveNode(null)}
+              className="text-slate-400 hover:text-white"
+            >
+              &times;
+            </button>
+          </div>
+
+          <div className="mt-2 space-y-2 text-[10.5px]">
+            {/* Choke Point & Impact Scores */}
+            <div className="grid grid-cols-2 gap-2 bg-[#07090D] p-2 rounded-lg border border-slate-800">
+              <div>
+                <div className="text-[9px] text-slate-400">Choke point:</div>
+                <div className="text-sm font-bold text-red-400 font-mono">
+                  {activeNode.chokePointScore} / 100
+                </div>
+              </div>
+              <div>
+                <div className="text-[9px] text-slate-400">Compromise score:</div>
+                <div className="text-sm font-bold text-orange-400 font-mono">
+                  {activeNode.compromiseScore} / 100
+                </div>
+              </div>
+            </div>
+
+            {/* Properties */}
+            <div className="space-y-1 font-mono text-[10px] text-slate-300">
+              <div>OS: <span className="text-white">{activeNode.os}</span></div>
+              <div>IP Address: <span className="text-white">{activeNode.ip}</span></div>
+              <div>Zone: <span className="text-white">{activeNode.zone}</span></div>
+            </div>
+
+            {/* Remediable Exposures */}
+            {activeNode.cves.length > 0 && (
+              <div className="pt-1">
+                <div className="text-[9.5px] font-bold text-slate-400 mb-1">REMEDIABLE EXPOSURES</div>
+                <div className="flex flex-wrap gap-1">
+                  {activeNode.cves.map((cve, i) => (
+                    <span
+                      key={i}
+                      className="px-1.5 py-0.5 rounded bg-red-950/60 border border-red-500/30 text-red-300 text-[9px] font-mono"
+                    >
+                      {cve}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Top Right View Controls Overlay */}
+      <div className="absolute top-3 right-3 flex items-center gap-2 z-20">
+        {/* 3D / 2D View Switch */}
+        <div className="flex rounded-lg bg-[#0C0E14] border border-[#1E2536] p-0.5 text-xs font-medium backdrop-blur-md">
           <button
             onClick={() => setViewMode("3D")}
             className={`px-3 py-1 rounded-md transition-all text-xs font-medium ${
               viewMode === "3D"
-                ? "bg-[#1E2638] text-white font-semibold"
+                ? "bg-[#211410] text-[#FF5722] border border-[#FF5722]/40 font-semibold"
                 : "text-slate-400 hover:text-white"
             }`}
           >
@@ -448,7 +552,7 @@ export const Tactical3DScene: React.FC<Tactical3DSceneProps> = ({
             onClick={() => setViewMode("2D")}
             className={`px-3 py-1 rounded-md transition-all text-xs font-medium ${
               viewMode === "2D"
-                ? "bg-[#1E2638] text-white font-semibold"
+                ? "bg-[#211410] text-[#FF5722] border border-[#FF5722]/40 font-semibold"
                 : "text-slate-400 hover:text-white"
             }`}
           >
@@ -456,101 +560,20 @@ export const Tactical3DScene: React.FC<Tactical3DSceneProps> = ({
           </button>
         </div>
 
-        {/* View Action Icons */}
-        <button className="w-7 h-7 rounded-lg bg-[#0D1017] border border-[#1E2536] hover:border-slate-600 flex items-center justify-center text-slate-400 hover:text-white transition-all">
-          <Search className="w-3.5 h-3.5" />
-        </button>
-        <button className="w-7 h-7 rounded-lg bg-[#0D1017] border border-[#1E2536] hover:border-slate-600 flex items-center justify-center text-slate-400 hover:text-white transition-all">
+        {/* Action Icons */}
+        <button
+          onClick={() => setIsFilterOpen(!isFilterOpen)}
+          className="w-7 h-7 rounded-lg bg-[#0C0E14] border border-[#1E2536] hover:border-slate-600 flex items-center justify-center text-slate-400 hover:text-white transition-all backdrop-blur-md"
+          title="Filter layers"
+        >
           <Filter className="w-3.5 h-3.5" />
         </button>
         <button
-          onClick={() => {
-            setZoom(1.0);
-            setPan({ x: 0, y: 0 });
-          }}
-          className="w-7 h-7 rounded-lg bg-[#0D1017] border border-[#1E2536] hover:border-slate-600 flex items-center justify-center text-slate-400 hover:text-white transition-all"
+          className="w-7 h-7 rounded-lg bg-[#0C0E14] border border-[#1E2536] hover:border-slate-600 flex items-center justify-center text-slate-400 hover:text-white transition-all backdrop-blur-md"
+          title="Toggle Fullscreen"
         >
           <Maximize2 className="w-3.5 h-3.5" />
         </button>
-      </div>
-
-      {/* Left Zoom & View Controls Pill matching photo */}
-      <div className="absolute left-3 top-1/2 -translate-y-1/2 flex flex-col items-center bg-[#0D1017] border border-[#1E2536] rounded-lg p-1 z-10 shadow-lg">
-        <button
-          onClick={() => setZoom((z) => Math.min(z + 0.15, 2.2))}
-          className="w-6 h-6 rounded flex items-center justify-center text-slate-400 hover:text-white transition-colors"
-        >
-          <Plus className="w-3.5 h-3.5" />
-        </button>
-        <div className="w-0.5 h-10 bg-slate-800 rounded-full my-1 relative">
-          <div
-            className="w-2 h-2 rounded-full bg-[#FF5722] absolute left-1/2 -translate-x-1/2 -translate-y-1/2 shadow-[0_0_6px_#FF5722]"
-            style={{
-              top: `${Math.max(10, Math.min(90, ((zoom - 0.5) / 1.7) * 100))}%`,
-            }}
-          />
-        </div>
-        <button
-          onClick={() => setZoom((z) => Math.max(z - 0.15, 0.5))}
-          className="w-6 h-6 rounded flex items-center justify-center text-slate-400 hover:text-white transition-colors"
-        >
-          <Minus className="w-3.5 h-3.5" />
-        </button>
-        <div className="w-4 h-[1px] bg-slate-800 my-0.5" />
-        <button
-          onClick={() => {
-            setZoom(1.0);
-            setPan({ x: 0, y: 0 });
-          }}
-          title="Reset Orientation"
-          className="w-6 h-6 rounded flex items-center justify-center text-slate-400 hover:text-white transition-colors"
-        >
-          <RefreshCw className="w-3 h-3" />
-        </button>
-      </div>
-
-      {/* Bottom Left Inset Topological Minimap matching photo */}
-      <div className="absolute left-3 bottom-3 w-36 h-20 rounded-lg bg-[#080B10]/90 border border-[#1E2536] p-1.5 pointer-events-none">
-        <div className="text-[8px] text-slate-500 font-mono uppercase tracking-wider mb-1">
-          Topological Map
-        </div>
-        <div className="relative w-full h-12 border border-dashed border-slate-800 rounded">
-          {nodes.map((n) => (
-            <div
-              key={n.id}
-              className="absolute w-1.5 h-1.5 rounded-full"
-              style={{
-                left: `${(n.x / 850) * 100}%`,
-                top: `${(n.y / 420) * 100}%`,
-                backgroundColor: n.color,
-              }}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Bottom Right Legend matching photo */}
-      <div className="absolute right-3 bottom-3 rounded-lg bg-[#080B10]/90 border border-[#1E2536] px-3 py-1.5 text-[10px] font-sans text-slate-400 flex items-center gap-3.5 pointer-events-none">
-        <div className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-[#38BDF8]" />
-          <span>Normal</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-[#FFA000]" />
-          <span>At Risk</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-[#FF1744] animate-pulse" />
-          <span>Compromised</span>
-        </div>
-        <div className="flex items-center gap-1.5 pl-2 border-l border-slate-800">
-          <span className="w-3 h-0.5 bg-[#FF1744] shadow-[0_0_4px_#FF1744]" />
-          <span>Attack Path</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-3 h-0.5 bg-[#38BDF8]" />
-          <span>Trust Relationship</span>
-        </div>
       </div>
     </div>
   );

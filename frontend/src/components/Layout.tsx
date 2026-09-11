@@ -2,11 +2,6 @@ import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Layers,
-  Crosshair,
-  Radio,
-  Sliders,
-  FileCheck2,
-  FileText,
   Search,
   Bell,
   ChevronDown,
@@ -14,11 +9,15 @@ import {
   ShieldAlert,
   Activity,
   ArrowRight,
-  Terminal,
   Target,
+  Sliders,
+  FileCheck2,
+  FileText,
+  Compass,
   Sparkles,
   X,
-  Compass,
+  Radio,
+  Wifi,
 } from "lucide-react";
 
 interface LayoutProps {
@@ -35,7 +34,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
-  // Keyboard shortcut (⌘K / Ctrl+K)
+  // Global search shortcut ⌘K / Ctrl+K
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
@@ -94,14 +93,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   ];
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#090B10] text-[#E2E8F0] select-none font-sans">
-      {/* LEFT SIDEBAR */}
-      <aside className="w-56 flex-shrink-0 flex flex-col border-r border-[#191F2D] bg-[#0A0D14] z-20">
-        {/* Brand Header */}
-        <div className="p-4 border-b border-[#191F2D]/60 flex items-center gap-3">
-          {/* Logo */}
-          <div className="w-8 h-8 rounded-lg bg-[#1F1512] border border-[#FF5722]/50 flex items-center justify-center shadow-[0_0_12px_rgba(255,87,34,0.3)] flex-shrink-0">
-            <svg className="w-5 h-5 text-[#FF5722]" viewBox="0 0 24 24" fill="currentColor">
+    <div className="flex h-screen w-screen overflow-hidden bg-[#07090D] text-slate-200 select-none font-sans">
+      {/* 1. LEFT SIDEBAR */}
+      <aside className="w-60 flex-shrink-0 flex flex-col border-r border-[#171B26] bg-[#0A0D14] z-20">
+        {/* Rakshastra Logo */}
+        <div className="p-4 border-b border-[#171B26] flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-[#1E1410] border border-[#FF5722]/50 flex items-center justify-center shadow-[0_0_12px_rgba(249,115,22,0.25)] flex-shrink-0">
+            <svg className="w-4.5 h-4.5 text-[#FF5722]" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#FF5722" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
             </svg>
           </div>
@@ -126,8 +124,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 to={item.path}
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150 ${
                   active
-                    ? "bg-[#241613] text-[#FF5722] border border-[#FF5722]/40 font-semibold shadow-[0_0_15px_rgba(255,87,34,0.12)]"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
+                    ? "bg-[#211410] text-[#FF5722] border border-[#FF5722]/40 font-semibold shadow-[0_0_12px_rgba(249,115,22,0.1)]"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-[#0E1118]"
                 }`}
               >
                 <Icon className={`w-4 h-4 ${active ? "text-[#FF5722]" : "text-slate-400"}`} />
@@ -137,23 +135,22 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           })}
         </nav>
 
-        {/* AI COPILOT Box */}
-        <div className="p-3 mx-2.5 mb-2.5 rounded-xl bg-[#0D1017] border border-[#1E2536] relative overflow-hidden shadow-lg">
+        {/* AI COPILOT Panel */}
+        <div className="p-3 mx-2.5 mb-2.5 rounded-xl bg-[#0C0E14] border border-[#171B26] shadow-md">
           <div className="flex items-center gap-2 mb-2">
-            <div className="w-5 h-5 rounded-md bg-[#241613] border border-[#FF5722]/40 flex items-center justify-center text-[#FF5722] flex-shrink-0">
+            <div className="w-5 h-5 rounded-md bg-[#211410] border border-[#FF5722]/40 flex items-center justify-center text-[#FF5722] flex-shrink-0">
               <Activity className="w-3 h-3 text-[#FF5722]" />
             </div>
             <div>
               <div className="text-[10px] font-bold text-white tracking-wider flex items-center gap-1.5">
                 AI COPILOT
-                <span className="w-1.5 h-1.5 rounded-full bg-[#FF5722] animate-pulse"></span>
               </div>
               <div className="text-[8.5px] text-slate-400">Ask. Simulate. Secure.</div>
             </div>
           </div>
 
-          {/* Quick Prompt Chips */}
-          <div className="space-y-0.5 my-2">
+          {/* Compact Command Suggestions */}
+          <div className="space-y-0.5 my-2 font-mono">
             {[
               "/ simulate attack from web server",
               "/ show blast radius of db-01",
@@ -166,14 +163,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                   setCopilotInput(prompt);
                   handleCopilotSubmit(prompt);
                 }}
-                className="w-full text-left text-[9.5px] text-slate-400 hover:text-orange-300 hover:bg-orange-950/20 px-1.5 py-1 rounded transition-colors truncate font-mono"
+                className="w-full text-left text-[9.5px] text-slate-400 hover:text-orange-300 hover:bg-orange-950/20 px-1.5 py-1 rounded transition-colors truncate block"
               >
                 {prompt}
               </button>
             ))}
           </div>
 
-          {/* Input */}
+          {/* Chat Input */}
           <div className="relative mt-2">
             <input
               type="text"
@@ -183,11 +180,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleCopilotSubmit();
               }}
-              className="w-full bg-[#07090E] border border-slate-800 rounded-lg pl-2.5 pr-7 py-1 text-[10px] text-slate-200 placeholder-slate-500 focus:outline-none focus:border-[#FF5722]/50"
+              className="w-full bg-[#07090D] border border-slate-800 rounded-lg pl-2.5 pr-7 py-1 text-[10.5px] text-slate-200 placeholder-slate-500 focus:outline-none focus:border-[#FF5722]/50"
             />
             <button
               onClick={() => handleCopilotSubmit()}
-              className="absolute right-1 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-[#FF5722]/20 hover:bg-[#FF5722]/40 border border-[#FF5722]/40 flex items-center justify-center text-[#FF5722] transition-all"
+              className="absolute right-1 top-1/2 -translate-y-1/2 w-4.5 h-4.5 rounded-full bg-[#FF5722]/20 hover:bg-[#FF5722]/40 border border-[#FF5722]/40 flex items-center justify-center text-[#FF5722] transition-all"
             >
               <ArrowRight className="w-2.5 h-2.5" />
             </button>
@@ -195,21 +192,21 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         </div>
 
         {/* Footer */}
-        <div className="px-4 py-2.5 border-t border-[#191F2D]/60 text-slate-500 text-[9px] flex flex-col">
+        <div className="px-4 py-2.5 border-t border-[#171B26] text-slate-500 text-[9px] flex flex-col">
           <span className="font-mono tracking-wider text-slate-400 font-medium">RAKSHASTRA v1.0.0</span>
           <span className="text-slate-500 text-[8.5px]">A Safer Digital Tomorrow</span>
         </div>
       </aside>
 
-      {/* MAIN CONTAINER */}
+      {/* 2. MAIN WORKSPACE */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* TOP HEADER */}
-        <header className="h-14 border-b border-[#191F2D] bg-[#0A0D14]/90 backdrop-blur-md px-6 flex items-center justify-between z-10 flex-shrink-0">
-          {/* Centered Global Search Bar */}
+        {/* TOP BAR */}
+        <header className="h-14 border-b border-[#171B26] bg-[#0A0D14]/90 backdrop-blur-md px-6 flex items-center justify-between z-10 flex-shrink-0">
+          {/* Global Search */}
           <div className="flex-1 max-w-xl">
             <div
               onClick={() => setIsSearchOpen(true)}
-              className="cursor-pointer bg-[#0D1017] border border-[#1E2536] hover:border-slate-600 rounded-lg px-3.5 py-1.5 text-xs flex items-center justify-between text-slate-400 transition-all shadow-inner"
+              className="cursor-pointer bg-[#0C0E14] border border-[#1E2536] hover:border-slate-600 rounded-lg px-3.5 py-1.5 text-xs flex items-center justify-between text-slate-400 transition-all shadow-inner"
             >
               <div className="flex items-center gap-2.5">
                 <Search className="w-3.5 h-3.5 text-slate-400" />
@@ -223,21 +220,27 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             </div>
           </div>
 
-          {/* Right Profile & Notifications */}
+          {/* Right Controls: Live Sync, Notification, Profile */}
           <div className="flex items-center gap-4 ml-4">
+            {/* Live Sync Status */}
+            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950/40 border border-emerald-500/30 text-[10px] font-mono text-emerald-400 font-medium">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span>LIVE SYNC: ACTIVE</span>
+            </div>
+
             {/* Notification Bell */}
             <div className="relative">
               <button
                 onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-                className="w-8 h-8 rounded-full bg-[#0D1017] border border-[#1E2536] hover:border-slate-700 flex items-center justify-center text-slate-300 hover:text-white transition-all relative"
+                className="w-8 h-8 rounded-full bg-[#0C0E14] border border-[#1E2536] hover:border-slate-700 flex items-center justify-center text-slate-300 hover:text-white transition-all relative"
               >
                 <Bell className="w-4 h-4" />
-                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#FF5722] shadow-[0_0_6px_#FF5722]"></span>
+                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#FF5722]"></span>
               </button>
 
               {/* Notification dropdown */}
               {isNotificationsOpen && (
-                <div className="absolute right-0 mt-2 w-72 rounded-xl bg-[#0D111A] border border-[#1E2536] shadow-2xl p-3 z-50 text-xs font-mono">
+                <div className="absolute right-0 mt-2 w-72 rounded-xl bg-[#0D1017] border border-[#1E2536] shadow-2xl p-3 z-50 text-xs font-mono">
                   <div className="flex items-center justify-between pb-2 border-b border-slate-800 text-slate-300 font-bold">
                     <span>SECURITY ALERTS</span>
                     <span className="text-[10px] text-orange-400">3 NEW</span>
@@ -259,13 +262,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               )}
             </div>
 
-            {/* User Profile matching photo */}
-            <div className="flex items-center gap-2.5 pl-2">
-              <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-700 bg-slate-800 flex items-center justify-center flex-shrink-0">
-                <svg className="w-full h-full text-slate-400" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                </svg>
-              </div>
+            {/* Analyst Profile */}
+            <div className="flex items-center gap-2.5 pl-2 border-l border-[#171B26]">
+              <img
+                src="/aditya.png"
+                alt="Aditya"
+                className="w-8 h-8 rounded-full border border-slate-700 object-cover flex-shrink-0"
+              />
               <div className="text-left leading-tight">
                 <div className="text-xs font-bold text-white leading-none">Aditya</div>
                 <div className="text-[9.5px] text-slate-400 mt-0.5 leading-none">Security Analyst</div>
@@ -275,7 +278,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
         </header>
 
-        {/* MAIN VIEWPORT */}
+        {/* VIEWPORT CONTENT */}
         <main className="flex-1 overflow-y-auto overflow-x-hidden p-5 relative">
           {children}
         </main>
@@ -284,9 +287,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* COMMAND PALETTE MODAL (⌘ K) */}
       {isSearchOpen && (
         <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-start justify-center pt-24">
-          <div className="w-full max-w-lg rounded-xl bg-[#0D1017] border border-orange-500/30 shadow-2xl p-4 overflow-hidden">
+          <div className="w-full max-w-lg rounded-xl bg-[#0C0E14] border border-[#FF5722]/30 shadow-2xl p-4 overflow-hidden">
             <div className="flex items-center gap-3 pb-3 border-b border-slate-800">
-              <Search className="w-4 h-4 text-orange-400" />
+              <Search className="w-4 h-4 text-[#FF5722]" />
               <input
                 autoFocus
                 type="text"
@@ -313,7 +316,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     navigate(item.path);
                     setIsSearchOpen(false);
                   }}
-                  className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg hover:bg-orange-500/10 hover:text-orange-400 text-slate-300 text-left transition-colors"
+                  className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg hover:bg-orange-500/10 hover:text-[#FF5722] text-slate-300 text-left transition-colors"
                 >
                   <div className="flex items-center gap-2">
                     <item.icon className="w-4 h-4 text-slate-400" />
@@ -329,7 +332,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
       {/* COPILOT DRAWER */}
       {isCopilotOpen && (
-        <div className="fixed bottom-4 right-6 w-96 rounded-xl bg-[#0D1017]/95 border border-orange-500/40 shadow-[0_0_30px_rgba(255,87,34,0.15)] backdrop-blur-xl z-50 p-4 font-sans">
+        <div className="fixed bottom-4 right-6 w-96 rounded-xl bg-[#0C0E14]/95 border border-[#FF5722]/40 shadow-[0_0_30px_rgba(249,115,22,0.15)] backdrop-blur-xl z-50 p-4 font-sans">
           <div className="flex items-center justify-between pb-2 border-b border-slate-800">
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-[#FF5722]" />
@@ -342,14 +345,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               <X className="w-4 h-4" />
             </button>
           </div>
-          <div className="mt-3 text-xs text-slate-300 leading-relaxed bg-[#07090E] p-3 rounded-lg border border-slate-800/80">
+          <div className="mt-3 text-xs text-slate-300 leading-relaxed bg-[#07090D] p-3 rounded-lg border border-slate-800/80">
             {copilotResponse}
           </div>
           <div className="mt-3 flex items-center justify-between text-[10px] text-slate-500 font-mono">
             <span>Autonomous Security Engine</span>
             <button
               onClick={() => navigate("/defense")}
-              className="text-orange-400 hover:underline flex items-center gap-1"
+              className="text-[#FF5722] hover:underline flex items-center gap-1"
             >
               Open Sandbox &rarr;
             </button>
