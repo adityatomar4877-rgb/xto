@@ -130,6 +130,23 @@ export const TimelinePlayer: React.FC<TimelinePlayerProps> = ({
             {currentEvent.explanation}
           </div>
 
+          {currentEvent.reason && currentEvent.reason.length > 0 && (
+            <div className="p-2.5 rounded-md bg-white border border-slate-200/90 space-y-1">
+              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5 font-mono">
+                <ShieldAlert className="w-3 h-3 text-[#FF5722]" />
+                CAUSAL EVIDENCE REASONS:
+              </div>
+              <ul className="space-y-0.5 text-[11px] text-slate-700 pl-1">
+                {currentEvent.reason.map((r, i) => (
+                  <li key={i} className="flex items-start gap-1.5">
+                    <span className="text-[#FF5722] font-bold mt-0.5">•</span>
+                    <span>{r}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <div className="pt-2 border-t border-slate-200/80 flex flex-wrap items-center gap-3 text-[11px] text-slate-500 font-mono">
             <div>
               FROM: <span className="text-slate-800 font-semibold">{currentEvent.source_asset_name}</span>
