@@ -4,37 +4,37 @@
 
 @layer base {
   :root {
-    --font-mono: "JetBrains Mono", monospace;
+    --font-mono: "JetBrains Mono", "SF Mono", monospace;
     --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     --font-display: "Outfit", "Space Grotesk", sans-serif;
   }
 
-  /* Clean Enterprise Light Mode (Default, matching reference photo) */
   html.light, :root {
-    --bg-main: #F8F9FA;
+    --bg-main: #FAFAFA;
     --bg-card: #FFFFFF;
-    --bg-card-hover: #F8FAFC;
-    --bg-input: #F1F4F8;
-    --border-main: #E5E7EB;
-    --border-hover: #D1D5DB;
-    --text-primary: #111827;
-    --text-secondary: #4B5563;
-    --text-muted: #9CA3AF;
-    --canvas-dot: rgba(15, 23, 42, 0.08);
+    --bg-subtle: #F5F5F5;
+    --bg-input: #F5F5F5;
+    --border: #ECECEF;
+    --border-strong: #E0E0E4;
+    --text-primary: #18181B;
+    --text-secondary: #71717A;
+    --text-muted: #A1A1AA;
+    --accent: #F25C1F;
+    --accent-soft: #FFF4ED;
   }
 
-  /* Dark SOC Mode */
   html.dark {
-    --bg-main: #07090D;
-    --bg-card: #0C0E14;
-    --bg-card-hover: #11141D;
-    --bg-input: #080A0F;
-    --border-main: #171B26;
-    --border-hover: #232A3B;
-    --text-primary: #F8FAFC;
-    --text-secondary: #8E98A8;
-    --text-muted: #64748B;
-    --canvas-dot: rgba(255, 255, 255, 0.08);
+    --bg-main: #0A0A0B;
+    --bg-card: #131316;
+    --bg-subtle: #1A1A1E;
+    --bg-input: #1A1A1E;
+    --border: #25252A;
+    --border-strong: #33333A;
+    --text-primary: #FAFAFA;
+    --text-secondary: #9B9BA4;
+    --text-muted: #6B6B73;
+    --accent: #FF6B3D;
+    --accent-soft: #1C1310;
   }
 
   body {
@@ -51,38 +51,48 @@
   }
 }
 
-/* Enterprise SOC Panels */
-.soc-card {
+/* Single clean card style — borderless, subtle bg */
+.card {
   background: var(--bg-card);
-  border: 1px solid var(--border-main);
-  border-radius: 0.75rem;
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease;
+  border-radius: 16px;
 }
 
-.soc-card:hover {
-  border-color: var(--border-hover);
+/* Subtle card with border */
+.card-border {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
 }
 
-/* Canvas Dotted Grid */
-.canvas-grid {
-  background-color: var(--bg-input);
-  background-image: radial-gradient(var(--canvas-dot) 1px, transparent 1px);
-  background-size: 20px 20px;
+/* Status dots */
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
 }
 
-/* Custom Scrollbar */
+.status-dot-online {
+  background: #22C55E;
+}
+
+.status-dot-offline {
+  background: #A1A1AA;
+}
+
+/* Scrollbar */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 4px;
+  height: 4px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--bg-main);
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--border-hover);
-  border-radius: 3px;
+  background: var(--border-strong);
+  border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #FF5722;
+  background: var(--text-muted);
 }

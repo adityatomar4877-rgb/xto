@@ -1,18 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import {
-  Terminal,
   Play,
   Sliders,
   Activity,
-  AlertTriangle,
   ArrowRight,
-  Zap,
   CheckCircle2,
-  Shield,
-  Layers,
-  Sparkles,
-  Search,
 } from "lucide-react";
 import {
   api,
@@ -23,109 +16,7 @@ import {
 } from "@/lib/api";
 import { Tactical3DScene, PredictedNextHop } from "@/components/Tactical3DScene";
 import { TimelinePlayer } from "@/components/TimelinePlayer";
-
-// MITRE ATT&CK Knowledge Base for transition predictions
-const MITRE_KNOWLEDGE_MAP: Record<
-  string,
-  { targetId: string; techniqueId: string; techniqueName: string; confidence: number; phase: string; explanation: string }
-> = {
-  "EXT-INTERNET": {
-    targetId: "FW-EDGE-01",
-    techniqueId: "T1190",
-    techniqueName: "Exploit Public-Facing Application",
-    confidence: 96,
-    phase: "Initial Access",
-    explanation: "External perimeter scan identifies exposed SSL-VPN and HTTPS interfaces.",
-  },
-  "FW-EDGE-01": {
-    targetId: "VPN-GW-01",
-    techniqueId: "T1133",
-    techniqueName: "External Remote Services",
-    confidence: 91,
-    phase: "Initial Access",
-    explanation: "Bypasses perimeter packet filter targeting legacy SSL-VPN firmware vulnerability.",
-  },
-  "VPN-GW-01": {
-    targetId: "WS-ENG-04",
-    techniqueId: "T1078",
-    techniqueName: "Valid Accounts: Stolen Dev Credentials",
-    confidence: 89,
-    phase: "Initial Access",
-    explanation: "Adversary leverages single-factor session fallback to authenticate into DevOps workstation.",
-  },
-  "WEB-SRV-01": {
-    targetId: "APP-SRV-01",
-    techniqueId: "T1210",
-    techniqueName: "Exploitation of Remote Services (Log4j)",
-    confidence: 86,
-    phase: "Lateral Movement",
-    explanation: "RCE vulnerability on DMZ portal pivots through internal API gateway route.",
-  },
-  "WS-ENG-04": {
-    targetId: "DC-CORP-01",
-    techniqueId: "T1003",
-    techniqueName: "OS Credential Dumping (LSASS)",
-    confidence: 95,
-    phase: "Credential Access",
-    explanation: "Dumps cached memory on DevOps machine to extract Domain Admin Kerberos ticket.",
-  },
-  "WS-FIN-02": {
-    targetId: "APP-SRV-01",
-    techniqueId: "T1021.001",
-    techniqueName: "Remote Desktop Protocol Hijacking",
-    confidence: 82,
-    phase: "Lateral Movement",
-    explanation: "Harvested internal portal session permits pivot into banking application server.",
-  },
-  "APP-SRV-01": {
-    targetId: "DB-PROD-01",
-    techniqueId: "T1005",
-    techniqueName: "Data from Local System / PostgreSQL Access",
-    confidence: 92,
-    phase: "Collection",
-    explanation: "Uses application database connection pool credentials to query production records.",
-  },
-  "DC-CORP-01": {
-    targetId: "DB-PROD-01",
-    techniqueId: "T1021.002",
-    techniqueName: "SMB / Windows Admin Shares Delegation",
-    confidence: 94,
-    phase: "Lateral Movement",
-    explanation: "Domain Admin privilege permits remote service creation on Tier-0 database server.",
-  },
-  "CLOUD-K8S-01": {
-    targetId: "DB-PROD-01",
-    techniqueId: "T1530",
-    techniqueName: "Data from Cloud Storage & DB Peering",
-    confidence: 88,
-    phase: "Collection",
-    explanation: "Compromised AWS service account accesses federated RDS storage volume.",
-  },
-  "DB-PROD-01": {
-    targetId: "VAULT-BACKUP-01",
-    techniqueId: "T1486",
-    techniqueName: "Data Encrypted for Impact (Veeam Invalidation)",
-    confidence: 98,
-    phase: "Impact",
-    explanation: "Adversary compromises immutable backup repository before deploying final ransomware payload.",
-  },
-  "SIEM-SOC-01": {
-    targetId: "DC-CORP-01",
-    techniqueId: "T1562.001",
-    techniqueName: "Impair Defenses: Log Evasion",
-    confidence: 78,
-    phase: "Defense Evasion",
-    explanation: "Suspends syslog forwarding agents on Domain Controller to delay SOC containment.",
-  },
-  "VAULT-BACKUP-01": {
-    targetId: "EXT-INTERNET",
-    techniqueId: "T1041",
-    techniqueName: "Exfiltration Over C2 Channel",
-    confidence: 90,
-    phase: "Exfiltration",
-    explanation: "Encrypted snapshot chunks staged and exfiltrated to adversary external VPS drop.",
-  },
-};
+import { motion } from "@/lib/animations";
 
 export const AttackSimulationPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -188,9 +79,18 @@ export const AttackSimulationPage: React.FC = () => {
 
   if (loading || !twin) {
     return (
-      <div className="flex items-center justify-center h-full font-mono text-[#FF5722]">
-        <Activity className="w-5 h-5 animate-spin mr-2" />
-        INITIALIZING ATTACK SIMULATION WORKSPACE...
+      <div className="flex flex-col items-center justify-center h-full gap-3">
+        <div className="flex items-center gap-1">
+          {[0, 1, 2].map((i) => (
+            <motion.span
+              key={i}
+              className="w-2 h-2 rounded-full bg-[#FF5722]"
+              animate={{ opacity: [0.3, 1, 0.3] }}
+              transition={{ duration: 1, repeat: Infinity, delay: i * 0.15 }}
+            />
+          ))}
+        </div>
+        <span className="text-[11px] font-mono text-[#A1A1AA]">Loading attack simulation...</span>
       </div>
     );
   }
@@ -219,11 +119,11 @@ export const AttackSimulationPage: React.FC = () => {
   const currentStep = simulationTrace?.timeline[activeStepIndex];
   const activeStepNode = currentStep?.target_asset_id || footholdId;
 
-  // Calculate MITRE ATT&CK predicted next move
+  // Calculate MITRE ATT&CK predicted next move — from real simulation data only
   let predictedNextHop: PredictedNextHop | null = null;
 
   if (simulationTrace && activeStepIndex < simulationTrace.timeline.length - 1) {
-    // If we are currently stepping through the timeline, the upcoming event is the predicted move!
+    // The upcoming event from the real simulation trace is the predicted move
     const nextEvent = simulationTrace.timeline[activeStepIndex + 1];
     predictedNextHop = {
       sourceId: nextEvent.source_asset_id,
@@ -237,36 +137,21 @@ export const AttackSimulationPage: React.FC = () => {
   } else if (simulationTrace && activeStepIndex === simulationTrace.timeline.length - 1) {
     // Final step reached
     predictedNextHop = null;
-  } else {
-    // Fallback: predict next move from current foothold using MITRE knowledge base
-    const currentAssetId = detectedPath[detectedPath.length - 1] || footholdId;
-    const rule = MITRE_KNOWLEDGE_MAP[currentAssetId];
-    if (rule) {
-      predictedNextHop = {
-        sourceId: currentAssetId,
-        targetId: rule.targetId,
-        techniqueId: rule.techniqueId,
-        techniqueName: rule.techniqueName,
-        confidence: rule.confidence,
-        phase: rule.phase,
-        explanation: rule.explanation,
-      };
-    }
   }
+  // No fallback — if there's no simulation trace yet, no prediction is shown
 
   return (
-    <div className="space-y-4 font-sans text-slate-900 select-none pb-4">
+    <div className="space-y-8 font-sans text-[#18181B] select-none pb-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900 font-display flex items-center gap-2">
-            <Terminal className="w-5 h-5 text-[#FF5722]" />
-            AGENT-BASED ATTACK SIMULATION
+          <h1 className="text-xl font-bold tracking-tight text-[#18181B] font-display">
+            Attack Simulation
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5 font-normal">
-            Autonomous adversary agent models reachable transitions:{" "}
-            <span className="text-red-600 font-semibold font-mono">RED = Detected Traversed Path</span>,{" "}
-            <span className="text-amber-600 font-semibold font-mono">YELLOW = MITRE ATT&CK Predicted Next Move</span>.
+          <p className="text-xs text-[#71717A] mt-0.5 font-normal">
+            Autonomous adversary agent models reachable transitions across the digital twin.
+            <span className="text-red-600 font-semibold font-mono"> Red</span> = detected path,{" "}
+            <span className="text-amber-600 font-semibold font-mono">Yellow</span> = predicted next move.
           </p>
         </div>
 
@@ -276,7 +161,7 @@ export const AttackSimulationPage: React.FC = () => {
               `/defense?threat=${threatId}&persona=${persona}&foothold=${footholdId}&target=${targetId}`
             )
           }
-          className="px-4 py-2 rounded-xl bg-[#FFF2EB] border border-[#FF5722]/40 text-[#FF5722] hover:bg-[#FFE5D6] text-xs font-semibold flex items-center gap-2 shadow-xs transition-all cursor-pointer"
+          className="px-4 py-2 rounded-2xl bg-[#FFF4ED] border border-[#FF5722]/40 text-[#F25C1F] dark:text-[#FF6B3D] hover:bg-[#FFE5D6] text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer"
         >
           <Sliders className="w-4 h-4" />
           TEST CONTROLS IN SANDBOX &rarr;
@@ -284,16 +169,16 @@ export const AttackSimulationPage: React.FC = () => {
       </div>
 
       {/* Scenario Builder Bar */}
-      <div className="p-4 rounded-xl bg-white border border-[#E5E7EB] grid grid-cols-5 gap-3.5 text-xs shadow-xs">
+      <div className="p-6 rounded-2xl bg-white border border-[#ECECEF] grid grid-cols-5 gap-3.5 text-xs">
         {/* Threat Vector */}
         <div>
-          <label className="text-[10px] text-slate-500 uppercase font-semibold font-mono block mb-1">
+          <label className="text-[10px] text-[#71717A] uppercase font-semibold font-mono block mb-1">
             THREAT VECTOR
           </label>
           <select
             value={threatId}
             onChange={(e) => setThreatId(e.target.value)}
-            className="w-full bg-[#F8F9FA] border border-[#E5E7EB] text-slate-800 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-[#FF5722] font-semibold"
+            className="w-full bg-[#F5F5F5] border border-[#ECECEF] text-slate-800 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-[#FF5722] font-semibold"
           >
             {vectors.map((v) => (
               <option key={v.id} value={v.id}>
@@ -305,13 +190,13 @@ export const AttackSimulationPage: React.FC = () => {
 
         {/* Attacker Persona */}
         <div>
-          <label className="text-[10px] text-slate-500 uppercase font-semibold font-mono block mb-1">
+          <label className="text-[10px] text-[#71717A] uppercase font-semibold font-mono block mb-1">
             ATTACKER PERSONA
           </label>
           <select
             value={persona}
             onChange={(e) => setPersona(e.target.value)}
-            className="w-full bg-[#F8F9FA] border border-[#E5E7EB] text-slate-800 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-[#FF5722] font-semibold"
+            className="w-full bg-[#F5F5F5] border border-[#ECECEF] text-slate-800 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-[#FF5722] font-semibold"
           >
             {attackers.map((a) => (
               <option key={a.persona} value={a.persona}>
@@ -323,13 +208,13 @@ export const AttackSimulationPage: React.FC = () => {
 
         {/* Initial Foothold */}
         <div>
-          <label className="text-[10px] text-slate-500 uppercase font-semibold font-mono block mb-1">
+          <label className="text-[10px] text-[#71717A] uppercase font-semibold font-mono block mb-1">
             INITIAL FOOTHOLD
           </label>
           <select
             value={footholdId}
             onChange={(e) => setFootholdId(e.target.value)}
-            className="w-full bg-[#F8F9FA] border border-[#E5E7EB] text-slate-800 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-[#FF5722] font-semibold"
+            className="w-full bg-[#F5F5F5] border border-[#ECECEF] text-slate-800 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-[#FF5722] font-semibold"
           >
             {twin.assets.map((a) => (
               <option key={a.id} value={a.id}>
@@ -341,13 +226,13 @@ export const AttackSimulationPage: React.FC = () => {
 
         {/* Objective Crown Jewel */}
         <div>
-          <label className="text-[10px] text-slate-500 uppercase font-semibold font-mono block mb-1">
+          <label className="text-[10px] text-[#71717A] uppercase font-semibold font-mono block mb-1">
             TARGET OBJECTIVE
           </label>
           <select
             value={targetId}
             onChange={(e) => setTargetId(e.target.value)}
-            className="w-full bg-[#F8F9FA] border border-[#E5E7EB] text-slate-800 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-[#FF5722] font-semibold"
+            className="w-full bg-[#F5F5F5] border border-[#ECECEF] text-slate-800 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-[#FF5722] font-semibold"
           >
             {twin.assets.map((a) => (
               <option key={a.id} value={a.id}>
@@ -362,7 +247,7 @@ export const AttackSimulationPage: React.FC = () => {
           <button
             onClick={handleRunSimulation}
             disabled={isSimulating}
-            className="w-full py-2 px-3 rounded-lg bg-[#FF5722] hover:bg-[#F4511E] disabled:opacity-50 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer"
+            className="w-full py-2 px-3 rounded-lg bg-[#FF5722] hover:bg-[#F4511E] disabled:opacity-50 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
           >
             {isSimulating ? (
               <>
@@ -380,9 +265,9 @@ export const AttackSimulationPage: React.FC = () => {
       </div>
 
       {/* Main Simulation Viewport: Exact 2D Vector Topology Canvas + Live Stats */}
-      <div className="grid grid-cols-12 gap-4">
+      <div className="grid grid-cols-12 gap-6">
         {/* Topology View (2D Vector Canvas matching screenshot) */}
-        <div className="col-span-8 h-[450px] flex flex-col">
+        <div className="col-span-8 h-[500px] flex flex-col">
           <Tactical3DScene
             height="h-full"
             assets={twin.assets}
@@ -401,21 +286,20 @@ export const AttackSimulationPage: React.FC = () => {
         </div>
 
         {/* Simulation Stats & MITRE Prediction Panel */}
-        <div className="col-span-4 p-4 rounded-xl bg-white border border-[#E5E7EB] space-y-3.5 shadow-xs flex flex-col justify-between h-[450px] overflow-y-auto">
+        <div className="col-span-4 p-5 rounded-2xl bg-white border border-[#ECECEF] space-y-3 flex flex-col justify-between h-[500px] overflow-y-auto">
           <div className="space-y-3">
-            <div className="text-xs text-slate-800 font-bold uppercase border-b border-slate-100 pb-2 flex items-center justify-between">
-              <span className="flex items-center gap-1.5 font-display">
-                <Terminal className="w-3.5 h-3.5 text-[#FF5722]" />
+            <div className="text-[13px] text-slate-800 font-bold uppercase border-b border-slate-100 pb-2 flex items-center justify-between">
+              <span className="font-display">
                 TELEMETRY & MITRE PREDICTOR
               </span>
-              <span className="text-[10px] text-[#FF5722] font-mono bg-[#FFF2EB] px-1.5 py-0.5 rounded font-bold">
+              <span className="text-[10px] text-[#F25C1F] dark:text-[#FF6B3D] font-mono bg-[#FFF4ED] px-1.5 py-0.5 rounded font-bold">
                 STEP {activeStepIndex + 1}/{simulationTrace?.timeline.length || 1}
               </span>
             </div>
 
             {/* MITRE ATT&CK Next Move Prediction Callout */}
             {predictedNextHop ? (
-              <div className="p-3 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100/50 border border-amber-300 space-y-2 shadow-xs">
+              <div className="p-3 rounded-2xl bg-gradient-to-br from-amber-50 to-amber-100/50 border border-amber-300 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
@@ -429,17 +313,17 @@ export const AttackSimulationPage: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded bg-amber-400 text-slate-950 font-mono font-black text-xs shadow-xs">
+                  <span className="px-2 py-0.5 rounded bg-amber-400 text-slate-950 font-mono font-black text-xs">
                     {predictedNextHop.techniqueId}
                   </span>
-                  <div className="text-xs font-bold text-slate-900 truncate">
+                  <div className="text-xs font-bold text-[#18181B] truncate">
                     {predictedNextHop.techniqueName}
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2 text-[11px] font-mono">
-                  <span className="text-slate-500">Target Asset:</span>
-                  <span className="font-bold text-slate-900 bg-white px-2 py-0.5 rounded border border-amber-200">
+                  <span className="text-[#71717A]">Target Asset:</span>
+                  <span className="font-bold text-[#18181B] bg-white px-2 py-0.5 rounded border border-amber-200">
                     {predictedNextHop.targetId}
                   </span>
                 </div>
@@ -449,7 +333,7 @@ export const AttackSimulationPage: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center gap-2 text-emerald-800 text-xs font-semibold">
+              <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center gap-2 text-emerald-800 text-xs font-semibold">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
                 <span>Final objective reached or adversary path fully contained.</span>
               </div>
@@ -459,13 +343,13 @@ export const AttackSimulationPage: React.FC = () => {
             {currentStep && (
               <div className="space-y-2 pt-1 border-t border-slate-100">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-500 font-medium">CURRENT ACTION:</span>
+                  <span className="text-[#71717A] font-medium">CURRENT ACTION:</span>
                   <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-red-50 text-red-600 border border-red-200">
                     {currentStep.technique_id} - {currentStep.phase}
                   </span>
                 </div>
 
-                <div className="text-xs text-slate-700 bg-[#F8F9FA] p-2.5 rounded-lg border border-[#E5E7EB] leading-relaxed">
+                <div className="text-xs text-slate-700 bg-[#F5F5F5] p-2.5 rounded-lg border border-[#ECECEF] leading-relaxed">
                   {currentStep.explanation}
                 </div>
               </div>
@@ -474,26 +358,66 @@ export const AttackSimulationPage: React.FC = () => {
             {/* Blast Radius & Effort Metrics */}
             {simulationTrace && (
               <div className="grid grid-cols-2 gap-2 text-xs pt-1">
-                <div className="p-2.5 rounded-lg bg-[#F8F9FA] border border-[#E5E7EB]">
-                  <div className="text-[9.5px] text-slate-500 font-medium">BLAST RADIUS</div>
+                <div className="p-2.5 rounded-lg bg-[#F5F5F5] border border-[#ECECEF]">
+                  <div className="text-[9.5px] text-[#71717A] font-medium">BLAST RADIUS</div>
                   <div className="text-lg font-black text-red-600 font-display">
                     {simulationTrace.blast_radius_percent}%
                   </div>
                 </div>
-                <div className="p-2.5 rounded-lg bg-[#F8F9FA] border border-[#E5E7EB]">
-                  <div className="text-[9.5px] text-slate-500 font-medium">ATTACKER EFFORT</div>
+                <div className="p-2.5 rounded-lg bg-[#F5F5F5] border border-[#ECECEF]">
+                  <div className="text-[9.5px] text-[#71717A] font-medium">ATTACKER EFFORT</div>
                   <div className="text-lg font-black text-slate-800 font-display">
                     {simulationTrace.total_attacker_effort_score}
                   </div>
                 </div>
               </div>
             )}
+
+            {/* Topology Color Code Key Callout */}
+            <div className="p-3 rounded-xl bg-slate-50/90 border border-slate-200/80 text-[10.5px] space-y-2">
+              <div className="text-[9.5px] font-mono font-bold text-slate-700 uppercase tracking-wider flex items-center justify-between">
+                <span>GRAPH COLOR CODE SPECIFICATION</span>
+                <span className="text-[#FF5722] font-semibold text-[9px]">Live Key</span>
+              </div>
+              <div className="grid grid-cols-2 gap-y-1.5 gap-x-2 text-[10px]">
+                <div className="flex items-center gap-1.5" title="Red: Confirmed adversary execution / stolen token">
+                  <span className="w-2 h-2 rounded-full bg-[#EF4444] animate-pulse flex-shrink-0" />
+                  <span className="font-bold text-red-600">Red:</span>
+                  <span className="text-slate-600 truncate">Compromised</span>
+                </div>
+                <div className="flex items-center gap-1.5" title="Yellow: MITRE ATT&CK predicted next lateral movement">
+                  <span className="w-2 h-2 rounded-full bg-[#EAB308] flex-shrink-0" />
+                  <span className="font-bold text-amber-600">Yellow:</span>
+                  <span className="text-slate-600 truncate">Predicted Move</span>
+                </div>
+                <div className="flex items-center gap-1.5" title="Purple: Crown Jewel (Tier-0 mission-critical asset)">
+                  <span className="w-2 h-2 rounded-full bg-[#8B5CF6] flex-shrink-0" />
+                  <span className="font-bold text-purple-600">Purple:</span>
+                  <span className="text-slate-600 truncate">Crown Jewel</span>
+                </div>
+                <div className="flex items-center gap-1.5" title="Blue: Normal operational host under active monitoring">
+                  <span className="w-2 h-2 rounded-full bg-[#0284C7] flex-shrink-0" />
+                  <span className="font-bold text-sky-600">Blue:</span>
+                  <span className="text-slate-600 truncate">Monitored</span>
+                </div>
+                <div className="flex items-center gap-1.5" title="Black: External untrusted space / threat actor origin">
+                  <span className="w-2 h-2 rounded-full bg-[#0F172A] flex-shrink-0" />
+                  <span className="font-bold text-slate-800">Black:</span>
+                  <span className="text-slate-600 truncate">Adversary</span>
+                </div>
+                <div className="flex items-center gap-1.5" title="Red solid line: Confirmed lateral attack path">
+                  <span className="w-3 h-0.5 bg-[#EF4444] flex-shrink-0" />
+                  <span className="font-bold text-red-600">Red Line:</span>
+                  <span className="text-slate-600 truncate">Attack Path</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Compromised Assets Pill List */}
           {simulationTrace && (
             <div className="pt-2 border-t border-slate-100">
-              <div className="text-[9.5px] text-slate-500 uppercase font-bold mb-1.5">
+              <div className="text-[9.5px] text-[#71717A] uppercase font-bold mb-1.5">
                 COMPROMISED ASSETS ({compromisedList.length}):
               </div>
               <div className="flex flex-wrap gap-1.5 max-h-16 overflow-y-auto">

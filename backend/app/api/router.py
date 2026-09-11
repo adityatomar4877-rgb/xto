@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-from fastapi import APIRouter, HTTPException, Query, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel
 
 from app.schemas.twin import (
@@ -659,17 +659,33 @@ def get_supported_ingestion_formats():
 
 @router.post("/ingest/upload", response_model=IngestionResponse)
 async def upload_scan_file(
-    file: UploadFile = File(...),
+    request: Request,
     mode: str = "MERGE",
+    filename: Optional[str] = None,
 ):
     """Upload and parse real-world scan files (Nmap, Nessus, BloodHound, or Digital Twin JSON).
-    Mode can be 'MERGE' (augment existing twin) or 'REPLACE' (wipe synthetic demo data and start with real data).
+    Accepts JSON body { content, filename, mode } OR raw text/XML/JSON in request body.
     """
     engine = get_ingestion_engine()
     try:
-        content_bytes = await file.read()
-        content_str = content_bytes.decode("utf-8", errors="replace")
-        return engine.ingest(content=content_str, filename=file.filename or "uploaded_scan", mode=mode)
+        content_type = request.headers.get("content-type", "")
+        if "application/json" in content_type:
+            body = await request.json()
+            if isinstance(body, dict) and "content" in body:
+                content_str = body["content"]
+                file_name = body.get("filename") or filename or "uploaded_scan.json"
+                req_mode = body.get("mode") or mode
+            else:
+                content_str = json.dumps(body)
+                file_name = filename or "uploaded_scan.json"
+                req_mode = mode
+        else:
+            raw_bytes = await request.body()
+            content_str = raw_bytes.decode("utf-8", errors="replace")
+            file_name = filename or "uploaded_scan"
+            req_mode = mode
+
+        return engine.ingest(content=content_str, filename=file_name, mode=req_mode)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to ingest scan file: {str(e)}")
 

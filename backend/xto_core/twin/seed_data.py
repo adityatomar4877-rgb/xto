@@ -504,3 +504,8 @@ def create_demo_topology() -> DigitalTwinTopology:
         controls=[ctrl_edr_fleet, ctrl_waf, ctrl_mfa_corp, ctrl_vault_airgap],
         stats=stats,
     )
+
+
+# Alias for backwards compatibility
+create_seed_topology = create_demo_topology
+
