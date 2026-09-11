@@ -1,10 +1,10 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import Lenis from "lenis";
 import { AnimatePresence, motion } from "framer-motion";
 import { EASE } from "@/lib/animations";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { Layout } from "@/components/Layout";
+import { LandingPage } from "@/pages/LandingPage";
 import { CommandCenterPage } from "@/pages/CommandCenterPage";
 import { DigitalTwinPage } from "@/pages/DigitalTwinPage";
 import { ThreatVectorsPage } from "@/pages/ThreatVectorsPage";
@@ -38,10 +38,8 @@ const AnimatedRoutes: React.FC = () => {
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<Navigate to="/command" replace />} />
         <Route path="/command" element={withPageAnimation(CommandCenterPage)} />
         <Route path="/twin" element={withPageAnimation(DigitalTwinPage)} />
-        <Route path="/ingest" element={withPageAnimation(DataIngestionPage)} />
         <Route path="/threat-vectors" element={withPageAnimation(ThreatVectorsPage)} />
         <Route path="/simulation" element={withPageAnimation(AttackSimulationPage)} />
         <Route path="/paths" element={withPageAnimation(AttackPathsPage)} />
@@ -49,6 +47,7 @@ const AnimatedRoutes: React.FC = () => {
         <Route path="/defense" element={withPageAnimation(DefenseSandboxPage)} />
         <Route path="/decision-proof" element={withPageAnimation(DecisionProofPage)} />
         <Route path="/audit" element={withPageAnimation(AutonomousAuditPage)} />
+        <Route path="/ingest" element={withPageAnimation(DataIngestionPage)} />
         <Route path="/mitre" element={withPageAnimation(MitreFrameworkPage)} />
         <Route path="/remediation" element={withPageAnimation(RemediationPage)} />
         <Route path="/sync" element={withPageAnimation(EnvironmentSyncPage)} />
@@ -60,38 +59,23 @@ const AnimatedRoutes: React.FC = () => {
 };
 
 export const App: React.FC = () => {
-  useEffect(() => {
-    const mainEl = document.getElementById("main-viewport");
-    const lenis = new Lenis({
-      wrapper: (mainEl as HTMLElement) || window,
-      content: (mainEl?.firstElementChild as HTMLElement) || document.documentElement,
-      duration: 1.2,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      orientation: "vertical",
-      gestureOrientation: "vertical",
-      smoothWheel: true,
-      touchMultiplier: 2,
-    });
-
-    let animId: number;
-    function raf(time: number) {
-      lenis.raf(time);
-      animId = requestAnimationFrame(raf);
-    }
-    animId = requestAnimationFrame(raf);
-
-    return () => {
-      cancelAnimationFrame(animId);
-      lenis.destroy();
-    };
-  }, []);
-
   return (
     <ThemeProvider>
       <BrowserRouter>
-        <Layout>
-          <AnimatedRoutes />
-        </Layout>
+        <Routes>
+          {/* Landing page — full-screen cinematic experience, no Layout */}
+          <Route path="/" element={<LandingPage />} />
+
+          {/* Dashboard pages — inside Layout with sidebar/topbar */}
+          <Route
+            path="*"
+            element={
+              <Layout>
+                <AnimatedRoutes />
+              </Layout>
+            }
+          />
+        </Routes>
       </BrowserRouter>
     </ThemeProvider>
   );

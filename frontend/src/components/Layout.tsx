@@ -32,13 +32,13 @@ interface LayoutProps {
 const navItems = [
   { path: "/command", label: "Overview", icon: LayoutGrid },
   { path: "/twin", label: "Digital Twin", icon: Layers },
-  { path: "/ingest", label: "Ingest Scans", icon: UploadCloud },
   { path: "/threat-vectors", label: "Threats", icon: ShieldAlert },
   { path: "/simulation", label: "Simulation", icon: Target },
   { path: "/blast-radius", label: "Blast Radius", icon: Compass },
   { path: "/defense", label: "What-If", icon: Sliders },
   { path: "/mitre", label: "MITRE", icon: ShieldCheck },
   { path: "/audit", label: "Audit", icon: Zap },
+  { path: "/ingest", label: "Ingest", icon: UploadCloud },
   { path: "/remediation", label: "Remediation", icon: FileCheck2 },
   { path: "/decision-proof", label: "Reports", icon: FileText },
 ];

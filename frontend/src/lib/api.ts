@@ -828,13 +828,18 @@ export const api = {
   // Real Scan Ingestion (Feature #13)
   getIngestionFormats: () =>
     request<SupportedFormatInfo[]>("/api/ingest/formats"),
-  uploadScanFile: (file: File, mode: string = "MERGE") => {
-    const formData = new FormData();
-    formData.append("file", file);
+  uploadScanFile: async (file: File, mode: string = "MERGE") => {
+    const text = await file.text();
     return request<IngestionResponse>(`/api/ingest/upload?mode=${mode}`, {
       method: "POST",
-      body: formData,
-      headers: {},
+      body: JSON.stringify({
+        content: text,
+        filename: file.name,
+        mode: mode,
+      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
     });
   },
   loadSampleScan: (sampleId: string, mode: string = "MERGE") =>

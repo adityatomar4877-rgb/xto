@@ -267,7 +267,7 @@ export const AttackSimulationPage: React.FC = () => {
       {/* Main Simulation Viewport: Exact 2D Vector Topology Canvas + Live Stats */}
       <div className="grid grid-cols-12 gap-6">
         {/* Topology View (2D Vector Canvas matching screenshot) */}
-        <div className="col-span-8 h-[500px] flex flex-col">
+        <div className="col-span-8 h-[450px] flex flex-col">
           <Tactical3DScene
             height="h-full"
             assets={twin.assets}
@@ -286,9 +286,9 @@ export const AttackSimulationPage: React.FC = () => {
         </div>
 
         {/* Simulation Stats & MITRE Prediction Panel */}
-        <div className="col-span-4 p-5 rounded-2xl bg-white border border-[#ECECEF] space-y-3 flex flex-col justify-between h-[500px] overflow-y-auto">
+        <div className="col-span-4 p-6 rounded-2xl bg-white border border-[#ECECEF] space-y-3.5 flex flex-col justify-between h-[450px] overflow-y-auto">
           <div className="space-y-3">
-            <div className="text-[13px] text-slate-800 font-bold uppercase border-b border-slate-100 pb-2 flex items-center justify-between">
+            <div className="text-[14px] text-slate-800 font-bold uppercase border-b border-slate-100 pb-2 flex items-center justify-between">
               <span className="font-display">
                 TELEMETRY & MITRE PREDICTOR
               </span>
@@ -372,46 +372,6 @@ export const AttackSimulationPage: React.FC = () => {
                 </div>
               </div>
             )}
-
-            {/* Topology Color Code Key Callout */}
-            <div className="p-3 rounded-xl bg-slate-50/90 border border-slate-200/80 text-[10.5px] space-y-2">
-              <div className="text-[9.5px] font-mono font-bold text-slate-700 uppercase tracking-wider flex items-center justify-between">
-                <span>GRAPH COLOR CODE SPECIFICATION</span>
-                <span className="text-[#FF5722] font-semibold text-[9px]">Live Key</span>
-              </div>
-              <div className="grid grid-cols-2 gap-y-1.5 gap-x-2 text-[10px]">
-                <div className="flex items-center gap-1.5" title="Red: Confirmed adversary execution / stolen token">
-                  <span className="w-2 h-2 rounded-full bg-[#EF4444] animate-pulse flex-shrink-0" />
-                  <span className="font-bold text-red-600">Red:</span>
-                  <span className="text-slate-600 truncate">Compromised</span>
-                </div>
-                <div className="flex items-center gap-1.5" title="Yellow: MITRE ATT&CK predicted next lateral movement">
-                  <span className="w-2 h-2 rounded-full bg-[#EAB308] flex-shrink-0" />
-                  <span className="font-bold text-amber-600">Yellow:</span>
-                  <span className="text-slate-600 truncate">Predicted Move</span>
-                </div>
-                <div className="flex items-center gap-1.5" title="Purple: Crown Jewel (Tier-0 mission-critical asset)">
-                  <span className="w-2 h-2 rounded-full bg-[#8B5CF6] flex-shrink-0" />
-                  <span className="font-bold text-purple-600">Purple:</span>
-                  <span className="text-slate-600 truncate">Crown Jewel</span>
-                </div>
-                <div className="flex items-center gap-1.5" title="Blue: Normal operational host under active monitoring">
-                  <span className="w-2 h-2 rounded-full bg-[#0284C7] flex-shrink-0" />
-                  <span className="font-bold text-sky-600">Blue:</span>
-                  <span className="text-slate-600 truncate">Monitored</span>
-                </div>
-                <div className="flex items-center gap-1.5" title="Black: External untrusted space / threat actor origin">
-                  <span className="w-2 h-2 rounded-full bg-[#0F172A] flex-shrink-0" />
-                  <span className="font-bold text-slate-800">Black:</span>
-                  <span className="text-slate-600 truncate">Adversary</span>
-                </div>
-                <div className="flex items-center gap-1.5" title="Red solid line: Confirmed lateral attack path">
-                  <span className="w-3 h-0.5 bg-[#EF4444] flex-shrink-0" />
-                  <span className="font-bold text-red-600">Red Line:</span>
-                  <span className="text-slate-600 truncate">Attack Path</span>
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* Compromised Assets Pill List */}

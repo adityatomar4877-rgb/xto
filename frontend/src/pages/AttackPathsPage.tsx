@@ -148,7 +148,7 @@ export const AttackPathsPage: React.FC = () => {
       {/* Main Content: Path List (Left) + Selected Path Node Progression (Right) */}
       <div className="grid grid-cols-12 gap-6">
         {/* Left: Ranked Paths */}
-        <StaggerGroup className="col-span-5 space-y-2 max-h-[600px] overflow-y-auto pr-1">
+        <StaggerGroup className="col-span-5 space-y-2 max-h-[600px] overflow-y-auto overscroll-contain pr-2">
           {pathData?.paths?.map((p: any, idx: number) => {
             const isSelected = selectedPathIndex === idx;
             return (

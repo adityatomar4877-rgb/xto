@@ -506,6 +506,6 @@ def create_demo_topology() -> DigitalTwinTopology:
     )
 
 
-# Alias for backwards compatibility
+# Backward-compatible alias
 create_seed_topology = create_demo_topology
 

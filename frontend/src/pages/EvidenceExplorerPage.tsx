@@ -119,7 +119,7 @@ export const EvidenceExplorerPage: React.FC = () => {
         className="grid grid-cols-12 gap-6"
       >
         {/* Left: Evidence List */}
-        <StaggerGroup className="col-span-5 space-y-2 max-h-[640px] overflow-y-auto pr-1">
+        <StaggerGroup className="col-span-5 space-y-2 max-h-[640px] overflow-y-auto overscroll-contain pr-2">
           {filtered.map((ev) => {
             const isSelected = selectedEvidence?.id === ev.id;
             return (

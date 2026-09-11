@@ -261,7 +261,7 @@ export const MitreFrameworkPage: React.FC = () => {
                 </div>
 
                 {/* Technique Cards */}
-                <div className="space-y-1.5 max-h-[560px] overflow-y-auto pr-1">
+                <div className="space-y-1.5 max-h-[560px] overflow-y-auto overscroll-contain pr-2">
                   {filteredTechniques.map((tech) => {
                     const isMitigated = tech.status === "MITIGATED";
                     return (

@@ -28,31 +28,39 @@ import {
   AuditedAttackPath,
   ChokepointAnalysis,
   RemediationTask,
+  DigitalTwinTopology,
 } from "@/lib/api";
 import { motion, StaggerGroup, AnimatedCard, AnimatedNumber, EASE } from "@/lib/animations";
+import { TopologyCanvas } from "@/components/landing/TopologyCanvas";
 
 export const AutonomousAuditPage: React.FC = () => {
   const [report, setReport] = useState<AutomatedAuditReport | null>(null);
+  const [twin, setTwin] = useState<DigitalTwinTopology | null>(null);
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [currentStep, setCurrentStep] = useState<number>(0);
-  const [activeTab, setActiveTab] = useState<"vulns" | "paths" | "chokepoints" | "remediations" | "report">("report");
+  const [activeTab, setActiveTab] = useState<"graph" | "vulns" | "paths" | "chokepoints" | "remediations" | "report">("graph");
   const [copiedCommand, setCopiedCommand] = useState<string | null>(null);
   const [selectedJiraTask, setSelectedJiraTask] = useState<RemediationTask | null>(null);
   const [jiraSuccess, setJiraSuccess] = useState<boolean>(false);
+  const [selectedPath, setSelectedPath] = useState<number>(0);
+  const [scanningNode, setScanningNode] = useState<string | null>(null);
+  const [scannedNodes, setScannedNodes] = useState<string[]>([]);
 
   const pipelineSteps = [
-    { title: "Vulnerability Discovery", desc: "Auditing all 12 assets for known CVEs & credential exposures" },
-    { title: "Attack Path Tracing", desc: "Computing all lateral traversal routes to enterprise Crown Jewels" },
-    { title: "Chokepoint & Damage Analysis", desc: "Extracting critical graph bottlenecks & 0-100 damage severity" },
-    { title: "Remediation Optimization", desc: "Evaluating candidate controls, ROI, and path elimination power" },
-    { title: "Executive Report Compilation", desc: "Assembling formal audit certificate and remediation dossier" },
+    { title: "Vulnerability Discovery", desc: "Scanning all assets for known CVEs & credential exposures" },
+    { title: "Attack Path Tracing", desc: "Computing all lateral traversal routes to Crown Jewels" },
+    { title: "Chokepoint & Damage Analysis", desc: "Extracting critical graph bottlenecks & damage severity" },
+    { title: "Remediation Optimization", desc: "Evaluating candidate controls and path elimination" },
+    { title: "Report Compilation", desc: "Assembling audit certificate and remediation dossier" },
   ];
 
   const runAudit = async () => {
     setIsRunning(true);
     setCurrentStep(0);
+    setActiveTab("graph");
+    setScannedNodes([]);
+    setScanningNode(null);
 
-    // Progressive step simulation for visual engagement
     const stepInterval = setInterval(() => {
       setCurrentStep((prev) => (prev < 4 ? prev + 1 : prev));
     }, 600);
@@ -64,15 +72,48 @@ export const AutonomousAuditPage: React.FC = () => {
       setTimeout(() => {
         setReport(data);
         setIsRunning(false);
+        setScanningNode(null);
+        if (twin) setScannedNodes(twin.assets.map((a) => a.id));
       }, 500);
     } catch (err) {
       clearInterval(stepInterval);
       console.error("Audit error:", err);
       setIsRunning(false);
+      setScanningNode(null);
     }
   };
 
+  // Node-by-node scanning animation while the audit pipeline runs
   useEffect(() => {
+    if (!isRunning || !twin || twin.assets.length === 0) return;
+
+    let idx = 0;
+    const scanned: string[] = [];
+    setScanningNode(twin.assets[0].id);
+    setScannedNodes([]);
+
+    const scanInterval = setInterval(() => {
+      // Mark previous node as scanned
+      scanned.push(twin.assets[idx].id);
+      setScannedNodes([...scanned]);
+      idx++;
+
+      if (idx >= twin.assets.length) {
+        // All nodes scanned, loop back to keep the animation alive until the report arrives
+        clearInterval(scanInterval);
+        setScanningNode(null);
+        setScannedNodes(twin.assets.map((a) => a.id));
+        return;
+      }
+
+      setScanningNode(twin.assets[idx].id);
+    }, 380);
+
+    return () => clearInterval(scanInterval);
+  }, [isRunning, twin]);
+
+  useEffect(() => {
+    api.getTwin().then(setTwin).catch(() => {});
     runAudit();
   }, []);
 
@@ -85,6 +126,11 @@ export const AutonomousAuditPage: React.FC = () => {
   const handlePrint = () => {
     window.print();
   };
+
+  // Derive highlight path from selected attack path
+  const activeAttackPath = report?.attack_paths[selectedPath];
+  const highlightPath = activeAttackPath?.nodes_sequence ?? [];
+  const compromisedNodes = activeAttackPath?.nodes_sequence ?? [];
 
   return (
     <div className="space-y-8 font-sans text-[#18181B] dark:text-slate-100 select-none pb-12">
@@ -231,13 +277,14 @@ export const AutonomousAuditPage: React.FC = () => {
 
       {/* 4. Tab Switcher Navigation */}
       {report && (
-        <div className="flex border-b border-slate-200 dark:border-slate-800 gap-2 text-xs font-semibold">
+        <div className="flex border-b border-slate-200 dark:border-slate-800 gap-2 text-xs font-semibold overflow-x-auto">
           {[
-            { id: "report", label: "Executive Report Dossier", count: null },
-            { id: "vulns", label: "Discovered Vulnerabilities", count: report.vulnerabilities_detected_count },
-            { id: "paths", label: "Viable Attack Paths", count: report.viable_attack_paths_count },
-            { id: "chokepoints", label: "Graph Chokepoints", count: report.chokepoints.length },
-            { id: "remediations", label: "Remediation Action Plan", count: report.remediation_tasks.length },
+            { id: "graph", label: "Topology Graph", count: null },
+            { id: "report", label: "Executive Report", count: null },
+            { id: "vulns", label: "Vulnerabilities", count: report.vulnerabilities_detected_count },
+            { id: "paths", label: "Attack Paths", count: report.viable_attack_paths_count },
+            { id: "chokepoints", label: "Chokepoints", count: report.chokepoints.length },
+            { id: "remediations", label: "Remediation Plan", count: report.remediation_tasks.length },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -259,7 +306,204 @@ export const AutonomousAuditPage: React.FC = () => {
         </div>
       )}
 
-      {/* 5. TAB 1: EXECUTIVE AUDIT REPORT DOSSIER */}
+      {/* 5. TAB: TOPOLOGY GRAPH — node-by-node scanning + attack paths */}
+      {(report || isRunning) && activeTab === "graph" && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4, ease: EASE }}
+          className="grid grid-cols-12 gap-6"
+        >
+          {/* Graph */}
+          <div className="col-span-12 lg:col-span-8">
+            <div className="p-6 rounded-2xl bg-white dark:bg-[#131316] border border-[#ECECEF] dark:border-slate-800">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-[14px] font-bold">
+                    {isRunning ? "Scanning Topology" : "Scanned Topology"}
+                  </h3>
+                  <p className="text-[11px] text-[#71717A] mt-0.5">
+                    {isRunning && twin
+                      ? `Scanning ${scannedNodes.length + 1}/${twin.assets.length} assets — ${scanningNode ?? ""}`
+                      : report
+                      ? `${report.assets_scanned_count} assets · ${report.viable_attack_paths_count} attack paths · ${report.chokepoints.length} chokepoints`
+                      : "Loading topology..."}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 text-[10px] font-mono text-[#A1A1AA]">
+                  {isRunning ? (
+                    <span className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-[#FF6B3D] animate-pulse" /> Scanning
+                    </span>
+                  ) : (
+                    <>
+                      <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#10B981]" /> Scanned</span>
+                      <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#8B5CF6]" /> Crown Jewel</span>
+                      <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#EF4444]" /> Attack Path</span>
+                    </>
+                  )}
+                </div>
+              </div>
+              <TopologyCanvas
+                assets={twin?.assets}
+                relationships={twin?.relationships}
+                highlightPath={isRunning ? [] : highlightPath}
+                compromisedNodes={isRunning ? [] : compromisedNodes}
+                scanningNode={scanningNode}
+                scannedNodes={scannedNodes}
+                showLabels
+                className="w-full h-[420px]"
+              />
+            </div>
+          </div>
+
+          {/* Side panel: during running → live scan progress; after report → path selector */}
+          <div className="col-span-12 lg:col-span-4 space-y-4">
+            {isRunning ? (
+              /* Live scanning progress */
+              <div className="p-5 rounded-2xl bg-white dark:bg-[#131316] border border-[#ECECEF] dark:border-slate-800">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-[14px] font-bold">Scan Progress</div>
+                  <span className="text-[11px] font-mono font-bold text-[#FF6B3D]">
+                    {scannedNodes.length + (scanningNode ? 1 : 0)}/{twin?.assets.length ?? 12}
+                  </span>
+                </div>
+                {/* Progress bar */}
+                <div className="w-full h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden mb-4">
+                  <motion.div
+                    className="h-full bg-gradient-to-r from-[#FF6B3D] to-[#F25C1F] rounded-full"
+                    animate={{ width: `${((scannedNodes.length + (scanningNode ? 1 : 0)) / (twin?.assets.length ?? 12)) * 100}%` }}
+                    transition={{ duration: 0.3, ease: EASE }}
+                  />
+                </div>
+                {/* Node-by-node scan list */}
+                <div className="space-y-1 max-h-[340px] overflow-y-auto overscroll-contain pr-1.5" data-lenis-prevent="true">
+                  {twin?.assets.map((a) => {
+                    const isScanning = scanningNode === a.id;
+                    const isScanned = scannedNodes.includes(a.id);
+                    return (
+                      <div
+                        key={a.id}
+                        className={`flex items-center gap-2.5 py-1.5 px-2.5 rounded-lg text-[11px] transition-all ${
+                          isScanning
+                            ? "bg-[#FFF4ED] dark:bg-[#1C1310]"
+                            : isScanned
+                            ? ""
+                            : "opacity-40"
+                        }`}
+                      >
+                        {isScanning ? (
+                          <RefreshCw className="w-3 h-3 text-[#FF6B3D] animate-spin flex-shrink-0" />
+                        ) : isScanned ? (
+                          <CheckCircle2 className="w-3 h-3 text-emerald-500 flex-shrink-0" />
+                        ) : (
+                          <span className="w-3 h-3 rounded-full border border-slate-300 dark:border-slate-700 flex-shrink-0" />
+                        )}
+                        <span className={`font-mono ${
+                          isScanning
+                            ? "text-[#FF6B3D] font-bold"
+                            : isScanned
+                            ? "text-emerald-600 dark:text-emerald-400"
+                            : "text-[#A1A1AA]"
+                        }`}>
+                          {a.id}
+                        </span>
+                        {isScanning && (
+                          <span className="ml-auto text-[9px] text-[#FF6B3D] font-mono animate-pulse">SCANNING</span>
+                        )}
+                        {isScanned && a.vulnerabilities.length > 0 && (
+                          <span className="ml-auto text-[9px] text-red-500 font-mono">{a.vulnerabilities.length} CVE</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Attack path selector */}
+                {report && (
+                  <div className="p-5 rounded-2xl bg-white dark:bg-[#131316] border border-[#ECECEF] dark:border-slate-800">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="text-[14px] font-bold">Attack Paths</div>
+                      <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[#71717A] dark:text-slate-400">
+                        {report.attack_paths.length} mapped
+                      </span>
+                    </div>
+                    <div className="space-y-1.5 max-h-[360px] overflow-y-auto overscroll-contain pr-1.5" data-lenis-prevent="true">
+                      {report.attack_paths.map((path, i) => (
+                        <button
+                          key={path.path_id}
+                          onClick={() => setSelectedPath(i)}
+                          className={`w-full text-left p-2.5 rounded-lg border transition-all text-xs ${
+                            selectedPath === i
+                              ? "border-[#F25C1F] dark:border-[#FF6B3D] bg-[#FFF4ED] dark:bg-[#1C1310]"
+                              : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-mono font-bold text-[#F25C1F] dark:text-[#FF6B3D]">{path.path_id}</span>
+                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded font-mono ${
+                              path.damage_tier === "CATASTROPHIC"
+                                ? "bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-400"
+                                : "bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"
+                            }`}>
+                              {path.damage_score}
+                            </span>
+                          </div>
+                          <div className="mt-1 text-[11px] text-[#71717A] dark:text-slate-400">
+                            {path.source_asset_name} → {path.target_crown_jewel_name}
+                          </div>
+                          <div className="mt-1 flex items-center gap-2 text-[9px] font-mono text-[#A1A1AA]">
+                            <span>{path.hop_count} hops</span>
+                            <span>·</span>
+                            <span>effort {path.attacker_effort_score}</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Scanned assets summary */}
+                {report && (
+                  <div className="p-5 rounded-2xl bg-white dark:bg-[#131316] border border-[#ECECEF] dark:border-slate-800">
+                    <div className="text-[14px] font-bold mb-3">Scanned Assets</div>
+                    <div className="space-y-1.5 max-h-[220px] overflow-y-auto overscroll-contain pr-1.5" data-lenis-prevent="true">
+                      {twin?.assets.map((a) => {
+                        const hasVuln = a.vulnerabilities.length > 0;
+                        const isChoke = report.chokepoints.some((c) => c.asset_id === a.id);
+                        const isOnPath = highlightPath.includes(a.id);
+                        return (
+                          <div
+                            key={a.id}
+                            className={`flex items-center justify-between py-1.5 px-2 rounded text-[11px] ${
+                              isOnPath ? "bg-red-50 dark:bg-red-950/20" : ""
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                                hasVuln ? "bg-red-500" : isChoke ? "bg-amber-500" : "bg-emerald-500"
+                              }`} />
+                              <span className="font-mono text-[#71717A] dark:text-slate-400 truncate">{a.id}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 flex-shrink-0">
+                              {hasVuln && <span className="text-[8px] text-red-500 font-mono">{a.vulnerabilities.length} CVE</span>}
+                              {isChoke && <span className="text-[8px] text-amber-500 font-mono">CHOKE</span>}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </motion.div>
+      )}
+
+      {/* 6. TAB: EXECUTIVE AUDIT REPORT DOSSIER */}
       {report && activeTab === "report" && (
         <motion.div
           initial={{ opacity: 0 }}

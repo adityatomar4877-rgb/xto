@@ -1,5 +1,5 @@
 import React from "react";
-import { motion, AnimatePresence, useMotionValue, useSpring, useTransform, MotionValue } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useSpring, useTransform, useInView, useScroll, MotionValue } from "framer-motion";
 
 // ── Easing presets ──────────────────────────────────────────────────
 export const EASE = [0.16, 1, 0.3, 1] as const;
@@ -217,5 +217,80 @@ export const AnimatedOverlay: React.FC<AnimatedOverlayProps> = ({
 };
 
 // ── Re-export for convenience ────────────────────────────────────────
-export { motion, AnimatePresence };
+export { motion, AnimatePresence, useInView, useScroll, useTransform, useSpring, useMotionValue };
 export type { MotionValue };
+
+// ── Scroll-triggered reveal ─────────────────────────────────────────
+
+interface RevealProps {
+  children: React.ReactNode;
+  className?: string;
+  delay?: number;
+  duration?: number;
+  y?: number;
+  once?: boolean;
+  threshold?: number;
+}
+
+export const Reveal: React.FC<RevealProps> = ({
+  children,
+  className,
+  delay = 0,
+  duration = 0.7,
+  y = 40,
+  once = true,
+  threshold = 0.15,
+}) => (
+  <motion.div
+    initial={{ opacity: 0, y }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once, margin: `-${Math.round(threshold * 100)}%` }}
+    transition={{ duration, delay, ease: EASE }}
+    className={className}
+  >
+    {children}
+  </motion.div>
+);
+
+// ── Scroll-triggered text reveal (word by word) ─────────────────────
+
+interface TextRevealProps {
+  text: string;
+  className?: string;
+  delay?: number;
+}
+
+export const TextReveal: React.FC<TextRevealProps> = ({ text, className, delay = 0 }) => {
+  const words = text.split(" ");
+  return (
+    <span className={className}>
+      {words.map((word, i) => (
+        <span key={i} className="inline-block overflow-hidden">
+          <motion.span
+            className="inline-block"
+            initial={{ y: "100%" }}
+            whileInView={{ y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: delay + i * 0.06, ease: EASE }}
+          >
+            {word}
+            {i < words.length - 1 ? "\u00A0" : ""}
+          </motion.span>
+        </span>
+      ))}
+    </span>
+  );
+};
+
+// ── Scroll progress bar ─────────────────────────────────────────────
+
+export const ScrollProgress: React.FC<{ className?: string }> = ({ className }) => {
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
+  return (
+    <motion.div
+      className={className}
+      style={{ scaleX, transformOrigin: "0%" }}
+    />
+  );
+};

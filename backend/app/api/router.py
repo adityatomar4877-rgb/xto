@@ -664,28 +664,22 @@ async def upload_scan_file(
     filename: Optional[str] = None,
 ):
     """Upload and parse real-world scan files (Nmap, Nessus, BloodHound, or Digital Twin JSON).
-    Accepts JSON body { content, filename, mode } OR raw text/XML/JSON in request body.
+    Accepts JSON payload { content, filename, mode } or raw text/file body.
     """
     engine = get_ingestion_engine()
     try:
         content_type = request.headers.get("content-type", "")
         if "application/json" in content_type:
-            body = await request.json()
-            if isinstance(body, dict) and "content" in body:
-                content_str = body["content"]
-                file_name = body.get("filename") or filename or "uploaded_scan.json"
-                req_mode = body.get("mode") or mode
-            else:
-                content_str = json.dumps(body)
-                file_name = filename or "uploaded_scan.json"
-                req_mode = mode
+            data = await request.json()
+            content_str = data.get("content", "")
+            fname = data.get("filename") or filename or "uploaded_scan.json"
+            ingest_mode = data.get("mode") or mode
         else:
-            raw_bytes = await request.body()
-            content_str = raw_bytes.decode("utf-8", errors="replace")
-            file_name = filename or "uploaded_scan"
-            req_mode = mode
-
-        return engine.ingest(content=content_str, filename=file_name, mode=req_mode)
+            body = await request.body()
+            content_str = body.decode("utf-8", errors="replace")
+            fname = filename or request.headers.get("x-filename", "uploaded_scan")
+            ingest_mode = mode
+        return engine.ingest(content=content_str, filename=fname, mode=ingest_mode)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to ingest scan file: {str(e)}")
 

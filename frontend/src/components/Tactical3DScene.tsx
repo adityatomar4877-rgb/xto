@@ -14,10 +14,6 @@ import {
   HardDrive,
   Radio,
   Zap,
-  Info,
-  X,
-  HelpCircle,
-  ShieldAlert,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import gsap from "gsap";
@@ -40,87 +36,11 @@ export interface Tactical3DSceneProps {
   relationships?: Relationship[];
   selectedAssetId?: string;
   onSelectAsset?: (asset: any) => void;
-  highlightPath?: string[]; // Traversed / detected nodes [e.g. "EXT-INTERNET", "FW-EDGE-01", "WS-ENG-04"]
-  compromisedNodes?: string[]; // Compromised node IDs
-  predictedNextHop?: PredictedNextHop | null; // MITRE predicted next move
-  activeStepNode?: string; // Current step active target node
+  highlightPath?: string[];
+  compromisedNodes?: string[];
+  predictedNextHop?: PredictedNextHop | null;
+  activeStepNode?: string;
 }
-
-export const COLOR_CODE_GUIDE = [
-  {
-    id: "normal",
-    label: "Normal / Monitored Asset",
-    color: "#0284C7",
-    badgeBg: "bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800",
-    summary: "Healthy operational enterprise host without detected adversary foothold.",
-    meaning: "Baseline system under active security monitoring. Operational services are mapped in the digital twin.",
-    examples: "Web Servers, App Servers, Finance Workstations, SIEM SOC, EKS Cluster nodes",
-    action: "Maintain continuous posture monitoring and EDR telemetry collection.",
-  },
-  {
-    id: "compromised",
-    label: "Compromised Asset / Foothold",
-    color: "#EF4444",
-    badgeBg: "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800",
-    summary: "Penetrated asset with confirmed adversary interactive execution or stolen session.",
-    meaning: "The attacker has established execution via phished credentials, exploited RCE, or credential dumping.",
-    examples: "DevOps Laptop (WS-ENG-04), Penetrated VPN Gateway, Compromised App Container",
-    action: "Isolate host immediately, revoke active sessions, and purge cached LSASS / NTLM tokens.",
-  },
-  {
-    id: "predicted",
-    label: "MITRE ATT&CK Predicted Move",
-    color: "#EAB308",
-    badgeBg: "bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800",
-    summary: "High-probability next adversary target predicted by graph trust & MITRE tactics.",
-    meaning: "Identified via multi-hop pathfinding as the next logical transition (e.g. pivoting to DC via ZeroLogon).",
-    examples: "Active Directory Domain Controller (DC-CORP-01), Central Database",
-    action: "Deploy preventive controls (MFA enforcement, RPC filtering) before the adversary pivots.",
-  },
-  {
-    id: "crown_jewel",
-    label: "Crown Jewel (Tier-0 Target)",
-    color: "#8B5CF6",
-    badgeBg: "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800",
-    summary: "Mission-critical high-value asset whose compromise represents catastrophic business loss.",
-    meaning: "Core assets targeted by ransomware syndicates for encryption, data exfiltration, or domain dominance.",
-    examples: "Immutable Ransomware Backup Vault (VAULT-BACKUP-01), Production Customer Database (DB-PROD-01)",
-    action: "Air-gap, enforce Tier-0 Hardware MFA, and restrict all inbound administrative execution channels.",
-  },
-  {
-    id: "adversary",
-    label: "Adversary Space / External Internet",
-    color: "#0F172A",
-    badgeBg: "bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-700",
-    summary: "Untrusted external space where phishing, C2 servers, and threat actors originate.",
-    meaning: "Initial external attack surface. Serves as root origin for external penetration simulations.",
-    examples: "External Threat Actor / Internet (EXT-INTERNET)",
-    action: "Maintain strict perimeter firewall policies and block known malicious C2 IP feeds.",
-  },
-  {
-    id: "attack_path",
-    label: "Traversed Attack Path (Red Conduit)",
-    color: "#DC2626",
-    isLine: true,
-    badgeBg: "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800",
-    summary: "Confirmed chronological movement executed by the adversary during the simulation.",
-    meaning: "A lateral network connection, credential pass, or remote execution successfully exploited by the attacker.",
-    examples: "WS-ENG-04 → DC-CORP-01 via Kerberos / RPC (T1068 / T1003)",
-    action: "Sever the underlying network or authentication relationship to break the attack kill chain.",
-  },
-  {
-    id: "trust_route",
-    label: "Trust Route / Baseline Channel (Gray Dashed)",
-    color: "#94A3B8",
-    isLine: true,
-    isDashed: true,
-    badgeBg: "bg-slate-50 dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800",
-    summary: "Authorized network reachability or normal operational data flow.",
-    meaning: "Permitted communication paths existing in normal enterprise infrastructure.",
-    examples: "APP-SRV-01 → DB-PROD-01 (TCP :5432), DC-CORP-01 → SIEM (Syslog :514)",
-    action: "Review for over-permissive trust boundaries and enforce network micro-segmentation.",
-  },
-];
 
 export interface TopologyNode {
   id: string;
@@ -219,66 +139,6 @@ function generateRoutePath(fromNode: TopologyNode, toNode: TopologyNode): string
   return `M ${x1} ${y1} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${x2} ${y2}`;
 }
 
-export function getNodeColorStatus(
-  node: TopologyNode,
-  isCompromised: boolean,
-  isPredictedTarget: boolean
-) {
-  if (isCompromised) {
-    return {
-      statusId: "compromised",
-      name: "Compromised Foothold",
-      haloColor: "#EF4444",
-      bgFill: "#FEE2E2",
-      textColor: "text-red-600",
-      badgeClass: "bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-300 border-red-300 dark:border-red-800",
-      description: "Confirmed active adversary execution or stolen session credentials.",
-    };
-  }
-  if (isPredictedTarget) {
-    return {
-      statusId: "predicted",
-      name: "Predicted Next Move",
-      haloColor: "#EAB308",
-      bgFill: "#FEF9C3",
-      textColor: "text-amber-700",
-      badgeClass: "bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800",
-      description: "Highest probability next target predicted by MITRE ATT&CK tactics.",
-    };
-  }
-  if (node.isCrownJewel) {
-    return {
-      statusId: "crown_jewel",
-      name: "Crown Jewel (Tier-0)",
-      haloColor: "#8B5CF6",
-      bgFill: "#F3E8FF",
-      textColor: "text-purple-600",
-      badgeClass: "bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-800",
-      description: "Mission-critical corporate asset requiring absolute isolation & Tier-0 controls.",
-    };
-  }
-  if (node.isInternet) {
-    return {
-      statusId: "adversary",
-      name: "Adversary Space",
-      haloColor: "#0F172A",
-      bgFill: "#0F172A",
-      textColor: "text-slate-400",
-      badgeClass: "bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-700",
-      description: "External untrusted origin / remote threat actor network.",
-    };
-  }
-  return {
-    statusId: "normal",
-    name: "Monitored Asset",
-    haloColor: "#0284C7",
-    bgFill: "#E0F2FE",
-    textColor: "text-sky-600",
-    badgeClass: "bg-sky-100 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border-sky-300 dark:border-sky-800",
-    description: "Operational enterprise system under continuous telemetry & monitoring.",
-  };
-}
-
 export const Tactical3DScene: React.FC<Tactical3DSceneProps> = ({
   height = "h-[440px]",
   assets,
@@ -293,11 +153,6 @@ export const Tactical3DScene: React.FC<Tactical3DSceneProps> = ({
   const [activeNodeId, setActiveNodeId] = useState<string | null>(selectedAssetId || activeStepNode || null);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
-  const [showColorGuide, setShowColorGuide] = useState(false);
-  const [selectedGuideId, setSelectedGuideId] = useState<string | null>(null);
-  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
-  const [hoveredRouteId, setHoveredRouteId] = useState<string | null>(null);
-  const [activeFilterStatus, setActiveFilterStatus] = useState<string | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
 
   // Build nodes and routes from real data, fall back to empty if no assets
@@ -362,121 +217,43 @@ export const Tactical3DScene: React.FC<Tactical3DSceneProps> = ({
       transition={{ duration: 0.45, ease: EASE }}
       className={`relative w-full ${height} bg-[#FFFFFF] dark:bg-[#131316] rounded-2xl border border-[#ECECEF] dark:border-[#25252A] overflow-hidden select-none flex flex-col`}
     >
-      {/* Header with Quick Color Key & Guide Toggle */}
-      <div className="px-5 py-3.5 flex items-center justify-between border-b border-[#ECECEF]/60 dark:border-[#25252A]/60 flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <div>
-            <h2 className="text-[14px] font-bold tracking-tight text-slate-900 dark:text-white">Digital Twin Topology</h2>
-            <p className="text-[10.5px] text-[#A1A1AA]">
-              {assetCount} assets · {routeCount} routes
-            </p>
-          </div>
-
-          {/* Active Filter Badge */}
-          {activeFilterStatus && (
-            <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-orange-100 dark:bg-orange-950/60 text-[10.5px] font-semibold text-orange-700 dark:text-orange-300 border border-orange-300 dark:border-orange-800 animate-in fade-in">
-              <span>Filter: <strong className="uppercase">{activeFilterStatus.replace('_', ' ')}</strong></span>
-              <button
-                onClick={() => setActiveFilterStatus(null)}
-                className="hover:text-red-600 font-bold ml-1 cursor-pointer"
-                title="Clear filter"
-              >
-                ×
-              </button>
-            </div>
-          )}
+      {/* Header — minimal */}
+      <div className="px-5 py-4 flex items-center justify-between">
+        <div>
+          <h2 className="text-[15px] font-bold tracking-tight">Digital Twin</h2>
+          <p className="text-[11px] text-[#A1A1AA] mt-0.5">
+            {assetCount} assets · {routeCount} routes
+          </p>
         </div>
-
-        {/* Quick Color Code Key Chips & Controls */}
-        <div className="flex items-center gap-2">
-          <div className="hidden lg:flex items-center gap-1.5 text-[10px] font-medium text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-[#1A1A1E] px-2.5 py-1 rounded-xl border border-slate-200/80 dark:border-slate-800">
-            <span className="text-slate-400 text-[9.5px] uppercase font-mono mr-1">Color Key:</span>
-            <button
-              onClick={() => setActiveFilterStatus(activeFilterStatus === "normal" ? null : "normal")}
-              className={`flex items-center gap-1 hover:opacity-80 px-1.5 py-0.5 rounded-lg transition-colors cursor-pointer ${
-                activeFilterStatus === "normal" ? "bg-sky-100 dark:bg-sky-950/80 text-sky-700 font-bold" : ""
-              }`}
-              title="Click to spotlight Normal / Monitored hosts"
-            >
-              <span className="w-2 h-2 rounded-full bg-[#0284C7]" />
-              <span>Normal</span>
-            </button>
-            <button
-              onClick={() => setActiveFilterStatus(activeFilterStatus === "compromised" ? null : "compromised")}
-              className={`flex items-center gap-1 hover:opacity-80 px-1.5 py-0.5 rounded-lg transition-colors cursor-pointer ${
-                activeFilterStatus === "compromised" ? "bg-red-100 dark:bg-red-950/80 text-red-700 font-bold" : "text-red-600 font-semibold"
-              }`}
-              title="Click to spotlight Compromised Footholds"
-            >
-              <span className="w-2 h-2 rounded-full bg-[#EF4444] animate-pulse" />
-              <span>Compromised</span>
-            </button>
-            <button
-              onClick={() => setActiveFilterStatus(activeFilterStatus === "predicted" ? null : "predicted")}
-              className={`flex items-center gap-1 hover:opacity-80 px-1.5 py-0.5 rounded-lg transition-colors cursor-pointer ${
-                activeFilterStatus === "predicted" ? "bg-amber-100 dark:bg-amber-950/80 text-amber-800 font-bold" : "text-amber-600 font-semibold"
-              }`}
-              title="Click to spotlight MITRE Predicted Next Moves"
-            >
-              <span className="w-2 h-2 rounded-full bg-[#EAB308]" />
-              <span>Predicted Target</span>
-            </button>
-            <button
-              onClick={() => setActiveFilterStatus(activeFilterStatus === "crown_jewel" ? null : "crown_jewel")}
-              className={`flex items-center gap-1 hover:opacity-80 px-1.5 py-0.5 rounded-lg transition-colors cursor-pointer ${
-                activeFilterStatus === "crown_jewel" ? "bg-purple-100 dark:bg-purple-950/80 text-purple-700 font-bold" : "text-purple-600 font-semibold"
-              }`}
-              title="Click to spotlight Crown Jewels (Tier-0 Targets)"
-            >
-              <span className="w-2 h-2 rounded-full bg-[#8B5CF6]" />
-              <span>Crown Jewel</span>
-            </button>
-          </div>
-
-          {/* Color Code Guide Button */}
-          <button
-            onClick={() => setShowColorGuide(!showColorGuide)}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#FF5722]/10 hover:bg-[#FF5722]/20 text-[#FF5722] font-semibold text-[11px] border border-[#FF5722]/30 transition-all cursor-pointer"
-            title="Open comprehensive color code guide"
-          >
-            <Info className="w-3.5 h-3.5" />
-            <span>{showColorGuide ? "Hide Guide" : "Color Guide"}</span>
-          </button>
-
-          {/* Reset View Button */}
-          <button
-            onClick={() => { setZoomLevel(1); setPanOffset({ x: 0, y: 0 }); setActiveFilterStatus(null); }}
-            className="w-7 h-7 rounded-xl hover:bg-[#F5F5F5] dark:hover:bg-[#1A1A1E] flex items-center justify-center text-[#A1A1AA] transition-colors cursor-pointer"
-            title="Reset Zoom & Filters"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-          </button>
-        </div>
+        <button
+          onClick={() => { setZoomLevel(1); setPanOffset({ x: 0, y: 0 }); }}
+          className="w-8 h-8 rounded-lg hover:bg-[#F5F5F5] dark:hover:bg-[#1A1A1E] flex items-center justify-center text-[#A1A1AA] transition-colors"
+        >
+          <RotateCcw className="w-4 h-4" />
+        </button>
       </div>
 
-      {/* Predicted Next Move Banner with explicit yellow status indicator */}
+      {/* Predicted next move — minimal inline */}
       {predictedNextHop && (
-        <div className="px-5 py-2 bg-gradient-to-r from-amber-50/90 via-amber-50/50 to-transparent dark:from-amber-950/30 dark:via-amber-950/10 border-b border-amber-200/60 dark:border-amber-800/40 flex items-center gap-2 z-10 flex-shrink-0 text-[11px]">
-          <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping flex-shrink-0" />
-          <span className="px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 font-mono font-black text-[9.5px] shadow-xs">
-            🟡 PREDICTED NEXT TARGET
-          </span>
-          <span className="px-1.5 py-0.5 rounded bg-amber-200/80 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 font-mono font-bold text-[10px]">
+        <div className="px-5 py-2 flex items-center gap-2 z-10">
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse flex-shrink-0" />
+          <span className="text-[11px] font-mono text-[#A1A1AA]">Predicted</span>
+          <span className="px-1.5 py-0.5 rounded bg-amber-400 text-slate-900 font-mono font-bold text-[10px]">
             {predictedNextHop.techniqueId || "T1003"}
           </span>
-          <span className="text-[#71717A] dark:text-[#9B9BA4] font-medium">
+          <span className="text-[12px] text-[#71717A] dark:text-[#9B9BA4]">
             {predictedNextHop.techniqueName || "Credential Dumping"}
           </span>
           <span className="text-[#A1A1AA]">→</span>
-          <span className="font-mono font-bold text-amber-900 dark:text-amber-300">
+          <span className="font-mono font-semibold text-[#18181B] dark:text-[#FAFAFA] text-[11px]">
             {predictedNextHop.targetId}
           </span>
-          <span className="text-[10px] text-amber-700 dark:text-amber-400 font-semibold ml-auto">{predictedNextHop.confidence || 94}% confidence</span>
+          <span className="text-[10px] text-[#A1A1AA] ml-auto">{predictedNextHop.confidence || 94}%</span>
         </div>
       )}
 
       {/* Topology viewport */}
-      <div className="relative flex-1 min-h-0 w-full overflow-hidden bg-[#FAFAFA] dark:bg-[#0A0A0B] flex flex-col">
+      <div className="relative flex-1 w-full overflow-hidden bg-[#FAFAFA] dark:bg-[#0A0A0B]">
         {/* Dot grid — very subtle */}
         <div
           className="absolute inset-0 opacity-30 pointer-events-none"
@@ -488,7 +265,7 @@ export const Tactical3DScene: React.FC<Tactical3DSceneProps> = ({
 
         {/* Scalable Vector Canvas */}
         <div
-          className="relative w-full flex-1 min-h-0"
+          className="relative w-full h-full"
           style={{
             transform: `scale(${zoomLevel}) translate(${panOffset.x}px, ${panOffset.y}px)`,
             transformOrigin: "center center",
@@ -538,43 +315,36 @@ export const Tactical3DScene: React.FC<Tactical3DSceneProps> = ({
               if (detected || predicted) return null;
 
               return (
-                <g
+                <path
                   key={`base-route-${route.id}`}
-                  onMouseEnter={() => setHoveredRouteId(route.id)}
-                  onMouseLeave={() => setHoveredRouteId(null)}
-                  className="transition-opacity"
-                  opacity={activeFilterStatus ? 0.2 : 1}
-                >
-                  <path
-                    d={d}
-                    fill="none"
-                    stroke="#CBD5E1"
-                    strokeWidth="1.6"
-                    strokeDasharray="4,4"
-                    className="dark:stroke-[#27272D] transition-all hover:stroke-[#94A3B8]"
-                  />
-                </g>
+                  d={d}
+                  fill="none"
+                  stroke="#94A3B8"
+                  strokeWidth="1.25"
+                  strokeDasharray="4,4"
+                  strokeOpacity="0.65"
+                />
               );
             })}
 
-            {/* 2. CONFIRMED TRAVERSED ATTACK PATHS (RED) */}
+            {/* 2. DETECTED ATTACK PATH (RED) */}
             {(() => {
               if (!highlightPath || highlightPath.length < 2) return null;
-              const hops: { from: string; to: string; index: number }[] = [];
+              const segments: { fromId: string; toId: string; key: string }[] = [];
               for (let i = 0; i < highlightPath.length - 1; i++) {
-                hops.push({ from: highlightPath[i], to: highlightPath[i + 1], index: i });
+                const fId = highlightPath[i];
+                const tId = highlightPath[i + 1];
+                if (fId && tId && fId !== tId && fId !== "EXT-INTERNET") {
+                  segments.push({ fromId: fId, toId: tId, key: `${fId}-${tId}-${i}` });
+                }
               }
-              return hops.map((hop) => {
-                const from = nodeMap.get(hop.from);
-                const to = nodeMap.get(hop.to);
+              return segments.map((seg) => {
+                const from = nodeMap.get(seg.fromId);
+                const to = nodeMap.get(seg.toId);
                 if (!from || !to) return null;
                 const d = generateRoutePath(from, to);
                 return (
-                  <g
-                    key={`detected-direct-${hop.from}-${hop.to}-${hop.index}`}
-                    onMouseEnter={() => setHoveredRouteId(`detected-${hop.from}-${hop.to}`)}
-                    onMouseLeave={() => setHoveredRouteId(null)}
-                  >
+                  <g key={`detected-direct-${seg.key}`}>
                     <path d={d} fill="none" stroke="#EF4444" strokeWidth="8" strokeOpacity="0.28" strokeLinecap="round" filter="url(#redDetectedGlow)" />
                     <path d={d} fill="none" stroke="#DC2626" strokeWidth="2.8" strokeLinecap="round" />
                     <circle r="4" fill="#EF4444">
@@ -594,11 +364,7 @@ export const Tactical3DScene: React.FC<Tactical3DSceneProps> = ({
               if (!from || !to) return null;
               const d = generateRoutePath(from, to);
               return (
-                <g
-                  key={`predicted-direct-${predictedNextHop.sourceId}-${predictedNextHop.targetId}`}
-                  onMouseEnter={() => setHoveredRouteId("predicted-hop")}
-                  onMouseLeave={() => setHoveredRouteId(null)}
-                >
+                <g key={`predicted-direct-${predictedNextHop.sourceId}-${predictedNextHop.targetId}`}>
                   <path d={d} fill="none" stroke="#FACC15" strokeWidth="8" strokeOpacity="0.35" strokeLinecap="round" filter="url(#yellowPredictedGlow)" />
                   <path d={d} fill="none" stroke="#EAB308" strokeWidth="2.8" strokeDasharray="6,4" strokeLinecap="round" />
                   <circle r="4.5" fill="#FACC15">
@@ -608,18 +374,13 @@ export const Tactical3DScene: React.FC<Tactical3DSceneProps> = ({
               );
             })()}
 
-            {/* 4. RENDER TOPOLOGY NODES WITH RICH STATUS HOVER HUD */}
+            {/* 4. RENDER TOPOLOGY NODES */}
             {realNodes.map((n) => {
               const isSelected = activeNodeId === n.id || selectedAssetId === n.id || activeStepNode === n.id;
               const isTraversed = highlightPath.includes(n.id);
               const isCompromised = compromisedNodes.includes(n.id) || (isTraversed && !n.isInternet);
               const isPredictedTarget = predictedNextHop?.targetId === n.id;
-              const status = getNodeColorStatus(n, isCompromised, isPredictedTarget);
-              const isHovered = hoveredNodeId === n.id;
               const Icon = n.icon;
-
-              // Filter spotlighting
-              const isDimmed = activeFilterStatus && status.statusId !== activeFilterStatus;
 
               return (
                 <g
@@ -630,10 +391,7 @@ export const Tactical3DScene: React.FC<Tactical3DSceneProps> = ({
                     setActiveNodeId(n.id);
                     if (onSelectAsset) onSelectAsset(n);
                   }}
-                  onMouseEnter={() => setHoveredNodeId(n.id)}
-                  onMouseLeave={() => setHoveredNodeId(null)}
-                  opacity={isDimmed ? 0.15 : 1}
-                  className="cursor-pointer group/node transition-opacity duration-200"
+                  className="cursor-pointer group/node"
                 >
                   {/* Animated Golden Radar Ring for Predicted Next Move */}
                   {isPredictedTarget && (
@@ -762,240 +520,10 @@ export const Tactical3DScene: React.FC<Tactical3DSceneProps> = ({
                   >
                     {n.subtitle}
                   </text>
-
-                  {/* ── INTERACTIVE FLOATING HOVER HUD CARD ── */}
-                  {isHovered && (
-                    <foreignObject
-                      x="-105"
-                      y={n.y < 120 ? 46 : -112}
-                      width="210"
-                      height="110"
-                      className="pointer-events-none z-50 overflow-visible"
-                    >
-                      <div className="p-2.5 rounded-xl bg-slate-950/95 dark:bg-[#18181D]/95 border border-slate-700/80 shadow-2xl backdrop-blur-md text-white text-[10px] space-y-1 animate-in fade-in zoom-in-95 duration-150">
-                        <div className="flex items-center justify-between gap-1 pb-1 border-b border-slate-800">
-                          <span className="font-bold text-white font-mono text-[11px] truncate">{n.name}</span>
-                          <span className={`px-1.5 py-0.2 rounded text-[8px] font-bold font-mono border ${status.badgeClass}`}>
-                            {status.statusId.toUpperCase()}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1.5 font-semibold text-[9.5px]">
-                          <span
-                            className="w-2 h-2 rounded-full flex-shrink-0"
-                            style={{
-                              backgroundColor: status.haloColor,
-                              boxShadow: `0 0 6px ${status.haloColor}`,
-                            }}
-                          />
-                          <span style={{ color: status.haloColor }}>{status.name}</span>
-                        </div>
-                        <p className="text-[9px] text-slate-300 leading-tight">
-                          {status.description}
-                        </p>
-                        <div className="pt-1 border-t border-slate-800/80 text-[8.5px] text-slate-400 flex justify-between font-mono">
-                          <span>Zone: {n.zone}</span>
-                          <span>Type: {n.type}</span>
-                        </div>
-                      </div>
-                    </foreignObject>
-                  )}
                 </g>
               );
             })}
           </svg>
-        </div>
-
-        {/* ── EXPANDABLE COLOR CODE GUIDE MODAL / DRAWER ── */}
-        {showColorGuide && (
-          <div className="absolute inset-0 bg-white/98 dark:bg-[#131316]/98 backdrop-blur-xl z-30 p-5 overflow-y-auto flex flex-col justify-between animate-in fade-in zoom-in-95 duration-200">
-            <div>
-              <div className="flex items-center justify-between pb-3 border-b border-[#ECECEF] dark:border-[#25252A]">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-[#FFF2EB] dark:bg-[#2A1711] border border-[#FF5722]/30 flex items-center justify-center text-[#FF5722]">
-                    <ShieldAlert className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white font-display">
-                      DIGITAL TWIN TOPOLOGY COLOR CODE SPECIFICATION
-                    </h3>
-                    <p className="text-[11px] text-slate-500">
-                      Standardized visual security posture indicators across assets, attack paths, and predicted MITRE transitions.
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowColorGuide(false)}
-                  className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 flex items-center justify-center text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              {/* Color Cards Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 mt-4">
-                {COLOR_CODE_GUIDE.map((item) => {
-                  const isSelected = selectedGuideId === item.id;
-                  return (
-                    <div
-                      key={item.id}
-                      onClick={() => {
-                        setSelectedGuideId(isSelected ? null : item.id);
-                        setActiveFilterStatus(item.id);
-                      }}
-                      className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
-                        isSelected
-                          ? "bg-orange-50/70 dark:bg-orange-950/30 border-[#FF5722] shadow-md ring-1 ring-[#FF5722]/20"
-                          : "bg-slate-50/70 dark:bg-[#1A1A1E]/70 border-[#ECECEF] dark:border-[#2A2A30] hover:border-slate-300 dark:hover:border-slate-700"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-2 mb-2">
-                        <div className="flex items-center gap-2">
-                          {item.isLine ? (
-                            item.isDashed ? (
-                              <div className="w-5 border-b-2 border-dashed border-[#94A3B8]" />
-                            ) : (
-                              <div className="w-5 h-1 bg-[#EF4444] rounded shadow-[0_0_6px_#EF4444]" />
-                            )
-                          ) : (
-                            <span
-                              className="w-3.5 h-3.5 rounded-full flex-shrink-0"
-                              style={{
-                                backgroundColor: item.color,
-                                boxShadow: `0 0 10px ${item.color}90`,
-                              }}
-                            />
-                          )}
-                          <span className="text-xs font-bold text-slate-900 dark:text-white">
-                            {item.label}
-                          </span>
-                        </div>
-                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-mono font-bold border ${item.badgeBg}`}>
-                          {item.id.toUpperCase()}
-                        </span>
-                      </div>
-
-                      <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
-                        {item.meaning}
-                      </p>
-
-                      <div className="mt-2.5 pt-2 border-t border-slate-200/70 dark:border-slate-800/80 space-y-1 text-[10.5px]">
-                        <div>
-                          <span className="text-slate-400 uppercase font-semibold text-[9.5px]">Examples: </span>
-                          <span className="text-slate-700 dark:text-slate-300 font-mono text-[10px]">{item.examples}</span>
-                        </div>
-                        <div>
-                          <span className="text-amber-600 dark:text-amber-400 uppercase font-semibold text-[9.5px]">Defender Action: </span>
-                          <span className="text-slate-800 dark:text-slate-200 font-medium text-[10px]">{item.action}</span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="pt-3 mt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500">
-              <span>All color states update dynamically in real time during attack simulations and what-if defense validations.</span>
-              <button
-                onClick={() => setShowColorGuide(false)}
-                className="px-4 py-1.5 rounded-lg bg-[#FF5722] hover:bg-[#F4511E] text-white font-semibold cursor-pointer shadow-sm"
-              >
-                Close Guide
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ── DOCKED MINIMAL COLOR CODE LEGEND BAR (Always visible at bottom) ── */}
-        <div className="flex-shrink-0 border-t border-[#ECECEF] dark:border-[#25252A] px-4 py-2 bg-white/98 dark:bg-[#131316]/98 backdrop-blur-md flex flex-wrap items-center justify-between gap-2 text-[11px] z-20 shadow-xs">
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Normal */}
-            <div
-              onClick={() => {
-                setActiveFilterStatus(activeFilterStatus === "normal" ? null : "normal");
-              }}
-              className={`flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity px-1.5 py-0.5 rounded ${activeFilterStatus === "normal" ? "bg-sky-100 dark:bg-sky-950 font-bold" : ""}`}
-              title="Click to spotlight Normal / Monitored hosts"
-            >
-              <span className="w-2.5 h-2.5 rounded-full bg-[#0284C7] ring-2 ring-[#0284C7]/20 flex-shrink-0 shadow-[0_0_6px_#0284C7]" />
-              <span className="text-slate-600 dark:text-slate-400 font-medium text-[10.5px]">🔵 Normal (Monitored)</span>
-            </div>
-
-            {/* Compromised */}
-            <div
-              onClick={() => {
-                setActiveFilterStatus(activeFilterStatus === "compromised" ? null : "compromised");
-              }}
-              className={`flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity px-1.5 py-0.5 rounded ${activeFilterStatus === "compromised" ? "bg-red-100 dark:bg-red-950 font-bold" : ""}`}
-              title="Click to spotlight Compromised Footholds"
-            >
-              <span className="w-2.5 h-2.5 rounded-full bg-[#EF4444] ring-2 ring-[#EF4444]/30 animate-pulse flex-shrink-0 shadow-[0_0_8px_#EF4444]" />
-              <span className="text-red-600 font-bold text-[10.5px]">🔴 Compromised Foothold</span>
-            </div>
-
-            {/* Predicted Next Move */}
-            <div
-              onClick={() => {
-                setActiveFilterStatus(activeFilterStatus === "predicted" ? null : "predicted");
-              }}
-              className={`flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity px-1.5 py-0.5 rounded ${activeFilterStatus === "predicted" ? "bg-amber-100 dark:bg-amber-950 font-bold" : ""}`}
-              title="Click to spotlight MITRE Predicted Next Move"
-            >
-              <span className="w-2.5 h-2.5 rounded-full bg-[#EAB308] ring-2 ring-[#EAB308]/30 flex-shrink-0 shadow-[0_0_8px_#EAB308]" />
-              <span className="text-amber-600 font-bold text-[10.5px]">🟡 Predicted Move</span>
-            </div>
-
-            {/* Crown Jewel */}
-            <div
-              onClick={() => {
-                setActiveFilterStatus(activeFilterStatus === "crown_jewel" ? null : "crown_jewel");
-              }}
-              className={`flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity px-1.5 py-0.5 rounded ${activeFilterStatus === "crown_jewel" ? "bg-purple-100 dark:bg-purple-950 font-bold" : ""}`}
-              title="Click to spotlight Tier-0 Crown Jewels"
-            >
-              <span className="w-2.5 h-2.5 rounded-full bg-[#8B5CF6] ring-2 ring-[#8B5CF6]/30 flex-shrink-0 shadow-[0_0_8px_#8B5CF6]" />
-              <span className="text-purple-600 font-bold text-[10.5px]">🟣 Crown Jewel</span>
-            </div>
-
-            {/* Adversary Space */}
-            <div
-              onClick={() => {
-                setActiveFilterStatus(activeFilterStatus === "adversary" ? null : "adversary");
-              }}
-              className={`flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity px-1.5 py-0.5 rounded ${activeFilterStatus === "adversary" ? "bg-slate-200 dark:bg-slate-800 font-bold" : ""}`}
-              title="Click to spotlight Adversary Space"
-            >
-              <span className="w-2.5 h-2.5 rounded-full bg-[#0F172A] ring-2 ring-slate-400/20 flex-shrink-0" />
-              <span className="text-slate-600 dark:text-slate-400 font-medium text-[10.5px]">⚫ Adversary Space</span>
-            </div>
-
-            {/* Traversed Attack Path */}
-            <div
-              className="flex items-center gap-1.5 hidden sm:flex"
-              title="Red solid conduit: Confirmed lateral movement"
-            >
-              <div className="w-4 h-0.5 bg-[#EF4444] rounded flex-shrink-0 shadow-[0_0_5px_#EF4444]" />
-              <span className="text-red-600 font-medium text-[10.5px]">── Attack Path</span>
-            </div>
-
-            {/* Trust Route */}
-            <div
-              className="flex items-center gap-1.5 hidden sm:flex"
-              title="Gray dashed line: Normal authorized network channel"
-            >
-              <div className="w-4 border-b border-dashed border-[#94A3B8] flex-shrink-0" />
-              <span className="text-slate-400 font-medium text-[10.5px]">╌╌ Trust Route</span>
-            </div>
-          </div>
-
-          {/* Color Code Guide Button */}
-          <button
-            onClick={() => setShowColorGuide(!showColorGuide)}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#FF5722]/10 hover:bg-[#FF5722]/20 text-[#FF5722] font-bold text-[11px] border border-[#FF5722]/30 transition-colors cursor-pointer ml-auto"
-          >
-            <Info className="w-3.5 h-3.5 text-[#FF5722]" />
-            <span>{showColorGuide ? "Close Guide" : "Color Code Guide"}</span>
-          </button>
         </div>
 
       </div>

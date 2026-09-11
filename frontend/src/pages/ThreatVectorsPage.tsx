@@ -86,7 +86,7 @@ export const ThreatVectorsPage: React.FC = () => {
       {/* Main Grid: Vector Catalog (Left) + Detail Assessment (Right) */}
       <div className="grid grid-cols-12 gap-6">
         {/* Left: Vector Selector */}
-        <StaggerGroup className="col-span-5 space-y-2.5 max-h-[720px] overflow-y-auto pr-1">
+        <StaggerGroup className="col-span-5 space-y-2.5 max-h-[720px] overflow-y-auto overscroll-contain pr-2">
           {vectors.map((vec) => {
             const isSelected = selectedVector.id === vec.id;
             return (
