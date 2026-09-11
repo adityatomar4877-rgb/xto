@@ -7,8 +7,22 @@
     --font-display: "Outfit", "Space Grotesk", sans-serif;
   }
 
-  /* Dark SOC Mode (Default) */
-  html.dark, :root {
+  /* Clean Enterprise Light Mode (Default, matching reference photo) */
+  html.light, :root {
+    --bg-main: #F8F9FA;
+    --bg-card: #FFFFFF;
+    --bg-card-hover: #F8FAFC;
+    --bg-input: #F1F4F8;
+    --border-main: #E5E7EB;
+    --border-hover: #D1D5DB;
+    --text-primary: #111827;
+    --text-secondary: #4B5563;
+    --text-muted: #9CA3AF;
+    --canvas-dot: rgba(15, 23, 42, 0.08);
+  }
+
+  /* Dark SOC Mode */
+  html.dark {
     --bg-main: #07090D;
     --bg-card: #0C0E14;
     --bg-card-hover: #11141D;
@@ -19,20 +33,6 @@
     --text-secondary: #8E98A8;
     --text-muted: #64748B;
     --canvas-dot: rgba(255, 255, 255, 0.08);
-  }
-
-  /* Clean Enterprise Light Mode (from Exposure Management photos) */
-  html.light {
-    --bg-main: #F4F6FB;
-    --bg-card: #FFFFFF;
-    --bg-card-hover: #F8FAFC;
-    --bg-input: #F1F5F9;
-    --border-main: #E2E8F0;
-    --border-hover: #CBD5E1;
-    --text-primary: #0F172A;
-    --text-secondary: #475569;
-    --text-muted: #94A3B8;
-    --canvas-dot: rgba(15, 23, 42, 0.08);
   }
 
   body {
