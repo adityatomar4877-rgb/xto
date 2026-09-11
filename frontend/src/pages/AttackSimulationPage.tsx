@@ -209,6 +209,10 @@ export const AttackSimulationPage: React.FC = () => {
       ]
     : [footholdId];
 
+  // Active step details
+  const currentStep = simulationTrace?.timeline[activeStepIndex];
+  const activeStepNode = currentStep?.target_asset_id || footholdId;
+
   // Calculate MITRE ATT&CK predicted next move
   let predictedNextHop: PredictedNextHop | null = null;
 
@@ -243,8 +247,6 @@ export const AttackSimulationPage: React.FC = () => {
       };
     }
   }
-
-  const currentEvent = simulationTrace?.timeline[activeStepIndex];
 
   return (
     <div className="space-y-4 font-sans text-slate-900 select-none pb-4">
@@ -382,6 +384,7 @@ export const AttackSimulationPage: React.FC = () => {
             highlightPath={detectedPath}
             compromisedNodes={compromisedList}
             predictedNextHop={predictedNextHop}
+            activeStepNode={activeStepNode}
             selectedAssetId={targetId}
             onSelectAsset={(asset) => {
               if (asset?.id) {
@@ -447,17 +450,17 @@ export const AttackSimulationPage: React.FC = () => {
             )}
 
             {/* Current Step Telemetry Details */}
-            {currentEvent && (
+            {currentStep && (
               <div className="space-y-2 pt-1 border-t border-slate-100">
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-slate-500 font-medium">CURRENT ACTION:</span>
                   <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-red-50 text-red-600 border border-red-200">
-                    {currentEvent.technique_id} - {currentEvent.phase}
+                    {currentStep.technique_id} - {currentStep.phase}
                   </span>
                 </div>
 
                 <div className="text-xs text-slate-700 bg-[#F8F9FA] p-2.5 rounded-lg border border-[#E5E7EB] leading-relaxed">
-                  {currentEvent.explanation}
+                  {currentStep.explanation}
                 </div>
               </div>
             )}

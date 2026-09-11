@@ -38,6 +38,7 @@ export interface Tactical3DSceneProps {
   highlightPath?: string[]; // Traversed / detected nodes [e.g. "EXT-INTERNET", "FW-EDGE-01", "WS-ENG-04"]
   compromisedNodes?: string[]; // Compromised node IDs
   predictedNextHop?: PredictedNextHop | null; // MITRE predicted next move
+  activeStepNode?: string; // Current step active target node
 }
 
 export interface TopologyNode {
@@ -211,9 +212,10 @@ export const Tactical3DScene: React.FC<Tactical3DSceneProps> = ({
   highlightPath = [],
   compromisedNodes = [],
   predictedNextHop = null,
+  activeStepNode,
   selectedAssetId,
 }) => {
-  const [activeNodeId, setActiveNodeId] = useState<string | null>(selectedAssetId || null);
+  const [activeNodeId, setActiveNodeId] = useState<string | null>(selectedAssetId || activeStepNode || null);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
 
@@ -242,9 +244,6 @@ export const Tactical3DScene: React.FC<Tactical3DSceneProps> = ({
       (predictedNextHop.sourceId === toId && predictedNextHop.targetId === fromId)
     );
   };
-
-  // Find predicted target node if any
-  const predictedTargetNode = predictedNextHop ? nodeMap.get(predictedNextHop.targetId) : null;
 
   return (
     <div
@@ -288,7 +287,7 @@ export const Tactical3DScene: React.FC<Tactical3DSceneProps> = ({
               setZoomLevel(1);
               setPanOffset({ x: 0, y: 0 });
             }}
-            className="w-7 h-7 rounded-lg border border-[#E5E7EB] hover:bg-slate-50 flex items-center justify-center text-slate-500 hover:text-slate-800 transition-colors"
+            className="w-7 h-7 rounded-lg border border-[#E5E7EB] hover:bg-slate-50 flex items-center justify-center text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
             title="Reset Topology View"
           >
             <RotateCcw className="w-3.5 h-3.5" />
@@ -484,7 +483,7 @@ export const Tactical3DScene: React.FC<Tactical3DSceneProps> = ({
 
             {/* 4. RENDER 12 TOPOLOGY NODES */}
             {TOPOLOGY_NODES.map((n) => {
-              const isSelected = activeNodeId === n.id || selectedAssetId === n.id;
+              const isSelected = activeNodeId === n.id || selectedAssetId === n.id || activeStepNode === n.id;
               const isTraversed = highlightPath.includes(n.id);
               const isCompromised = compromisedNodes.includes(n.id) || (isTraversed && n.id !== "EXT-INTERNET");
               const isPredictedTarget = predictedNextHop?.targetId === n.id;
@@ -660,14 +659,14 @@ export const Tactical3DScene: React.FC<Tactical3DSceneProps> = ({
         <div className="absolute top-4 left-4 flex flex-col bg-white rounded-lg border border-[#E5E7EB] shadow-sm z-20 overflow-hidden">
           <button
             onClick={() => setZoomLevel((z) => Math.min(1.5, z + 0.1))}
-            className="w-7 h-7 flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors border-b border-[#F1F3F5]"
+            className="w-7 h-7 flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors border-b border-[#F1F3F5] cursor-pointer"
             title="Zoom In"
           >
             <Plus className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => setZoomLevel((z) => Math.max(0.7, z - 0.1))}
-            className="w-7 h-7 flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors border-b border-[#F1F3F5]"
+            className="w-7 h-7 flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors border-b border-[#F1F3F5] cursor-pointer"
             title="Zoom Out"
           >
             <Minus className="w-3.5 h-3.5" />
@@ -677,7 +676,7 @@ export const Tactical3DScene: React.FC<Tactical3DSceneProps> = ({
               setZoomLevel(1);
               setPanOffset({ x: 0, y: 0 });
             }}
-            className="w-7 h-7 flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
+            className="w-7 h-7 flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors cursor-pointer"
             title="Reset View"
           >
             <RotateCcw className="w-3 h-3" />
