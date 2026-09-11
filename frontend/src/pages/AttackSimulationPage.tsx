@@ -91,10 +91,29 @@ export const AttackSimulationPage: React.FC = () => {
 
   // Active path and compromised nodes from timeline up to activeStepIndex
   const activeEvents = simulationTrace ? simulationTrace.timeline.slice(0, activeStepIndex + 1) : [];
-  const compromisedList = activeEvents
-    .filter((e) => e.success)
-    .map((e) => e.target_asset_id);
-  const pathNodes = activeEvents.map((e) => e.target_asset_id);
+  
+  const pathNodes: string[] = [];
+  const compromisedList: string[] = [];
+
+  if (simulationTrace) {
+    if (footholdId && !pathNodes.includes(footholdId)) {
+      pathNodes.push(footholdId);
+    }
+    activeEvents.forEach((e) => {
+      if (e.source_asset_id && e.source_asset_id !== "EXT-INTERNET" && !pathNodes.includes(e.source_asset_id)) {
+        pathNodes.push(e.source_asset_id);
+      }
+      if (e.target_asset_id && !pathNodes.includes(e.target_asset_id)) {
+        pathNodes.push(e.target_asset_id);
+      }
+      if (e.success && e.target_asset_id && !compromisedList.includes(e.target_asset_id)) {
+        compromisedList.push(e.target_asset_id);
+      }
+    });
+  }
+
+  const currentStep = simulationTrace?.timeline[activeStepIndex];
+  const activeStepNode = currentStep?.target_asset_id || footholdId;
 
   return (
     <div className="space-y-4 font-sans text-slate-900 select-none pb-4">
@@ -228,6 +247,9 @@ export const AttackSimulationPage: React.FC = () => {
             relationships={twin.relationships}
             highlightPath={pathNodes}
             compromisedNodes={compromisedList}
+            activeStepNode={activeStepNode}
+            selectedAssetId={activeStepNode}
+            height="h-full min-h-[384px]"
           />
         </div>
 
