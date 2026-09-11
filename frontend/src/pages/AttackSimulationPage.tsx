@@ -13,6 +13,8 @@ import {
   Layers,
   Sparkles,
   Search,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import {
   api,
@@ -23,6 +25,7 @@ import {
 } from "@/lib/api";
 import { Tactical3DScene, PredictedNextHop } from "@/components/Tactical3DScene";
 import { TimelinePlayer } from "@/components/TimelinePlayer";
+import { useStaggerEntrance } from "@/lib/animations";
 
 // MITRE ATT&CK Knowledge Base for transition predictions
 const MITRE_KNOWLEDGE_MAP: Record<
@@ -150,6 +153,8 @@ export const AttackSimulationPage: React.FC = () => {
   const [activeStepIndex, setActiveStepIndex] = useState<number>(0);
   const [isSimulating, setIsSimulating] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
+  const [showProof, setShowProof] = useState<boolean>(false);
+  const containerRef = useStaggerEntrance(".gsap-box", [simulationTrace?.simulation_id]);
 
   useEffect(() => {
     Promise.all([api.getTwin(), api.getThreatVectors(), api.getAttackers()])
@@ -249,7 +254,7 @@ export const AttackSimulationPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-4 font-sans text-slate-900 select-none pb-4">
+    <div ref={containerRef} className="space-y-4 font-sans text-slate-900 select-none pb-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -270,7 +275,7 @@ export const AttackSimulationPage: React.FC = () => {
               `/defense?threat=${threatId}&persona=${persona}&foothold=${footholdId}&target=${targetId}`
             )
           }
-          className="px-4 py-2 rounded-xl bg-[#FFF2EB] border border-[#FF5722]/40 text-[#FF5722] hover:bg-[#FFE5D6] text-xs font-semibold flex items-center gap-2 shadow-xs transition-all cursor-pointer"
+          className="px-4 py-2 rounded-xl bg-[#FFF2EB] border border-[#FF5722]/40 text-[#FF5722] hover:bg-[#FFE5D6] text-xs font-semibold flex items-center gap-2 shadow-xs transition-all cursor-pointer hover:scale-[1.02]"
         >
           <Sliders className="w-4 h-4" />
           TEST CONTROLS IN SANDBOX &rarr;
@@ -278,7 +283,7 @@ export const AttackSimulationPage: React.FC = () => {
       </div>
 
       {/* Scenario Builder Bar */}
-      <div className="p-4 rounded-xl bg-white border border-[#E5E7EB] grid grid-cols-5 gap-3.5 text-xs shadow-xs">
+      <div className="gsap-box p-4 rounded-xl bg-white border border-[#E5E7EB] grid grid-cols-5 gap-3.5 text-xs shadow-xs transition-all duration-200 hover:shadow-md">
         {/* Threat Vector */}
         <div>
           <label className="text-[10px] text-slate-500 uppercase font-semibold font-mono block mb-1">
@@ -287,7 +292,7 @@ export const AttackSimulationPage: React.FC = () => {
           <select
             value={threatId}
             onChange={(e) => setThreatId(e.target.value)}
-            className="w-full bg-[#F8F9FA] border border-[#E5E7EB] text-slate-800 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-[#FF5722] font-semibold"
+            className="w-full bg-[#F8F9FA] border border-[#E5E7EB] text-slate-800 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-[#FF5722] font-semibold transition-colors"
           >
             {vectors.map((v) => (
               <option key={v.id} value={v.id}>
@@ -305,7 +310,7 @@ export const AttackSimulationPage: React.FC = () => {
           <select
             value={persona}
             onChange={(e) => setPersona(e.target.value)}
-            className="w-full bg-[#F8F9FA] border border-[#E5E7EB] text-slate-800 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-[#FF5722] font-semibold"
+            className="w-full bg-[#F8F9FA] border border-[#E5E7EB] text-slate-800 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-[#FF5722] font-semibold transition-colors"
           >
             {attackers.map((a) => (
               <option key={a.persona} value={a.persona}>
@@ -323,7 +328,7 @@ export const AttackSimulationPage: React.FC = () => {
           <select
             value={footholdId}
             onChange={(e) => setFootholdId(e.target.value)}
-            className="w-full bg-[#F8F9FA] border border-[#E5E7EB] text-slate-800 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-[#FF5722] font-semibold"
+            className="w-full bg-[#F8F9FA] border border-[#E5E7EB] text-slate-800 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-[#FF5722] font-semibold transition-colors"
           >
             {twin.assets.map((a) => (
               <option key={a.id} value={a.id}>
@@ -341,7 +346,7 @@ export const AttackSimulationPage: React.FC = () => {
           <select
             value={targetId}
             onChange={(e) => setTargetId(e.target.value)}
-            className="w-full bg-[#F8F9FA] border border-[#E5E7EB] text-slate-800 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-[#FF5722] font-semibold"
+            className="w-full bg-[#F8F9FA] border border-[#E5E7EB] text-slate-800 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-[#FF5722] font-semibold transition-colors"
           >
             {twin.assets.map((a) => (
               <option key={a.id} value={a.id}>
@@ -356,7 +361,7 @@ export const AttackSimulationPage: React.FC = () => {
           <button
             onClick={handleRunSimulation}
             disabled={isSimulating}
-            className="w-full py-2 px-3 rounded-lg bg-[#FF5722] hover:bg-[#F4511E] disabled:opacity-50 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer"
+            className="w-full py-2 px-3 rounded-lg bg-[#FF5722] hover:bg-[#F4511E] disabled:opacity-50 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
           >
             {isSimulating ? (
               <>
@@ -376,7 +381,7 @@ export const AttackSimulationPage: React.FC = () => {
       {/* Main Simulation Viewport: Exact 2D Vector Topology Canvas + Live Stats */}
       <div className="grid grid-cols-12 gap-4">
         {/* Topology View (2D Vector Canvas matching screenshot) */}
-        <div className="col-span-8 h-[450px] flex flex-col">
+        <div className="gsap-box col-span-8 h-[450px] flex flex-col">
           <Tactical3DScene
             height="h-full"
             assets={twin.assets}
@@ -395,7 +400,7 @@ export const AttackSimulationPage: React.FC = () => {
         </div>
 
         {/* Simulation Stats & MITRE Prediction Panel */}
-        <div className="col-span-4 p-4 rounded-xl bg-white border border-[#E5E7EB] space-y-3.5 shadow-xs flex flex-col justify-between h-[450px] overflow-y-auto">
+        <div className="gsap-box col-span-4 p-4 rounded-xl bg-white border border-[#E5E7EB] space-y-3.5 shadow-xs flex flex-col justify-between h-[450px] overflow-y-auto transition-all duration-200 hover:shadow-md">
           <div className="space-y-3">
             <div className="text-xs text-slate-800 font-bold uppercase border-b border-slate-100 pb-2 flex items-center justify-between">
               <span className="flex items-center gap-1.5 font-display">
@@ -409,7 +414,7 @@ export const AttackSimulationPage: React.FC = () => {
 
             {/* MITRE ATT&CK Next Move Prediction Callout */}
             {predictedNextHop ? (
-              <div className="p-3 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100/50 border border-amber-300 space-y-2 shadow-xs">
+              <div className="p-3 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100/50 border border-amber-300 space-y-2 shadow-xs transition-all hover:border-amber-400">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
@@ -462,6 +467,29 @@ export const AttackSimulationPage: React.FC = () => {
                 <div className="text-xs text-slate-700 bg-[#F8F9FA] p-2.5 rounded-lg border border-[#E5E7EB] leading-relaxed">
                   {currentStep.explanation}
                 </div>
+
+                {/* Progressive disclosure toggle for causal proof */}
+                {currentStep.reason && currentStep.reason.length > 0 && (
+                  <div>
+                    <button
+                      onClick={() => setShowProof(!showProof)}
+                      className="text-[10.5px] text-[#FF5722] hover:text-[#E64A19] font-semibold flex items-center gap-1 cursor-pointer py-1"
+                    >
+                      <span>{showProof ? "Hide Causal Evidence" : "View Causal Evidence Proof"}</span>
+                      {showProof ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                    </button>
+                    {showProof && (
+                      <div className="p-2 rounded bg-white border border-slate-200 text-[10px] space-y-1 mt-1 font-mono">
+                        {currentStep.reason.map((r, i) => (
+                          <div key={i} className="text-slate-600 flex items-start gap-1.5">
+                            <span className="text-[#FF5722]">•</span>
+                            <span>{r}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
@@ -507,12 +535,14 @@ export const AttackSimulationPage: React.FC = () => {
 
       {/* Interactive Timeline Player with Step Controls */}
       {simulationTrace && (
-        <TimelinePlayer
-          timeline={simulationTrace.timeline}
-          activeStepIndex={activeStepIndex}
-          onStepChange={(idx) => setActiveStepIndex(idx)}
-          onSelectEvidence={(eid) => navigate(`/evidence?id=${eid}`)}
-        />
+        <div className="gsap-box transition-all duration-200 hover:shadow-md">
+          <TimelinePlayer
+            timeline={simulationTrace.timeline}
+            activeStepIndex={activeStepIndex}
+            onStepChange={(idx) => setActiveStepIndex(idx)}
+            onSelectEvidence={(eid) => navigate(`/evidence?id=${eid}`)}
+          />
+        </div>
       )}
     </div>
   );

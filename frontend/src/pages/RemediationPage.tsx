@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   ListOrdered,
   TrendingDown,
@@ -16,12 +16,15 @@ import {
 } from "lucide-react";
 import { api, RemediationPriority } from "@/lib/api";
 import { useNavigate } from "react-router-dom";
+import { useStaggerEntrance } from "@/lib/animations";
 
 export const RemediationPage: React.FC = () => {
   const navigate = useNavigate();
   const [remediations, setRemediations] = useState<RemediationPriority[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchFilter, setSearchFilter] = useState("");
+
+  const containerRef = useStaggerEntrance(".gsap-box", [loading]);
   const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
   const [jiraSuccess, setJiraSuccess] = useState(false);
   const [jiraForm, setJiraForm] = useState({
@@ -90,9 +93,9 @@ export const RemediationPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-5 font-sans text-slate-900 dark:text-slate-100 select-none pb-8">
+    <div ref={containerRef} className="space-y-5 font-sans text-slate-900 dark:text-slate-100 select-none pb-8">
       {/* 1. Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gsap-box">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white font-display flex items-center gap-2">
@@ -122,7 +125,7 @@ export const RemediationPage: React.FC = () => {
       {/* 2. Top Analytics Row (inspired by Photo 1 & Photo 2) */}
       <div className="grid grid-cols-12 gap-4">
         {/* Card 1: Top Remediated Exposures */}
-        <div className="col-span-4 rounded-xl bg-white dark:bg-[#0C0E14] border border-[#E5E7EB] dark:border-[#171B26] p-4 shadow-xs space-y-3">
+        <div className="col-span-4 rounded-xl bg-white dark:bg-[#0C0E14] border border-[#E5E7EB] dark:border-[#171B26] p-4 shadow-xs space-y-3 gsap-box">
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-bold text-slate-900 dark:text-white tracking-wide font-display">
               Top Remediated Exposures
@@ -146,7 +149,7 @@ export const RemediationPage: React.FC = () => {
         </div>
 
         {/* Card 2: Choke Point Impact Funnel (from Photo 2) */}
-        <div className="col-span-4 rounded-xl bg-white dark:bg-[#0C0E14] border border-[#E5E7EB] dark:border-[#171B26] p-4 shadow-xs space-y-3">
+        <div className="col-span-4 rounded-xl bg-white dark:bg-[#0C0E14] border border-[#E5E7EB] dark:border-[#171B26] p-4 shadow-xs space-y-3 gsap-box">
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-bold text-slate-900 dark:text-white tracking-wide font-display">
               Choke Point Reduction Funnel
@@ -174,7 +177,7 @@ export const RemediationPage: React.FC = () => {
         </div>
 
         {/* Card 3: Critical Assets by Severity (from Photo 1) */}
-        <div className="col-span-4 rounded-xl bg-white dark:bg-[#0C0E14] border border-[#E5E7EB] dark:border-[#171B26] p-4 shadow-xs space-y-3">
+        <div className="col-span-4 rounded-xl bg-white dark:bg-[#0C0E14] border border-[#E5E7EB] dark:border-[#171B26] p-4 shadow-xs space-y-3 gsap-box">
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-bold text-slate-900 dark:text-white tracking-wide font-display">
               Critical Assets by Severity
@@ -200,7 +203,7 @@ export const RemediationPage: React.FC = () => {
       </div>
 
       {/* 3. Remediation Items Table (inspired by Photo 1 & Photo 2) */}
-      <div className="rounded-xl bg-white dark:bg-[#0C0E14] border border-[#E5E7EB] dark:border-[#171B26] p-4 shadow-xs space-y-3">
+      <div className="rounded-xl bg-white dark:bg-[#0C0E14] border border-[#E5E7EB] dark:border-[#171B26] p-4 shadow-xs space-y-3 gsap-box">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h2 className="text-sm font-bold text-slate-900 dark:text-white font-display">

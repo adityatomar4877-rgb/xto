@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import {
   ShieldAlert,
@@ -23,6 +23,7 @@ import {
   MitreMatrixTactic,
   MitreTechnique,
 } from "@/lib/api";
+import { useStaggerEntrance } from "@/lib/animations";
 
 export const MitreFrameworkPage: React.FC = () => {
   const [report, setReport] = useState<MitrePostureReport | null>(null);
@@ -31,6 +32,8 @@ export const MitreFrameworkPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "MITIGATED" | "VULNERABLE">("ALL");
   const [selectedTechnique, setSelectedTechnique] = useState<MitreTechnique | null>(null);
+
+  const containerRef = useStaggerEntrance(".gsap-box", [loading, statusFilter]);
 
   useEffect(() => {
     Promise.all([api.getMitreCoverage(), api.getMitreMatrix()])
@@ -58,9 +61,9 @@ export const MitreFrameworkPage: React.FC = () => {
     "text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/50 bg-amber-50/60 dark:bg-amber-950/40";
 
   return (
-    <div className="space-y-6 font-sans select-none pb-12">
+    <div ref={containerRef} className="space-y-6 font-sans select-none pb-12">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gsap-box">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2 font-display">
@@ -88,7 +91,7 @@ export const MitreFrameworkPage: React.FC = () => {
       {/* Top Posture Dashboard Banner */}
       <div className="grid grid-cols-5 gap-4">
         {/* Posture Score */}
-        <div className={`p-4 rounded-xl border ${scoreColor} shadow-xs flex flex-col justify-between`}>
+        <div className={`p-4 rounded-xl border ${scoreColor} shadow-xs flex flex-col justify-between gsap-box`}>
           <div>
             <div className="text-[10px] uppercase font-bold tracking-wider opacity-80 font-mono">
               MITRE COVERAGE INDEX
@@ -103,14 +106,14 @@ export const MitreFrameworkPage: React.FC = () => {
         </div>
 
         {/* Total Evaluated */}
-        <div className="p-4 rounded-xl bg-white dark:bg-[#0C0E14] border border-[#E5E7EB] dark:border-[#171B26] shadow-xs">
+        <div className="p-4 rounded-xl bg-white dark:bg-[#0C0E14] border border-[#E5E7EB] dark:border-[#171B26] shadow-xs gsap-box">
           <div className="text-[10px] text-slate-500 uppercase font-bold font-mono">EVALUATED TECHNIQUES</div>
           <div className="text-2xl font-bold text-slate-900 dark:text-white mt-1 font-mono">{report.total_techniques_evaluated}</div>
           <div className="text-[10px] text-slate-400 mt-1">Enterprise matrix techniques</div>
         </div>
 
         {/* Mitigated Techniques */}
-        <div className="p-4 rounded-xl bg-white dark:bg-[#0C0E14] border border-emerald-500/30 shadow-xs">
+        <div className="p-4 rounded-xl bg-white dark:bg-[#0C0E14] border border-emerald-500/30 shadow-xs gsap-box">
           <div className="text-[10px] text-emerald-600 dark:text-emerald-400 uppercase font-bold flex items-center gap-1.5 font-mono">
             <CheckCircle2 className="w-3 h-3" /> MITIGATED / BLOCKED
           </div>
@@ -119,7 +122,7 @@ export const MitreFrameworkPage: React.FC = () => {
         </div>
 
         {/* Exposed Techniques */}
-        <div className="p-4 rounded-xl bg-white dark:bg-[#0C0E14] border border-rose-500/30 shadow-xs">
+        <div className="p-4 rounded-xl bg-white dark:bg-[#0C0E14] border border-rose-500/30 shadow-xs gsap-box">
           <div className="text-[10px] text-rose-600 dark:text-rose-400 uppercase font-bold flex items-center gap-1.5 font-mono">
             <XCircle className="w-3 h-3" /> EXPOSED GAPS
           </div>
@@ -128,7 +131,7 @@ export const MitreFrameworkPage: React.FC = () => {
         </div>
 
         {/* Active Mitigations */}
-        <div className="p-4 rounded-xl bg-white dark:bg-[#0C0E14] border border-[#E5E7EB] dark:border-cyan-500/30 shadow-xs">
+        <div className="p-4 rounded-xl bg-white dark:bg-[#0C0E14] border border-[#E5E7EB] dark:border-cyan-500/30 shadow-xs gsap-box">
           <div className="text-[10px] text-[#FF5722] uppercase font-bold font-mono">ACTIVE M-SERIES MITIGATIONS</div>
           <div className="text-2xl font-bold text-slate-900 dark:text-white mt-1 font-mono">{report.total_active_mitigations}</div>
           <div className="text-[10px] text-slate-400 mt-1">M1030, M1032, M1049, M1026...</div>
@@ -136,7 +139,7 @@ export const MitreFrameworkPage: React.FC = () => {
       </div>
 
       {/* Tactic Coverage Breakdown (Horizontal Bars) */}
-      <div className="p-4 rounded-xl bg-white dark:bg-[#0C0E14] border border-[#E5E7EB] dark:border-slate-800 shadow-xs space-y-3">
+      <div className="p-4 rounded-xl bg-white dark:bg-[#0C0E14] border border-[#E5E7EB] dark:border-slate-800 shadow-xs space-y-3 gsap-box">
         <div className="flex items-center justify-between text-xs border-b border-[#F1F3F5] dark:border-slate-800 pb-2">
           <span className="font-bold text-slate-900 dark:text-slate-200 font-display">TACTIC-BY-TACTIC DEFENSE PROFILE</span>
           <span className="text-slate-500 font-mono text-[11px]">{report.tactics_breakdown.length} ENTERPRISE TACTICS EVALUATED</span>
@@ -167,7 +170,7 @@ export const MitreFrameworkPage: React.FC = () => {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="flex items-center justify-between gap-4 p-3 rounded-xl bg-white dark:bg-[#0C0E14] border border-[#E5E7EB] dark:border-slate-800 text-xs shadow-xs">
+      <div className="flex items-center justify-between gap-4 p-3 rounded-xl bg-white dark:bg-[#0C0E14] border border-[#E5E7EB] dark:border-slate-800 text-xs shadow-xs gsap-box">
         <div className="flex items-center gap-2 flex-1 max-w-md bg-[#F8F9FA] dark:bg-slate-950 px-3 py-1.5 rounded-lg border border-[#E5E7EB] dark:border-slate-800 focus-within:border-[#FF5722]">
           <Search className="w-3.5 h-3.5 text-slate-400" />
           <input

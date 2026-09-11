@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Crosshair, ShieldAlert, CheckCircle2, ArrowRight, Play, Activity } from "lucide-react";
 import { api, ThreatVector, DigitalTwinTopology } from "@/lib/api";
 import { useNavigate } from "react-router-dom";
+import { useStaggerEntrance } from "@/lib/animations";
 
 export const ThreatVectorsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -12,6 +13,8 @@ export const ThreatVectorsPage: React.FC = () => {
   const [assessmentResult, setAssessmentResult] = useState<any>(null);
   const [assessing, setAssessing] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  const containerRef = useStaggerEntrance(".gsap-box", [loading, selectedVector?.id]);
 
   useEffect(() => {
     Promise.all([api.getThreatVectors(), api.getTwin()])
@@ -51,9 +54,9 @@ export const ThreatVectorsPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 font-sans select-none pb-8">
+    <div ref={containerRef} className="space-y-6 font-sans select-none pb-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gsap-box">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2 font-display">
             <Crosshair className="w-5 h-5 text-[#FF5722]" />
@@ -82,7 +85,7 @@ export const ThreatVectorsPage: React.FC = () => {
                   setSelectedVector(vec);
                   setAssessmentResult(null);
                 }}
-                className={`p-3.5 rounded-xl border cursor-pointer transition-all shadow-xs ${
+                className={`p-3.5 rounded-xl border cursor-pointer transition-all shadow-xs gsap-box ${
                   isSelected
                     ? "bg-[#FFF5EE] dark:bg-orange-950/20 border-[#FFCCBA] dark:border-[#FF5722]/40 text-slate-900 dark:text-white"
                     : "bg-white dark:bg-[#0C0E14] border-[#E5E7EB] dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700"
@@ -112,7 +115,7 @@ export const ThreatVectorsPage: React.FC = () => {
         </div>
 
         {/* Right: Detailed Vector Assessment & Launch */}
-        <div className="col-span-7 p-5 rounded-xl bg-white dark:bg-[#0C0E14] border border-[#E5E7EB] dark:border-[#171B26] shadow-xs space-y-5">
+        <div className="col-span-7 p-5 rounded-xl bg-white dark:bg-[#0C0E14] border border-[#E5E7EB] dark:border-[#171B26] shadow-xs space-y-5 gsap-box">
           {/* Vector Title */}
           <div className="border-b border-[#F1F3F5] dark:border-slate-800 pb-3">
             <div className="flex items-center justify-between">

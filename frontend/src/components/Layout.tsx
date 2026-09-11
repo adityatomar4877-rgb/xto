@@ -287,26 +287,27 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               {theme === "dark" ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
             </button>
 
-            {/* Analyst Profile */}
-            <div className="flex items-center gap-2.5 pl-2 border-l border-[#E5E7EB] dark:border-[#171B26]">
-              <div className="w-8 h-8 rounded-full bg-[#E5E7EB] dark:bg-slate-800 flex items-center justify-center text-slate-700 dark:text-slate-200 font-bold text-xs flex-shrink-0">
+            {/* Analyst Profile - Minimal & Clean */}
+            <div className="flex items-center gap-2 pl-2 border-l border-[#E5E7EB] dark:border-[#171B26]">
+              <div
+                className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#FF5722] to-amber-500 text-white flex items-center justify-center font-bold text-xs shadow-xs cursor-pointer hover:opacity-90 transition-opacity"
+                title="Active Operator: Aditya"
+              >
                 A
               </div>
-              <div className="text-left leading-tight">
-                <div className="text-xs font-bold text-slate-900 dark:text-white leading-none">
-                  Aditya
-                </div>
-                <div className="text-[9.5px] text-slate-400 mt-0.5 leading-none">
-                  Security Analyst
-                </div>
-              </div>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+              <span className="text-xs font-semibold text-slate-800 dark:text-white hidden md:inline">
+                Aditya
+              </span>
             </div>
           </div>
         </header>
 
-        {/* VIEWPORT CONTENT */}
-        <main id="main-viewport" className="flex-1 overflow-y-auto overflow-x-hidden p-5 relative">
+        {/* VIEWPORT CONTENT WITH GSAP PAGE ENTRANCE */}
+        <main
+          id="main-viewport"
+          key={location.pathname}
+          className="flex-1 overflow-y-auto overflow-x-hidden p-5 relative animate-in fade-in duration-200"
+        >
           {children}
         </main>
       </div>

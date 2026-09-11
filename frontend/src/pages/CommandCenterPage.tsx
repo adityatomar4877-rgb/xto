@@ -15,16 +15,18 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import { Tactical3DScene } from "@/components/Tactical3DScene";
+import { useStaggerEntrance } from "@/lib/animations";
 
 export const CommandCenterPage: React.FC = () => {
   const [selectedControl, setSelectedControl] = useState("Network Segmentation");
+  const containerRef = useStaggerEntrance(".gsap-box", []);
 
   return (
-    <div className="space-y-4 font-sans text-slate-900 select-none pb-4">
+    <div ref={containerRef} className="space-y-4 font-sans text-slate-900 select-none pb-4">
       {/* 1. HERO SECTION & TOP RIGHT METRICS */}
       <div className="grid grid-cols-12 gap-4">
         {/* Left 9 Cols: Hero Banner */}
-        <div className="col-span-12 lg:col-span-9 bg-white rounded-xl border border-[#E5E7EB] p-6 shadow-xs flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
+        <div className="gsap-box col-span-12 lg:col-span-9 bg-white rounded-xl border border-[#E5E7EB] p-6 shadow-xs flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden transition-all duration-200 hover:shadow-md">
           {/* Left Text Block */}
           <div className="space-y-3 max-w-md z-10">
             <div className="text-[9.5px] font-bold text-slate-500 tracking-[0.2em] uppercase">
@@ -118,7 +120,7 @@ export const CommandCenterPage: React.FC = () => {
         {/* Right 3 Cols: 3 Stacked Metric Cards */}
         <div className="col-span-12 lg:col-span-3 flex flex-col justify-between gap-3">
           {/* Metric 1: Assets Monitored */}
-          <div className="flex-1 bg-white rounded-xl border border-[#E5E7EB] p-3.5 shadow-xs flex items-center gap-3.5">
+          <div className="gsap-box flex-1 bg-white rounded-xl border border-[#E5E7EB] p-3.5 shadow-xs flex items-center gap-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
             <div className="w-10 h-10 rounded-lg bg-[#FFF2EB] border border-[#FF5722]/20 flex items-center justify-center text-[#FF5722] flex-shrink-0">
               <Shield className="w-5 h-5" />
             </div>
@@ -131,7 +133,7 @@ export const CommandCenterPage: React.FC = () => {
           </div>
 
           {/* Metric 2: Active Threats */}
-          <div className="flex-1 bg-white rounded-xl border border-[#E5E7EB] p-3.5 shadow-xs flex items-center gap-3.5">
+          <div className="gsap-box flex-1 bg-white rounded-xl border border-[#E5E7EB] p-3.5 shadow-xs flex items-center gap-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
             <div className="w-10 h-10 rounded-lg bg-[#FEF3C7] border border-amber-500/20 flex items-center justify-center text-amber-600 flex-shrink-0">
               <AlertTriangle className="w-5 h-5" />
             </div>
@@ -144,7 +146,7 @@ export const CommandCenterPage: React.FC = () => {
           </div>
 
           {/* Metric 3: Simulation Running */}
-          <div className="flex-1 bg-white rounded-xl border border-[#E5E7EB] p-3.5 shadow-xs flex items-center gap-3.5">
+          <div className="gsap-box flex-1 bg-white rounded-xl border border-[#E5E7EB] p-3.5 shadow-xs flex items-center gap-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
             <div className="w-10 h-10 rounded-lg bg-[#FFF2EB] border border-[#FF5722]/20 flex items-center justify-center text-[#FF5722] flex-shrink-0">
               <Activity className="w-5 h-5" />
             </div>
@@ -161,7 +163,7 @@ export const CommandCenterPage: React.FC = () => {
       {/* 2. MAIN DIGITAL TWIN & RIGHT-SIDE ACTIVE SIMULATION + THREATS */}
       <div className="grid grid-cols-12 gap-4">
         {/* Left 8 Cols: Environment Digital Twin */}
-        <div className="col-span-12 lg:col-span-8 flex flex-col">
+        <div className="gsap-box col-span-12 lg:col-span-8 flex flex-col">
           <Tactical3DScene
             height="h-[430px]"
             highlightPath={["EXT-INTERNET", "FW-EDGE-01", "VPN-GW-01", "WS-ENG-04", "DC-CORP-01"]}
@@ -180,7 +182,7 @@ export const CommandCenterPage: React.FC = () => {
         {/* Right 4 Cols: Active Simulation & Top Threat Vectors */}
         <div className="col-span-12 lg:col-span-4 space-y-4">
           {/* Active Simulation Card */}
-          <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 shadow-xs space-y-3.5">
+          <div className="gsap-box bg-white rounded-xl border border-[#E5E7EB] p-4 shadow-xs space-y-3.5 transition-all duration-200 hover:shadow-md">
             {/* Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -282,7 +284,7 @@ export const CommandCenterPage: React.FC = () => {
           </div>
 
           {/* Top Threat Vectors Card */}
-          <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 shadow-xs space-y-3">
+          <div className="gsap-box bg-white rounded-xl border border-[#E5E7EB] p-4 shadow-xs space-y-3 transition-all duration-200 hover:shadow-md">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-bold text-slate-900 tracking-wide font-display">
                 Top Threat Vectors
@@ -330,7 +332,7 @@ export const CommandCenterPage: React.FC = () => {
       {/* 3. LOWER SECTION: BLAST RADIUS, CONTROL EFFECTIVENESS, REMEDIATION PRIORITIZATION */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
         {/* Module 1: Blast Radius */}
-        <div className="md:col-span-4 bg-white rounded-xl border border-[#E5E7EB] p-4 shadow-xs flex flex-col justify-between">
+        <div className="gsap-box md:col-span-4 bg-white rounded-xl border border-[#E5E7EB] p-4 shadow-xs flex flex-col justify-between transition-all duration-200 hover:shadow-md">
           <div>
             {/* Header */}
             <div className="flex items-center gap-2 mb-2">
@@ -404,7 +406,7 @@ export const CommandCenterPage: React.FC = () => {
         </div>
 
         {/* Module 2: Control Effectiveness */}
-        <div className="md:col-span-4 bg-white rounded-xl border border-[#E5E7EB] p-4 shadow-xs flex flex-col justify-between">
+        <div className="gsap-box md:col-span-4 bg-white rounded-xl border border-[#E5E7EB] p-4 shadow-xs flex flex-col justify-between transition-all duration-200 hover:shadow-md">
           <div>
             {/* Header */}
             <div className="flex items-center justify-between mb-2">
@@ -493,7 +495,7 @@ export const CommandCenterPage: React.FC = () => {
         </div>
 
         {/* Module 3: Remediation Prioritization */}
-        <div className="md:col-span-4 bg-white rounded-xl border border-[#E5E7EB] p-4 shadow-xs flex flex-col justify-between">
+        <div className="gsap-box md:col-span-4 bg-white rounded-xl border border-[#E5E7EB] p-4 shadow-xs flex flex-col justify-between transition-all duration-200 hover:shadow-md">
           <div>
             {/* Header */}
             <div className="flex items-center justify-between mb-2">

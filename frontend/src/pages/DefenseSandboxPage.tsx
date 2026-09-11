@@ -22,6 +22,7 @@ import {
   AttackerProfile,
 } from "@/lib/api";
 import { DecisionProofCard } from "@/components/DecisionProofCard";
+import { useStaggerEntrance } from "@/lib/animations";
 
 interface DefenseOption {
   id: string;
@@ -92,6 +93,7 @@ export const DefenseSandboxPage: React.FC = () => {
   const [comparison, setComparison] = useState<WhatIfComparison | null>(null);
   const [isSimulating, setIsSimulating] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
+  const containerRef = useStaggerEntrance(".gsap-box", [comparison?.decision_proof?.proof_id]);
 
   useEffect(() => {
     api.getTwin()
@@ -144,7 +146,7 @@ export const DefenseSandboxPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 font-sans select-none pb-8">
+    <div ref={containerRef} className="space-y-6 font-sans select-none pb-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -166,7 +168,7 @@ export const DefenseSandboxPage: React.FC = () => {
           <button
             onClick={() => runSandbox(activeDefenses)}
             disabled={isSimulating}
-            className="px-4 py-2 rounded-xl bg-[#FF5722] hover:bg-[#F4511E] text-white text-xs font-semibold flex items-center gap-2 transition-all shadow-xs cursor-pointer disabled:opacity-50"
+            className="px-4 py-2 rounded-xl bg-[#FF5722] hover:bg-[#F4511E] text-white text-xs font-semibold flex items-center gap-2 transition-all shadow-xs cursor-pointer disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98]"
           >
             <Play className="w-4 h-4" />
             {isSimulating ? "RE-SIMULATING..." : "RE-SIMULATE ATTACK"}
@@ -175,7 +177,7 @@ export const DefenseSandboxPage: React.FC = () => {
       </div>
 
       {/* Scenario Parameters Bar */}
-      <div className="p-4 rounded-xl bg-white dark:bg-[#0C0E14] border border-[#E5E7EB] dark:border-[#171B26] flex items-center justify-between text-xs text-slate-800 dark:text-slate-200 shadow-xs">
+      <div className="gsap-box p-4 rounded-xl bg-white dark:bg-[#0C0E14] border border-[#E5E7EB] dark:border-[#171B26] flex items-center justify-between text-xs text-slate-800 dark:text-slate-200 shadow-xs transition-all duration-200 hover:shadow-md">
         <div className="flex items-center gap-6 font-mono text-xs">
           <div>
             THREAT: <span className="text-[#FF5722] font-bold">{threatId}</span>
@@ -200,7 +202,7 @@ export const DefenseSandboxPage: React.FC = () => {
       {/* Main Grid: Defense Controls Selection (Left) + Live Decision Proof (Right) */}
       <div className="grid grid-cols-12 gap-6">
         {/* Left Column: Virtual Control Toggles */}
-        <div className="col-span-5 space-y-3">
+        <div className="gsap-box col-span-5 space-y-3">
           <div className="text-xs text-slate-500 uppercase tracking-wider flex items-center justify-between font-semibold">
             <span>TOGGLE VIRTUAL DEFENSIVE CONTROLS</span>
             <span className="text-[#FF5722] text-[10px] font-mono font-bold">
@@ -216,7 +218,7 @@ export const DefenseSandboxPage: React.FC = () => {
                 <div
                   key={def.id}
                   onClick={() => toggleDefense(def.id)}
-                  className={`p-3.5 rounded-xl border cursor-pointer transition-all shadow-xs ${
+                  className={`p-3.5 rounded-xl border cursor-pointer transition-all shadow-xs hover:scale-[1.01] active:scale-[0.99] ${
                     isEnabled
                       ? "bg-[#FFF5EE] dark:bg-orange-950/20 border-[#FFCCBA] dark:border-[#FF5722]/40 text-slate-900 dark:text-white"
                       : "bg-white dark:bg-[#0C0E14] border-[#E5E7EB] dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700"
@@ -252,7 +254,7 @@ export const DefenseSandboxPage: React.FC = () => {
         </div>
 
         {/* Right Column: Live Decision Proof & Before vs After Diff */}
-        <div className="col-span-7 space-y-4">
+        <div className="gsap-box col-span-7 space-y-4">
           <div className="text-xs text-slate-500 uppercase tracking-wider flex items-center justify-between font-semibold">
             <span>DECISION PROOF OUTPUT (CORE USP)</span>
             {isSimulating && (
