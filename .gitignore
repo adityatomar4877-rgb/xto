@@ -61,3 +61,7 @@ Thumbs.db
 
 # TypeScript / Vite
 *.tsbuildinfo
+
+# Vercel
+.vercel/
+
