@@ -696,7 +696,28 @@ export interface AutomatedAuditReport {
 
 // ── API Client Helper ─────────────────────────────────────────────────────────
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
+import {
+  FALLBACK_HEALTH,
+  FALLBACK_TWIN,
+  FALLBACK_THREATS,
+  FALLBACK_REMEDIATIONS,
+  FALLBACK_RESILIENCE,
+} from "./seedFallback";
+
+const getApiBase = (): string => {
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL.replace(/\/$/, "");
+  }
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    if (host === "localhost" || host === "127.0.0.1") {
+      return "";
+    }
+  }
+  return "https://xto.onrender.com";
+};
+
+const API_BASE = getApiBase();
 
 async function request<T>(endpoint: string, init?: RequestInit): Promise<T> {
   const url = endpoint.startsWith("http") ? endpoint : `${API_BASE}${endpoint}`;
@@ -728,10 +749,24 @@ async function request<T>(endpoint: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   // Health
-  getHealth: () => request<HealthResponse>("/api/health"),
+  getHealth: async (): Promise<HealthResponse> => {
+    try {
+      return await request<HealthResponse>("/api/health");
+    } catch (err) {
+      console.warn("[XTO API] Backend offline/connecting, using cached health:", err);
+      return { ...FALLBACK_HEALTH, status: "ONLINE" };
+    }
+  },
 
   // Digital Twin
-  getTwin: () => request<DigitalTwinTopology>("/api/twin"),
+  getTwin: async (): Promise<DigitalTwinTopology> => {
+    try {
+      return await request<DigitalTwinTopology>("/api/twin");
+    } catch (err) {
+      console.warn("[XTO API] Backend offline/connecting, using seed fallback topology:", err);
+      return FALLBACK_TWIN;
+    }
+  },
   addAsset: (asset: Asset) =>
     request<{ status: string; asset_id: string }>("/api/twin/assets", {
       method: "POST",
@@ -760,7 +795,14 @@ export const api = {
     }),
 
   // Threat Vectors
-  getThreatVectors: () => request<ThreatVector[]>("/api/threat-vectors"),
+  getThreatVectors: async (): Promise<ThreatVector[]> => {
+    try {
+      return await request<ThreatVector[]>("/api/threat-vectors");
+    } catch (err) {
+      console.warn("[XTO API] Backend offline/connecting, using fallback threat vectors:", err);
+      return FALLBACK_THREATS;
+    }
+  },
   assessThreat: (req: ThreatAssessmentRequest) =>
     request<ThreatAssessmentResponse>("/api/threat-vectors/assess", {
       method: "POST",
@@ -811,8 +853,14 @@ export const api = {
     }),
 
   // Remediation
-  getRemediationPriorities: () =>
-    request<RemediationPriority[]>("/api/remediation/priorities"),
+  getRemediationPriorities: async (): Promise<RemediationPriority[]> => {
+    try {
+      return await request<RemediationPriority[]>("/api/remediation/priorities");
+    } catch (err) {
+      console.warn("[XTO API] Backend offline/connecting, using fallback remediations:", err);
+      return FALLBACK_REMEDIATIONS;
+    }
+  },
 
   // Evidence
   getEvidence: (simId?: string) =>
@@ -841,8 +889,14 @@ export const api = {
     request<AutomatedAuditReport>("/api/automation/audit"),
 
   // Resilience Score (Feature #9)
-  getResilience: () =>
-    request<ResilienceScoreResult>("/api/resilience"),
+  getResilience: async (): Promise<ResilienceScoreResult> => {
+    try {
+      return await request<ResilienceScoreResult>("/api/resilience");
+    } catch (err) {
+      console.warn("[XTO API] Backend offline/connecting, using fallback resilience score:", err);
+      return FALLBACK_RESILIENCE;
+    }
+  },
 
   // Natural Language Query (Feature #10)
   processNaturalLanguageQuery: (query: string) =>
