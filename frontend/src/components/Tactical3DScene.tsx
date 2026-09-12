@@ -330,29 +330,47 @@ export const Tactical3DScene: React.FC<Tactical3DSceneProps> = ({
             {/* 2. DETECTED ATTACK PATH (RED) */}
             {(() => {
               if (!highlightPath || highlightPath.length < 2) return null;
-              const segments: { fromId: string; toId: string; key: string }[] = [];
+              const segments: { fromId: string; toId: string; key: string; d: string }[] = [];
               for (let i = 0; i < highlightPath.length - 1; i++) {
                 const fId = highlightPath[i];
                 const tId = highlightPath[i + 1];
                 if (fId && tId && fId !== tId && fId !== "EXT-INTERNET") {
-                  segments.push({ fromId: fId, toId: tId, key: `${fId}-${tId}-${i}` });
+                  const from = nodeMap.get(fId);
+                  const to = nodeMap.get(tId);
+                  if (from && to) {
+                    segments.push({ fromId: fId, toId: tId, key: `${fId}-${tId}-${i}`, d: generateRoutePath(from, to) });
+                  }
                 }
               }
-              return segments.map((seg) => {
-                const from = nodeMap.get(seg.fromId);
-                const to = nodeMap.get(seg.toId);
-                if (!from || !to) return null;
-                const d = generateRoutePath(from, to);
-                return (
-                  <g key={`detected-direct-${seg.key}`}>
-                    <path d={d} fill="none" stroke="#EF4444" strokeWidth="8" strokeOpacity="0.28" strokeLinecap="round" filter="url(#redDetectedGlow)" />
-                    <path d={d} fill="none" stroke="#DC2626" strokeWidth="2.8" strokeLinecap="round" />
-                    <circle r="4" fill="#EF4444">
-                      <animateMotion path={d} dur="2.4s" repeatCount="indefinite" />
-                    </circle>
-                  </g>
-                );
-              });
+              return segments.map((seg) => (
+                <g key={`detected-direct-${seg.key}`}>
+                  <motion.path
+                    d={seg.d}
+                    fill="none"
+                    stroke="#EF4444"
+                    strokeWidth="8"
+                    strokeOpacity="0.28"
+                    strokeLinecap="round"
+                    filter="url(#redDetectedGlow)"
+                    initial={{ pathLength: 0, opacity: 0 }}
+                    animate={{ pathLength: 1, opacity: 0.28 }}
+                    transition={{ duration: 0.7, ease: "easeInOut" }}
+                  />
+                  <motion.path
+                    d={seg.d}
+                    fill="none"
+                    stroke="#DC2626"
+                    strokeWidth="2.8"
+                    strokeLinecap="round"
+                    initial={{ pathLength: 0 }}
+                    animate={{ pathLength: 1 }}
+                    transition={{ duration: 0.7, ease: "easeInOut" }}
+                  />
+                  <circle r="4" fill="#EF4444">
+                    <animateMotion path={seg.d} dur="2.4s" repeatCount="indefinite" />
+                  </circle>
+                </g>
+              ));
             })()}
 
             {/* 3. PREDICTED NEXT MOVE PATH (YELLOW) */}
@@ -365,8 +383,29 @@ export const Tactical3DScene: React.FC<Tactical3DSceneProps> = ({
               const d = generateRoutePath(from, to);
               return (
                 <g key={`predicted-direct-${predictedNextHop.sourceId}-${predictedNextHop.targetId}`}>
-                  <path d={d} fill="none" stroke="#FACC15" strokeWidth="8" strokeOpacity="0.35" strokeLinecap="round" filter="url(#yellowPredictedGlow)" />
-                  <path d={d} fill="none" stroke="#EAB308" strokeWidth="2.8" strokeDasharray="6,4" strokeLinecap="round" />
+                  <motion.path
+                    d={d}
+                    fill="none"
+                    stroke="#FACC15"
+                    strokeWidth="8"
+                    strokeOpacity="0.35"
+                    strokeLinecap="round"
+                    filter="url(#yellowPredictedGlow)"
+                    initial={{ pathLength: 0, opacity: 0 }}
+                    animate={{ pathLength: 1, opacity: 1 }}
+                    transition={{ duration: 0.5, ease: "easeInOut" }}
+                  />
+                  <motion.path
+                    d={d}
+                    fill="none"
+                    stroke="#EAB308"
+                    strokeWidth="2.8"
+                    strokeDasharray="6,4"
+                    strokeLinecap="round"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.4, delay: 0.2, ease: "easeOut" }}
+                  />
                   <circle r="4.5" fill="#FACC15">
                     <animateMotion path={d} dur="1.6s" repeatCount="indefinite" />
                   </circle>
@@ -401,6 +440,18 @@ export const Tactical3DScene: React.FC<Tactical3DSceneProps> = ({
                     </circle>
                   )}
 
+                  {/* Compromise Burst Ring */}
+                  {isCompromised && (
+                    <motion.circle
+                      fill="none"
+                      stroke="#EF4444"
+                      strokeWidth="2"
+                      initial={{ r: 20, opacity: 0.8 }}
+                      animate={{ r: 48, opacity: 0 }}
+                      transition={{ duration: 1, ease: "easeOut" }}
+                    />
+                  )}
+
                   {/* Soft Diffuse Halo */}
                   <circle
                     r={n.isCrownJewel ? 38 : 30}
@@ -414,6 +465,7 @@ export const Tactical3DScene: React.FC<Tactical3DSceneProps> = ({
                         : "rgba(2, 132, 199, 0.20)"
                     }
                     filter={n.isCrownJewel ? "url(#softPurpleGlow)" : "url(#softCyanGlow)"}
+                    style={{ transition: "fill 0.5s ease" }}
                   />
 
                   {/* Secondary Inner Halo */}
@@ -428,6 +480,7 @@ export const Tactical3DScene: React.FC<Tactical3DSceneProps> = ({
                         ? "rgba(168, 85, 247, 0.14)"
                         : "rgba(2, 132, 199, 0.12)"
                     }
+                    style={{ transition: "fill 0.5s ease" }}
                   />
 
                   {/* Outer Ring Circle */}
@@ -446,7 +499,7 @@ export const Tactical3DScene: React.FC<Tactical3DSceneProps> = ({
                         : "#0284C7"
                     }
                     strokeWidth={isSelected ? 3 : isCompromised || isPredictedTarget ? 2.5 : 2}
-                    className="transition-all duration-200"
+                    style={{ transition: "fill 0.5s ease, stroke 0.5s ease, stroke-width 0.5s ease" }}
                   />
 
                   {/* Inner Node Graphic */}
@@ -464,6 +517,7 @@ export const Tactical3DScene: React.FC<Tactical3DSceneProps> = ({
                           ? "#F3E8FF"
                           : "#E0F2FE"
                       }
+                      style={{ transition: "fill 0.5s ease" }}
                     />
                   )}
 

@@ -116,12 +116,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       >
         {/* Logo */}
         <div className="px-6 pt-7 pb-6">
-          <div className="flex items-center gap-2">
-            <svg className="w-6 h-6 text-[#F25C1F] dark:text-[#FF6B3D]" viewBox="0 0 24 24" fill="none">
+          <Link to="/" className="flex items-center gap-2.5 group">
+            <svg className="w-6 h-6 text-[#F25C1F] dark:text-[#FF6B3D] transition-transform group-hover:scale-105" viewBox="0 0 24 24" fill="none">
               <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            <span className="font-bold text-[14px] font-display tracking-tight">Rakshastra</span>
-          </div>
+            <span className="font-bold text-[17px] tracking-tight leading-none text-[#18181B] dark:text-[#FAFAFA]">
+              RAKSHASTRA
+            </span>
+          </Link>
         </div>
 
         {/* Nav */}
@@ -189,15 +191,17 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* MAIN */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* TOPBAR — minimal */}
-        <header className="h-14 px-8 flex items-center justify-between flex-shrink-0">
-          {/* Search trigger */}
-          <div
-            onClick={() => setIsSearchOpen(true)}
-            className="cursor-pointer flex items-center gap-2.5 text-[#A1A1AA] hover:text-[#71717A] transition-colors"
-          >
-            <Search className="w-4 h-4" />
-            <span className="text-[13px]">Search...</span>
-            <kbd className="ml-2 text-[10px] font-mono text-[#A1A1AA] border border-[#ECECEF] dark:border-[#25252A] rounded px-1.5 py-0.5">⌘K</kbd>
+        <header className="h-14 px-8 flex items-center justify-between flex-shrink-0 border-b border-[#ECECEF]/60 dark:border-[#25252A]/60">
+          <div className="flex items-center gap-6">
+            {/* Search trigger */}
+            <div
+              onClick={() => setIsSearchOpen(true)}
+              className="cursor-pointer flex items-center gap-2.5 text-[#A1A1AA] hover:text-[#71717A] transition-colors"
+            >
+              <Search className="w-4 h-4" />
+              <span className="text-[13px]">Search...</span>
+              <kbd className="ml-2 text-[10px] font-mono text-[#A1A1AA] border border-[#ECECEF] dark:border-[#25252A] rounded px-1.5 py-0.5">⌘K</kbd>
+            </div>
           </div>
 
           <div className="flex items-center gap-1">

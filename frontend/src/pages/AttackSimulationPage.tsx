@@ -149,6 +149,7 @@ export const AttackSimulationPage: React.FC = () => {
   const [simulationTrace, setSimulationTrace] = useState<SimulationTrace | null>(null);
   const [activeStepIndex, setActiveStepIndex] = useState<number>(0);
   const [isSimulating, setIsSimulating] = useState<boolean>(false);
+  const [autoPlaying, setAutoPlaying] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [showProof, setShowProof] = useState<boolean>(false);
   const containerRef = useStaggerEntrance(".gsap-box", [simulationTrace?.simulation_id]);
@@ -173,7 +174,8 @@ export const AttackSimulationPage: React.FC = () => {
         target_objective_id: targetId,
       });
       setSimulationTrace(trace);
-      setActiveStepIndex(trace.timeline.length - 1);
+      setActiveStepIndex(0);
+      setAutoPlaying(true);
     } catch (err) {
       console.error("Simulation failure:", err);
     } finally {
@@ -187,6 +189,19 @@ export const AttackSimulationPage: React.FC = () => {
       handleRunSimulation();
     }
   }, [loading]);
+
+  // Auto-advance through timeline steps so the attack path "flows" node by node
+  useEffect(() => {
+    if (!autoPlaying || !simulationTrace) return;
+    if (activeStepIndex >= simulationTrace.timeline.length - 1) {
+      setAutoPlaying(false);
+      return;
+    }
+    const timer = setTimeout(() => {
+      setActiveStepIndex((prev) => prev + 1);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [autoPlaying, activeStepIndex, simulationTrace]);
 
   if (loading || !twin) {
     return (
@@ -535,7 +550,10 @@ className="w-full py-2 px-3 rounded-lg bg-[#FF5722] hover:bg-[#F4511E] disabled:
           <TimelinePlayer
             timeline={simulationTrace.timeline}
             activeStepIndex={activeStepIndex}
-            onStepChange={(idx) => setActiveStepIndex(idx)}
+            onStepChange={(idx) => {
+              setAutoPlaying(false);
+              setActiveStepIndex(idx);
+            }}
             onSelectEvidence={(eid) => navigate(`/evidence?id=${eid}`)}
           />
         </div>
