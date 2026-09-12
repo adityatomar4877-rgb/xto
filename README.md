@@ -11,6 +11,16 @@
 [![Pydantic v2](https://img.shields.io/badge/Pydantic-2.10-E92063.svg)](https://docs.pydantic.dev/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
+[![Live Demo](https://img.shields.io/badge/Live%20Platform-xto--twin.vercel.app-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://xto-twin.vercel.app/)
+[![API Backend](https://img.shields.io/badge/Backend%20API-xto.onrender.com-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://xto.onrender.com/docs)
+[![System Status](https://img.shields.io/badge/System%20Status-Online-brightgreen?style=for-the-badge)](https://xto.onrender.com/healthz)
+
+> 🌐 **Live Web Application**: [https://xto-twin.vercel.app](https://xto-twin.vercel.app)  
+> 🛡️ **Interactive Command Center**: [https://xto-twin.vercel.app/command](https://xto-twin.vercel.app/command)  
+> 📚 **FastAPI Swagger API Reference**: [https://xto.onrender.com/docs](https://xto.onrender.com/docs)  
+> 🩺 **Production Health Endpoint**: [https://xto.onrender.com/healthz](https://xto.onrender.com/healthz)
+
+
 ---
 
 ## Table of Contents
@@ -642,6 +652,15 @@ xto/
 ---
 
 ## 8. Installation & Deployment Guide
+
+### Live Production Deployments
+
+| Component | Platform | URL | Status |
+|---|---|---|---|
+| **Frontend War Room** | **Vercel** | [https://xto-twin.vercel.app](https://xto-twin.vercel.app) | ![Online](https://img.shields.io/badge/Status-Live%20Online-brightgreen.svg) |
+| **Command Center** | **Vercel** | [https://xto-twin.vercel.app/command](https://xto-twin.vercel.app/command) | ![Online](https://img.shields.io/badge/Status-Live%20Online-brightgreen.svg) |
+| **FastAPI Backend & Swagger** | **Render** | [https://xto.onrender.com/docs](https://xto.onrender.com/docs) | ![Online](https://img.shields.io/badge/Status-Live%20Online-brightgreen.svg) |
+| **Health Check Endpoint** | **Render** | [https://xto.onrender.com/healthz](https://xto.onrender.com/healthz) | ![HTTP 200](https://img.shields.io/badge/Healthz-200%20OK-brightgreen.svg) |
 
 ### Option A: Docker Full-Stack Deployment (Recommended)
 Prerequisites: Docker and Docker Compose installed.
